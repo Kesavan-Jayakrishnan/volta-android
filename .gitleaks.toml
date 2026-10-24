@@ -1,0 +1,8 @@
+# Secret scan settings for CI. Real keys never belong in this repository; the only key-shaped strings are
+# obviously fake ones (all zeros) used by tests and Compose previews.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Fake Google keys in tests and previews"
+regexes = ['''AIza(?:TEST|SyB)0{20,}(?:w4Qk|0+)''']
