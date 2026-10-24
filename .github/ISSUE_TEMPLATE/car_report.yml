@@ -1,0 +1,22 @@
+name: My car works / doesn't work
+description: Tell us how Volta does with your MG EV.
+labels: [compatibility]
+body:
+  - type: input
+    id: car
+    attributes:
+      label: Car model, variant and year
+      placeholder: MG ZS EV Exclusive Pro 2024
+    validations:
+      required: true
+  - type: dropdown
+    id: signin
+    attributes:
+      label: Does sign-in work?
+      options: ["Yes", "No"]
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: What works and what doesn't
