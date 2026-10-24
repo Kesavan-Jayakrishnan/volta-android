@@ -1,0 +1,30 @@
+name: Bug report
+description: Something doesn't work as it should.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+  - type: input
+    id: car
+    attributes:
+      label: Car model and year
+      placeholder: MG Windsor EV 2025
+  - type: input
+    id: phone
+    attributes:
+      label: Phone and Android version
+  - type: input
+    id: version
+    attributes:
+      label: Volta version
+  - type: markdown
+    attributes:
+      value: Please remove phone numbers, VINs, locations and API keys from anything you paste.

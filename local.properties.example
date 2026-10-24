@@ -1,0 +1,8 @@
+# Copy to local.properties (git-ignored). Android Studio usually creates it for you.
+sdk.dir=/path/to/Android/sdk
+
+# Optional: release signing. Leave out for debug builds.
+# VOLTA_STORE_FILE=/absolute/path/to/release.jks
+# VOLTA_STORE_PASSWORD=
+# VOLTA_KEY_ALIAS=
+# VOLTA_KEY_PASSWORD=
