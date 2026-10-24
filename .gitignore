@@ -1,0 +1,30 @@
+# Gradle and build output
+.gradle/
+build/
+.kotlin/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+.navigation/
+
+# Local configuration and secrets: never commit these
+local.properties
+*.jks
+*.keystore
+*.p12
+google-services.json
+secrets.properties
+
+# Release artefacts
+*.apk
+*.aab
+*.apks
+output-metadata.json
+
+# OS
+.DS_Store
+Thumbs.db
