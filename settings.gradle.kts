@@ -16,4 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Volta"
 
-include(":core:model")
+include(":core:model", ":core:planner")
