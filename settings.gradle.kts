@@ -15,3 +15,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Volta"
+
+include(":core:model", ":core:planner", ":core:ismart")
