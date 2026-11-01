@@ -16,5 +16,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "Volta"
 
+include(":app")
 include(":core:model", ":core:planner", ":core:ismart", ":core:maps", ":core:domain")
-include(":core:testing")
+include(":core:data", ":core:designsystem", ":core:testing")
+include(":feature:onboarding")
