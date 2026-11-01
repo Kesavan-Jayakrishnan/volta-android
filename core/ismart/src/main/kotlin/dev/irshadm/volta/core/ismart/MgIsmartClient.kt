@@ -162,13 +162,14 @@ class MgIsmartClient(
             }
         }
         val code = parsed["code"]?.jsonPrimitive?.intOrNull
-        if (code == 7) {
+        val message = parsed["message"]?.jsonPrimitive?.contentOrNull
+        if (code == 7 || (code != null && code != 0 && sessionInvalid(message))) {
             if (!retry) throw IsmartException("MG session stays invalid after login")
             sessions.save(null)
             loginLocked()
             return gatewayGet(path, params, retry = false)
         }
-        if (code != null && code != 0) throw IsmartException(parsed["message"]?.jsonPrimitive?.contentOrNull ?: "MG gateway error $code")
+        if (code != null && code != 0) throw IsmartException(message ?: "MG gateway error $code")
         return parsed
     }
 
@@ -325,4 +326,13 @@ class MgIsmartClient(
         const val COMMAND_ATTEMPTS = 15
         const val MAX_LOGINS_PER_HOUR = 3
     }
+}
+
+/**
+ * The gateway says the session is gone. Usually that's code 7, but it also answers with other codes and the message
+ * "Login is invalid, please login again"; both mean the same thing and get one fresh login.
+ */
+internal fun sessionInvalid(message: String?): Boolean {
+    val m = message?.lowercase() ?: return false
+    return ("login" in m && "invalid" in m) || "login again" in m || "token" in m && ("invalid" in m || "expired" in m)
 }

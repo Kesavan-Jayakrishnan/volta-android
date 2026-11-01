@@ -26,7 +26,8 @@ data class SignInUiState(
 
 @HiltViewModel
 class SignInViewModel @Inject constructor(private val accounts: AccountRepository) : ViewModel() {
-    private val _state = MutableStateFlow(SignInUiState())
+    // A saved password MG rejected on a reconnect lands here with MG's own message.
+    private val _state = MutableStateFlow(SignInUiState(error = accounts.rejection.value?.let { SignInError.Rejected(it) }))
     val state: StateFlow<SignInUiState> = _state.asStateFlow()
 
     /** Digits only. A pasted "+91 98000 00012" keeps the ten digits after the country code. */
