@@ -1,6 +1,7 @@
 package dev.irshadm.volta.feature.onboarding.signin
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,7 +20,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -45,7 +45,7 @@ import dev.irshadm.volta.core.designsystem.StepBar
 import dev.irshadm.volta.core.designsystem.VoltaTheme
 import dev.irshadm.volta.core.designsystem.Wt
 import dev.irshadm.volta.core.designsystem.WtButton
-import dev.irshadm.volta.core.designsystem.WtIcons
+import dev.irshadm.volta.core.designsystem.VoltaCarArt
 import dev.irshadm.volta.core.designsystem.WtNote
 import dev.irshadm.volta.core.domain.SignInError
 import java.text.DateFormat
@@ -85,7 +85,7 @@ fun SignInScreen(
         Text("Your MG EV, live on your phone", style = MaterialTheme.typography.bodyMedium, color = Wt.Muted, modifier = Modifier.padding(top = 4.dp))
 
         when (val error = state.error) {
-            null -> Glow()
+            null -> CarHero()
             else -> WtNote(NoteTone.Error, body = errorBody(error), title = errorTitle(error), modifier = Modifier.padding(top = 32.dp))
         }
 
@@ -128,12 +128,18 @@ fun SignInScreen(
     }
 }
 
-/** Soft accent glow where the car artwork will sit. */
+/**
+ * The car from the splash and app icon, lit, on the icon's charcoal tile (the artwork is painted on that colour, so
+ * the tile hides its soft edges). The bolt drops in and the lights come on once.
+ */
 @Composable
-private fun Glow() {
-    Box(Modifier.padding(top = 18.dp).height(120.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
-        Box(Modifier.size(260.dp, 120.dp).background(Brush.radialGradient(listOf(Wt.tint(Wt.Gold, 0.22f), Color.Transparent))))
-        Icon(WtIcons.Car, contentDescription = null, tint = Wt.Gold, modifier = Modifier.size(56.dp))
+private fun CarHero() {
+    val shape = RoundedCornerShape(28.dp)
+    Box(Modifier.padding(top = 22.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(320.dp, 200.dp).background(Brush.radialGradient(listOf(Wt.tint(Wt.Gold, 0.14f), Color.Transparent))))
+        Box(Modifier.fillMaxWidth(0.84f).clip(shape).background(Wt.IconTile).border(1.dp, Wt.tint(Wt.Gold, 0.28f), shape).padding(10.dp)) {
+            VoltaCarArt(Modifier.fillMaxWidth(), animate = true)
+        }
     }
 }
 
