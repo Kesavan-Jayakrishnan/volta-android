@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget surface: a solid dark material, corners matching the launcher's own widget corners. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#FF1C1C1E" />
+    <corners android:radius="@android:dimen/system_app_widget_background_radius" />
+</shape>

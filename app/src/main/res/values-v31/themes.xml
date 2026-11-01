@@ -1,0 +1,7 @@
+<resources>
+    <!-- System splash (Android 12+): the app icon on the same charcoal as the animated intro that follows. -->
+    <style name="Theme.Volta" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowSplashScreenBackground">#292B30</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">#292B30</item>
+    </style>
+</resources>

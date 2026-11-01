@@ -2,6 +2,33 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Home charger (Exicom Spin) start/stop over Bluetooth Low Energy; never used to find your location. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Android Auto: the host requires this for PlaceListMapTemplate (Chargers nearby). Install-time, no prompt. -->
+    <uses-permission android:name="androidx.car.app.MAP_TEMPLATES" />
+
+    <queries>
+        <package android:name="com.google.android.apps.maps" />
+        <!-- Android Auto's connection state (CarConnection): is the phone projecting to a car right now? -->
+        <provider android:authorities="androidx.car.app.connection" />
+    </queries>
+    <!-- Settings → Alerts offers the "unrestricted battery" dialog; without it background checks run late on Samsung. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
 
     <application
         android:name=".VoltaApp"
@@ -13,13 +40,75 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Volta">
 
+        <!-- Older Google Play services Maps renderers still load Apache HTTP classes. -->
+        <uses-library android:name="org.apache.http.legacy" android:required="false" />
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+
+        <service
+            android:name=".service.TripService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
+        <!-- Android Auto: read-and-guide screens for the live trip (no car commands). Exported so the Android Auto
+             host can bind; VoltaCarAppService.createHostValidator() limits that to Google's host in release builds. -->
+        <service
+            android:name=".car.VoltaCarAppService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.car.app.CarAppService" />
+                <category android:name="androidx.car.app.category.POI" />
+            </intent-filter>
+        </service>
+        <meta-data android:name="com.google.android.gms.car.application" android:resource="@xml/automotive_app_desc" />
+        <meta-data android:name="androidx.car.app.minCarApiLevel" android:value="1" />
+
         <activity
             android:name=".MainActivity"
-            android:exported="true"
-            android:windowSoftInputMode="adjustResize">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
+        </activity>
+
+        <receiver android:name=".service.smart.SmartGeofenceReceiver" android:exported="false" />
+        <receiver android:name=".service.smart.PrecoolFeedbackReceiver" android:exported="false" />
+        <receiver android:name=".service.smart.WalkingReceiver" android:exported="false" />
+        <receiver android:name=".service.ChargerFeedbackReceiver" android:exported="false" />
+        <!-- "Left the car": Bluetooth to a car head unit dropped. A protected system broadcast, exempt from the implicit-broadcast limits. -->
+        <receiver android:name=".service.LeftCarReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".widget.VoltaWidgetSmall" android:exported="false" android:label="Volta">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_small_info" />
+        </receiver>
+        <receiver android:name=".widget.VoltaWidgetMedium" android:exported="false" android:label="Volta">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_medium_info" />
+        </receiver>
+        <receiver android:name=".service.smart.SmartBootReceiver" android:exported="false">
+            <intent-filter><action android:name="android.intent.action.BOOT_COMPLETED" /></intent-filter>
+        </receiver>
+
+        <!-- Confirm-then-send sheet for shortcuts / Samsung Routines (never sends on its own). -->
+        <activity
+            android:name=".QuickActionActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity="dev.irshadm.volta.quick"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.Volta.Sheet">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="volta" android:host="action" />
             </intent-filter>
         </activity>
     </application>

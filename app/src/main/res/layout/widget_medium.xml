@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Medium Volta widget (4×2): what the car is doing as the headline (Parked / Driving / Charging / Cooling, or the
+     one thing that needs you), range and charge, a line that always ends with when the car was last read, the car
+     big on the right, a pill with the cabin / outside temperature (thermometer, or a snowflake while the AC runs), a
+     round Lock button, and a warning button only for check-soon items. The android:text values are only for the
+     widget-gallery preview; the app overwrites them. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@drawable/widget_bg">
+    <ImageView android:id="@+id/car" android:layout_width="290dp" android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom" android:layout_marginEnd="-40dp" android:layout_marginBottom="-4dp"
+        android:adjustViewBounds="true" android:src="@drawable/car360_locked_1" android:importantForAccessibility="no" />
+    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="18dp" android:layout_marginTop="18dp" android:layout_marginEnd="60dp" android:orientation="vertical">
+        <TextView android:id="@+id/headline" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textColor="#D6B98A" android:textSize="32sp" android:fontFamily="sans-serif-medium" android:letterSpacing="-0.02"
+            android:includeFontPadding="false" android:maxLines="1" android:text="Parked" />
+        <TextView android:id="@+id/numbers" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp"
+            android:textColor="#FFFFFF" android:textSize="17sp" android:fontFamily="sans-serif-medium" android:maxLines="1" android:text="157 km · 65 %" />
+        <TextView android:id="@+id/detail" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp"
+            android:textColor="#8E8E93" android:textSize="13sp" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" android:text="Since 7:45 pm · read 3:12 pm" />
+    </LinearLayout>
+    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="start|bottom"
+        android:layout_marginStart="18dp" android:layout_marginBottom="16dp" android:orientation="horizontal">
+        <LinearLayout android:id="@+id/btn_ac" android:layout_width="wrap_content" android:layout_height="40dp"
+            android:background="@drawable/widget_pill" android:orientation="horizontal" android:gravity="center_vertical"
+            android:paddingStart="13dp" android:paddingEnd="14dp" android:contentDescription="AC">
+            <ImageView android:id="@+id/ac_icon" android:layout_width="17dp" android:layout_height="17dp" android:src="@drawable/wg_thermo" android:importantForAccessibility="no" />
+            <TextView android:id="@+id/ac_cabin" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="7dp"
+                android:textColor="#FFFFFF" android:textSize="14sp" android:fontFamily="sans-serif-medium" android:maxLines="1" android:text="~34°" />
+            <TextView android:id="@+id/ac_outside" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="4dp"
+                android:textColor="#8E8E93" android:textSize="14sp" android:fontFamily="sans-serif-medium" android:maxLines="1" android:text="/ 30°" />
+        </LinearLayout>
+        <ImageView android:id="@+id/btn_lock" android:layout_width="40dp" android:layout_height="40dp" android:layout_marginStart="10dp" android:padding="11dp"
+            android:background="@drawable/widget_button" android:src="@drawable/wg_lock" android:contentDescription="Lock" />
+        <ImageView android:id="@+id/btn_warn" android:layout_width="40dp" android:layout_height="40dp" android:layout_marginStart="10dp" android:padding="11dp"
+            android:background="@drawable/widget_button" android:src="@drawable/wg_warning" android:contentDescription="Something needs attention" android:visibility="gone" />
+    </LinearLayout>
+</FrameLayout>

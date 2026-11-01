@@ -1,48 +1,139 @@
 package dev.irshadm.volta
 
-import android.graphics.Color
 import android.os.Bundle
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.SystemBarStyle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dagger.hilt.android.AndroidEntryPoint
-import dev.irshadm.volta.core.designsystem.VoltaTheme
-import dev.irshadm.volta.core.designsystem.Wt
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import dev.irshadm.volta.ui.components.BottomTab
+import dev.irshadm.volta.ui.components.ComingSoon
+import dev.irshadm.volta.ui.components.WtBottomBar
+import dev.irshadm.volta.core.designsystem.WtIcons
+import dev.irshadm.volta.ui.home.HomeScreen
+import dev.irshadm.volta.ui.plan.PlanScreen
+import dev.irshadm.volta.ui.trip.TripScreen
+import dev.irshadm.volta.ui.energy.EnergyScreen
+import dev.irshadm.volta.ui.settings.SettingsScreen
+import dev.irshadm.volta.core.domain.ObserveStartDestinationUseCase
 import dev.irshadm.volta.core.domain.StartDestination
 import dev.irshadm.volta.feature.onboarding.mapskey.MapsKeyMode
 import dev.irshadm.volta.feature.onboarding.mapskey.MapsKeyRoute
 import dev.irshadm.volta.feature.onboarding.signin.SignInRoute
-import dev.irshadm.volta.navigation.VoltaNavHost
+import dev.irshadm.volta.core.designsystem.Wt
+import dev.irshadm.volta.core.designsystem.WtMotion
+import dev.irshadm.volta.core.designsystem.VoltaTheme
+import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
-    private val app: AppViewModel by viewModels()
-
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(Wt.Bg.toArgb()),
+            navigationBarStyle = SystemBarStyle.dark(Wt.Bg.toArgb()),
+        )
         super.onCreate(savedInstanceState)
-        // Dark-only app: light status and navigation bar icons on every device setting.
-        enableEdgeToEdge(SystemBarStyle.dark(Color.TRANSPARENT), SystemBarStyle.dark(Color.TRANSPARENT))
         setContent {
             VoltaTheme {
-                val destination by app.destination.collectAsStateWithLifecycle()
-                Box(Modifier.fillMaxSize().background(Wt.Bg)) {
-                    // First run is a gate in front of the app, not part of its back stack: Back from step 1 leaves.
-                    when (destination) {
-                        null -> Unit
-                        StartDestination.SignIn -> SignInRoute()
-                        StartDestination.MapsKey -> MapsKeyRoute(MapsKeyMode.FirstRun)
-                        StartDestination.Home -> VoltaNavHost()
+                // The intro plays once per cold start, over the app (which is already loading underneath).
+                var intro by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(savedInstanceState == null) }
+                androidx.compose.runtime.LaunchedEffect(Unit) {
+                    if (intro) { dev.irshadm.volta.ui.splash.SplashGate.holding = true; dev.irshadm.volta.ui.splash.SplashGate.landed = false }
+                }
+                val link by ismart.link.collectAsStateWithLifecycle()
+                // First run (sign-in, then the optional Google key) is a gate over the app; so is the connection-lost
+                // screen when the saved login stops working, until it's dismissed.
+                val start by observeStart().collectAsStateWithLifecycle(initialValue = null)
+                val dismissed by ismart.reconnectDismissed.collectAsStateWithLifecycle()
+                Box(Modifier.fillMaxSize()) {
+                    if (start == StartDestination.Home) AppNav()
+                    when {
+                        start == StartDestination.SignIn -> SignInRoute()
+                        start == StartDestination.MapsKey -> MapsKeyRoute(MapsKeyMode.FirstRun)
+                        link is dev.irshadm.volta.data.ismart.LinkState.NeedsReconnect && !dismissed ->
+                            dev.irshadm.volta.ui.account.ConnectionLostScreen()
                     }
+                    if (intro) dev.irshadm.volta.ui.splash.SplashIntro(link) { intro = false }
                 }
             }
+        }
+    }
+
+    @javax.inject.Inject lateinit var ismart: dev.irshadm.volta.data.ismart.IsmartRepository
+    @javax.inject.Inject lateinit var trips: dev.irshadm.volta.data.trip.TripRepository
+    @javax.inject.Inject lateinit var observeStart: ObserveStartDestinationUseCase
+
+    private var lastAutoRefresh = 0L
+
+    /** Opening the app (or coming back after a couple of minutes) fetches fresh car data straight away. */
+    override fun onStart() {
+        super.onStart()
+        val now = System.currentTimeMillis()
+        if (now - lastAutoRefresh > 2 * 60_000) {
+            lastAutoRefresh = now
+            lifecycleScope.launch { ismart.refresh() }
+        }
+        // A planned trip the process died in the middle of stays "in progress" until we close it here.
+        lifecycleScope.launch { runCatching { trips.closeStale() } }
+    }
+}
+
+private val Tabs = listOf(
+    BottomTab("battery", "Dashboard", WtIcons.Dashboard),
+    BottomTab("plan", "Plan", WtIcons.Pin),
+    BottomTab("trip", "Trip", WtIcons.Route),
+    BottomTab("energy", "Energy", WtIcons.Bars),
+    BottomTab("settings", "Settings", WtIcons.Gear),
+)
+
+@Composable
+private fun AppNav() {
+    val nav = rememberNavController()
+    val backStack by nav.currentBackStackEntryAsState()
+    val current = backStack?.destination?.route
+    fun go(route: String) = nav.navigate(route) {
+        popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+    Scaffold(
+        containerColor = Wt.Bg,
+        bottomBar = { WtBottomBar(Tabs, current) { go(it.route) } },
+    ) { padding ->
+        NavHost(
+            nav,
+            startDestination = "battery",
+            modifier = Modifier.fillMaxSize().background(Wt.Bg).padding(bottom = padding.calculateBottomPadding()),
+            enterTransition = { fadeIn(tween(260)) },
+            exitTransition = { fadeOut(tween(180)) },
+        ) {
+            composable("battery") { HomeScreen(onPlanTrip = { go("plan") }, onSettings = { go("settings") }) }
+            composable("plan") { PlanScreen(onTripStarted = { go("trip") }) }
+            composable("trip") { TripScreen(onPlan = { go("plan") }) }
+            composable("energy") { EnergyScreen(onSettings = { go("settings") }) }
+            composable("settings") { Box(Modifier.fillMaxSize()) { SettingsScreen(onBack = { go("battery") }) } }
         }
     }
 }

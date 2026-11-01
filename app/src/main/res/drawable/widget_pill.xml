@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pill-shaped widget button (the AC button with its temperatures), same fill as the round buttons. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#FF2C2C2E" />
+    <corners android:radius="20dp" />
+</shape>
