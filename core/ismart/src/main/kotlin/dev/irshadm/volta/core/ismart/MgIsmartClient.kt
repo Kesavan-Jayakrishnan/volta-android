@@ -1,3 +1,7 @@
+// Ported to Kotlin from mg-ismart-india-client by John Lazarus (MIT licence):
+// https://github.com/john-lazarus/mg-ismart-india-client. Thank you, John: this module would not exist without
+// your work on the MG India protocol. The original licence is reproduced in NOTICE.md.
+
 package dev.irshadm.volta.core.ismart
 
 import kotlinx.coroutines.Dispatchers
@@ -50,7 +54,7 @@ class InMemorySessionStore(private var session: LoginFrame.Session? = null) : Se
 }
 
 /**
- * Kotlin port of `MgIndiaClient` (mg-ismart-india-client@2b890f2): one session, logins only when
+ * Kotlin port of `MgIndiaClient` from John Lazarus's mg-ismart-india-client (commit 2b890f2): one session, logins only when
  * the server says the session is invalid, a guard against login tug-of-war, polled status/charge
  * frames, PIN-verified commands.
  */

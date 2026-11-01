@@ -1,3 +1,7 @@
+// Ported to Kotlin from mg-ismart-india-client by John Lazarus (MIT licence):
+// https://github.com/john-lazarus/mg-ismart-india-client. Thank you, John: this module would not exist without
+// your work on the MG India protocol. The original licence is reproduced in NOTICE.md.
+
 package dev.irshadm.volta.core.ismart
 
 /**
