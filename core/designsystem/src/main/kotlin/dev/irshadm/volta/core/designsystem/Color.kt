@@ -5,6 +5,8 @@ import androidx.compose.ui.graphics.Color
 /** Colour tokens. Dark only: Volta has no light theme. */
 object Wt {
     val Bg = Color(0xFF0B0D10)
+    /** The app icon's charcoal, which the car artwork is painted on. */
+    val IconTile = Color(0xFF292B30)
     val Surface = Color(0xFF12161B)
     val SurfaceHigh = Color(0xFF1A1F26)
     val Border = Color(0xFF1F2937)
