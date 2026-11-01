@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 /** Signs in when [nextResult] succeeds; records every attempt in [attempts]. */
 class FakeAccountRepository(initial: Account = Account.SignedOut) : AccountRepository {
     override val account = MutableStateFlow(initial)
+    override val rejection = MutableStateFlow<String?>(null)
     var nextResult: Result<Unit> = Result.success(Unit)
     val attempts = mutableListOf<Pair<String, String>>()
 

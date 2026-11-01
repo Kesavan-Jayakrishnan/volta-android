@@ -5,7 +5,7 @@ depends on nothing Android; the data layer implements the domain's interfaces.
 
 ```
                  ┌──────────────┐
-                 │     :app     │  Activity, navigation, Hilt entry point
+                 │     :app     │  the app: dashboard, plan, trip, energy, settings, Android Auto
                  └──────┬───────┘
           ┌─────────────┼──────────────────┐
           ▼             ▼                  ▼
@@ -37,7 +37,7 @@ depends on nothing Android; the data layer implements the domain's interfaces.
 | `:core:designsystem` | Android | Theme, colours, type, icons and shared components (`WtButton`, `WtNote`, `VoltaCarArt`). |
 | `:core:testing` | Kotlin | Fakes and `MainDispatcherRule`, shared by every module's unit tests. |
 | `:feature:onboarding` | Android | Sign-in and Google key screens. |
-| `:app` | Android | `MainActivity`, the first-run gate and navigation. |
+| `:app` | Android | The app itself: dashboard, trip planner, live trip, energy, settings, Android Auto, widget, background alerts and smart pre-cool, with Room and WorkManager. Its i-SMART link backs the first-run screens through `IsmartAccount`. |
 
 Four of the modules have no Android dependency at all, so their tests run on the plain JVM in seconds.
 
@@ -56,6 +56,9 @@ or home.
 
 **Errors as types.** The MG client's exceptions become a `SignInError` sealed type; Google's error bodies become a
 `KeyProblem` enum. The UI turns each case into a specific message and a specific fix.
+
+**Where this is heading.** `:app` holds most of the code today, organised by package (`data`, `service`, `car`,
+`ui/home`, `ui/plan`, …). Screens move into their own `:feature:*` modules over time, the way first run already has.
 
 ## The Google key, end to end
 

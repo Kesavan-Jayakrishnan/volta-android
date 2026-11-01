@@ -10,15 +10,12 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import dev.irshadm.volta.core.data.account.IsmartAccountRepository
 import dev.irshadm.volta.core.data.maps.SecretMapsKeyRepository
 import dev.irshadm.volta.core.data.security.KeystoreSecretStore
 import dev.irshadm.volta.core.data.security.SecretStore
 import dev.irshadm.volta.core.data.setup.DataStoreSetupRepository
-import dev.irshadm.volta.core.domain.AccountRepository
 import dev.irshadm.volta.core.domain.MapsKeyRepository
 import dev.irshadm.volta.core.domain.SetupRepository
-import dev.irshadm.volta.core.ismart.MgIsmartClient
 import dev.irshadm.volta.core.maps.AppIdentity
 import dev.irshadm.volta.core.maps.GoogleApi
 import dev.irshadm.volta.core.maps.GoogleMapsKeyChecker
@@ -45,11 +42,6 @@ object DataModule {
     @Provides
     @Singleton
     fun secretStore(@ApplicationContext context: Context): SecretStore = KeystoreSecretStore(context)
-
-    @Provides
-    @Singleton
-    fun accountRepository(secrets: SecretStore, http: OkHttpClient): AccountRepository =
-        IsmartAccountRepository(secrets) { credentials, sessions -> MgIsmartClient(http, credentials, sessions) }
 
     @Provides
     @Singleton

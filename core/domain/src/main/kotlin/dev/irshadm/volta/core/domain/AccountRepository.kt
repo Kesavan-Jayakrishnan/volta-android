@@ -25,6 +25,9 @@ sealed interface SignInError {
 interface AccountRepository {
     val account: StateFlow<Account>
 
+    /** MG's message when it rejected a saved password on a reconnect; the sign-in screen shows it once. */
+    val rejection: StateFlow<String?>
+
     /** Signs in and keeps the login (encrypted) only when MG accepts it. */
     suspend fun signIn(phone: String, password: String): Result<Unit>
 

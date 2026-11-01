@@ -60,4 +60,9 @@ class SignInViewModelTest {
         assertEquals(SignInError.Offline, vm.state.value.error)
         assertEquals("secret12", vm.state.value.password)
     }
+
+    @Test fun `a rejected saved password shows MG's message on arrival`() {
+        val accounts = FakeAccountRepository().apply { rejection.value = "Password changed" }
+        assertEquals(SignInError.Rejected("Password changed"), SignInViewModel(accounts).state.value.error)
+    }
 }

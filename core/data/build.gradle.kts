@@ -16,7 +16,6 @@ kotlin {
 
 dependencies {
     api(project(":core:domain"))
-    implementation(project(":core:ismart"))
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.okhttp)
 

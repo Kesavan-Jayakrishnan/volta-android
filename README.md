@@ -9,17 +9,19 @@ There is no Volta server and no analytics: your login and key stay on your phone
 > Volta is an independent project. It is not made by, endorsed by or affiliated with MG Motor India or SAIC.
 > "MG" and "i-SMART" are their trademarks, used here only to say what the app works with.
 
-## Status
+## What it does
 
-Early. This repository is being built up in stages:
+- **Dashboard:** battery, the range you'll really get, charging, locks, doors, windows, tyres and the 12 V battery,
+  read from your car. Alerts when something needs a look.
+- **Remote controls:** lock, unlock, AC, find and windows, each confirmed with your fingerprint and your MG control PIN.
+- **Trip planner:** routes with their climb, fast-charging stops with a backup for each, and meal stops at places
+  that are open when you get there. Behind-plan alerts re-plan from where you are.
+- **Energy:** every charging session priced on your home tariff or public rates.
+- **Smart pre-cool:** suggests cooling the car before you walk out. It always asks first.
+- **Android Auto** and a home-screen widget.
 
-| Stage | What | State |
-|---|---|---|
-| 1 | Project structure, MG sign-in, your own Google key (checked before it's saved) | Done |
-| 2 | Dashboard: battery, range, charging, doors and tyres | Next |
-| 3 | Trip planner: route, charging stops, meal stops | Planned |
-
-Tested on the MG Windsor EV. Other MG EVs on i-SMART should sign in; their battery figures will follow.
+Built and tested on the MG Windsor EV. Other MG EVs on i-SMART sign in and show their data with a generic car
+picture; their battery figures can be set in Settings → Car until model profiles arrive.
 
 ## What you need
 

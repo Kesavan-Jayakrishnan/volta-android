@@ -1,0 +1,75 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "e8ba65400a2f3071bf2732448c958093",
+    "entities": [
+      {
+        "tableName": "soc_readings",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `socPercent` REAL NOT NULL, `source` TEXT NOT NULL, `measuredAtMillis` INTEGER NOT NULL, `batteryEnergyKwh` REAL, `carRangeKm` REAL, `odometerKm` REAL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "socPercent",
+            "columnName": "socPercent",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "measuredAtMillis",
+            "columnName": "measuredAtMillis",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "batteryEnergyKwh",
+            "columnName": "batteryEnergyKwh",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "carRangeKm",
+            "columnName": "carRangeKm",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "odometerKm",
+            "columnName": "odometerKm",
+            "affinity": "REAL"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_soc_readings_measuredAtMillis",
+            "unique": false,
+            "columnNames": [
+              "measuredAtMillis"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_soc_readings_measuredAtMillis` ON `${TABLE_NAME}` (`measuredAtMillis`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e8ba65400a2f3071bf2732448c958093')"
+    ]
+  }
+}

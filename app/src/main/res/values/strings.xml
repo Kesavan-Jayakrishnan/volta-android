@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Volta</string>
+    <string name="widget_small_description">What the car is doing, range and charge</string>
+    <string name="widget_medium_description">What the car is doing, range and charge, with pre-cool and lock</string>
+    <string name="shortcut_precool_short">Pre-cool car</string>
+    <string name="shortcut_precool_long">Pre-cool your car</string>
+    <string name="shortcut_lock_short">Lock car</string>
+    <string name="shortcut_lock_long">Lock your car</string>
+    <string name="shortcut_find_short">Find car</string>
+    <string name="shortcut_find_long">Flash lights and horn</string>
 </resources>

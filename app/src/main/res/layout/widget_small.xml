@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Small Volta widget (2×2): status, the car, range as the one big number, charge and when it was read, and the bar.
+     The android:text values are only for the widget-gallery preview; the app overwrites them. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="@drawable/widget_bg" android:padding="16dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+        <ImageView android:id="@+id/state_icon" android:layout_width="13dp" android:layout_height="13dp" android:src="@drawable/wg_lock" android:importantForAccessibility="no" />
+        <TextView android:id="@+id/state" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="5dp"
+            android:textColor="#8E8E93" android:textSize="12sp" android:fontFamily="sans-serif-medium" android:maxLines="1" android:text="Locked" />
+    </LinearLayout>
+    <ImageView android:id="@+id/car" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        android:layout_marginTop="2dp" android:scaleType="fitCenter" android:src="@drawable/car360_locked_1" android:importantForAccessibility="no" />
+    <TextView android:id="@+id/range" android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:textColor="#FFFFFF" android:textSize="26sp" android:fontFamily="sans-serif-medium" android:letterSpacing="-0.02" android:maxLines="1" android:includeFontPadding="false" android:text="157 km" />
+    <TextView android:id="@+id/sub" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp"
+        android:textColor="#8E8E93" android:textSize="12sp" android:maxLines="1" android:ellipsize="end" android:text="65 % · read 3:12 pm" />
+    <ProgressBar android:id="@+id/bar" style="@android:style/Widget.ProgressBar.Horizontal"
+        android:layout_width="match_parent" android:layout_height="4dp" android:layout_marginTop="8dp"
+        android:max="100" android:progress="65" android:progressDrawable="@drawable/widget_bar_champagne" />
+</LinearLayout>

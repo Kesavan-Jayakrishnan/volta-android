@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Long-press the app icon, or use in Samsung Modes and Routines → "Open app shortcut".
+     Each opens a confirmation sheet; nothing is sent until the user confirms with a fingerprint. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut android:shortcutId="precool" android:enabled="true" android:icon="@drawable/ic_shortcut_precool"
+        android:shortcutShortLabel="@string/shortcut_precool_short" android:shortcutLongLabel="@string/shortcut_precool_long">
+        <intent android:action="android.intent.action.VIEW" android:data="volta://action/precool"
+            android:targetPackage="dev.irshadm.volta.oss" android:targetClass="dev.irshadm.volta.QuickActionActivity" />
+    </shortcut>
+    <shortcut android:shortcutId="lock" android:enabled="true" android:icon="@drawable/ic_shortcut_lock"
+        android:shortcutShortLabel="@string/shortcut_lock_short" android:shortcutLongLabel="@string/shortcut_lock_long">
+        <intent android:action="android.intent.action.VIEW" android:data="volta://action/lock"
+            android:targetPackage="dev.irshadm.volta.oss" android:targetClass="dev.irshadm.volta.QuickActionActivity" />
+    </shortcut>
+    <shortcut android:shortcutId="find" android:enabled="true" android:icon="@drawable/ic_shortcut_find"
+        android:shortcutShortLabel="@string/shortcut_find_short" android:shortcutLongLabel="@string/shortcut_find_long">
+        <intent android:action="android.intent.action.VIEW" android:data="volta://action/find"
+            android:targetPackage="dev.irshadm.volta.oss" android:targetClass="dev.irshadm.volta.QuickActionActivity" />
+    </shortcut>
+</shortcuts>
