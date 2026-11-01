@@ -36,6 +36,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 
 /** Every pressable shrinks to 0.97 while held: instant feedback on touch-down. */
 fun Modifier.pressScale(interaction: MutableInteractionSource): Modifier = composed {
@@ -112,21 +113,23 @@ fun WtNote(tone: NoteTone, body: String, modifier: Modifier = Modifier, title: S
     }
 }
 
-/** Progress through a short flow: one bar per step, filled up to [current] (1-based). */
+/**
+ * Where you are in a short flow, in words ("STEP 1 OF 2"). Words rather than dots, so it can't be mistaken for a
+ * carousel you could swipe.
+ */
 @Composable
-fun StepBar(current: Int, total: Int, modifier: Modifier = Modifier) {
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        repeat(total) { i ->
-            Box(Modifier.width(22.dp).height(4.dp).clip(RoundedCornerShape(4.dp)).background(if (i < current) Wt.Gold else Wt.BorderStrong))
-        }
-    }
+fun StepLabel(current: Int, total: Int, modifier: Modifier = Modifier) {
+    Text(
+        "STEP $current OF $total", modifier = modifier,
+        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.14.em), color = Wt.Dim,
+    )
 }
 
 @Preview(backgroundColor = 0xFF0B0D10, showBackground = true)
 @Composable
 private fun ComponentsPreview() = VoltaTheme {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        StepBar(current = 1, total = 2)
+        StepLabel(current = 1, total = 2)
         WtNote(NoteTone.Caution, "Signing in here signs the official MG app out.")
         WtNote(NoteTone.Error, "Routes API isn't enabled for this key's project.", title = "Google said no")
         WtButton("Continue", onClick = {}, modifier = Modifier.fillMaxWidth())
