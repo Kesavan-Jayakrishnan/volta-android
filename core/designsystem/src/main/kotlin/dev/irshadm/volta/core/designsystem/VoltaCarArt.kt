@@ -15,6 +15,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -28,9 +33,11 @@ import kotlin.math.exp
  * Volta's car artwork, the same layers the app icon and splash are drawn from: faint light lines, the car, its
  * light bar and headlights, and the bolt above it. With [animate], the bolt drops in and the lights switch on once,
  * as at the end of the splash; with animations turned off on the phone it simply appears lit.
+ * With [blendEdges], the artwork's charcoal backdrop fades out towards every edge, so it sits straight on any dark
+ * background without a visible box.
  */
 @Composable
-fun VoltaCarArt(modifier: Modifier = Modifier, animate: Boolean = false) {
+fun VoltaCarArt(modifier: Modifier = Modifier, animate: Boolean = false, blendEdges: Boolean = false) {
     val still = !animate || LocalReducedMotion.current
     val drop = remember { Animatable(if (still) 1f else 0f) }      // bolt: 0 = above, 1 = in place
     val lights = remember { Animatable(if (still) 1f else 0f) }
@@ -40,7 +47,7 @@ fun VoltaCarArt(modifier: Modifier = Modifier, animate: Boolean = false) {
         lights.animateTo(1f, tween(350, delayMillis = 150 + BOLT_MS))
     }
 
-    BoxWithConstraints(modifier.aspectRatio(ART_W / ART_H)) {
+    BoxWithConstraints(modifier.aspectRatio(ART_W / ART_H).then(if (blendEdges) Modifier.fadeEdges() else Modifier)) {
         val w = maxWidth
         Image(painterResource(R.drawable.volta_art_lines), null, Modifier.fillMaxSize().graphicsLayer { alpha = 0.15f }, contentScale = ContentScale.FillBounds)
         Image(painterResource(R.drawable.volta_art_car), null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
@@ -60,6 +67,19 @@ fun VoltaCarArt(modifier: Modifier = Modifier, animate: Boolean = false) {
     }
 }
 
+/**
+ * Fades content to transparent near all four edges. The car nearly fills the artwork's width, so the sides fade over
+ * a narrower band than the top and bottom, where there's only backdrop.
+ */
+private fun Modifier.fadeEdges(sides: Float = 0.12f, topBottom: Float = 0.2f): Modifier =
+    graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+        .drawWithContent {
+            drawContent()
+            fun fade(band: Float) = arrayOf(0f to Color.Transparent, band to Color.Black, 1f - band to Color.Black, 1f to Color.Transparent)
+            drawRect(Brush.horizontalGradient(*fade(sides)), blendMode = BlendMode.DstIn)
+            drawRect(Brush.verticalGradient(*fade(topBottom)), blendMode = BlendMode.DstIn)
+        }
+
 private const val ART_W = 990f
 private const val ART_H = 750f
 private const val BOLT_X = 445f
@@ -71,5 +91,5 @@ private const val BOLT_MS = 700
 @Preview(backgroundColor = 0xFF0B0D10, showBackground = true)
 @Composable
 private fun VoltaCarArtPreview() = VoltaTheme {
-    VoltaCarArt(Modifier.fillMaxWidth().padding(24.dp))
+    VoltaCarArt(Modifier.fillMaxWidth().padding(24.dp), blendEdges = true)
 }

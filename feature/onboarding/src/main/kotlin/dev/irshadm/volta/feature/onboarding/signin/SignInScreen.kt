@@ -1,7 +1,6 @@
 package dev.irshadm.volta.feature.onboarding.signin
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,8 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -128,18 +125,11 @@ fun SignInScreen(
     }
 }
 
-/**
- * The car from the splash and app icon, lit, on the icon's charcoal tile (the artwork is painted on that colour, so
- * the tile hides its soft edges). The bolt drops in and the lights come on once.
- */
+/** The car from the splash and app icon, lit, fading into the screen's background. The bolt drops in and the lights come on once. */
 @Composable
 private fun CarHero() {
-    val shape = RoundedCornerShape(28.dp)
-    Box(Modifier.padding(top = 22.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
-        Box(Modifier.size(320.dp, 200.dp).background(Brush.radialGradient(listOf(Wt.tint(Wt.Gold, 0.14f), Color.Transparent))))
-        Box(Modifier.fillMaxWidth(0.84f).clip(shape).background(Wt.IconTile).border(1.dp, Wt.tint(Wt.Gold, 0.28f), shape).padding(10.dp)) {
-            VoltaCarArt(Modifier.fillMaxWidth(), animate = true)
-        }
+    Box(Modifier.padding(top = 18.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
+        VoltaCarArt(Modifier.fillMaxWidth(0.96f), animate = true, blendEdges = true)
     }
 }
 
