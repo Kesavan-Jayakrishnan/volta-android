@@ -39,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.irshadm.volta.core.designsystem.NoteTone
-import dev.irshadm.volta.core.designsystem.StepLabel
 import dev.irshadm.volta.core.designsystem.VoltaTheme
 import dev.irshadm.volta.core.designsystem.Wt
 import dev.irshadm.volta.core.designsystem.WtButton
@@ -94,8 +93,7 @@ fun MapsKeyScreen(
             .verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        if (mode == MapsKeyMode.FirstRun) StepLabel(current = 2, total = 2, modifier = Modifier.align(Alignment.CenterHorizontally))
-        else Icon(WtIcons.Back, "Back", tint = Wt.Text, modifier = Modifier.size(24.dp).clip(RoundedCornerShape(8.dp)).clickable(onClick = onDone))
+        if (mode == MapsKeyMode.Settings) Icon(WtIcons.Back, "Back", tint = Wt.Text, modifier = Modifier.size(24.dp).clip(RoundedCornerShape(8.dp)).clickable(onClick = onDone))
 
         Text(if (state.passed) "Key works" else "Add your Google Maps key", style = MaterialTheme.typography.headlineSmall, color = Wt.Text)
         if (!state.passed) {

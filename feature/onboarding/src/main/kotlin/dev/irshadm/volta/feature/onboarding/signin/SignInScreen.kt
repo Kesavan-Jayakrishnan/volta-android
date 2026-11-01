@@ -38,7 +38,6 @@ import androidx.compose.ui.unit.em
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.irshadm.volta.core.designsystem.NoteTone
-import dev.irshadm.volta.core.designsystem.StepLabel
 import dev.irshadm.volta.core.designsystem.VoltaTheme
 import dev.irshadm.volta.core.designsystem.Wt
 import dev.irshadm.volta.core.designsystem.WtButton
@@ -76,7 +75,6 @@ fun SignInScreen(
             .verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        StepLabel(current = 1, total = 2)
         // Same order as the splash: the car with its bolt, then the name under it.
         if (state.error == null) CarHero() else Spacer(Modifier.height(28.dp))
         Text("VOLTA", style = MaterialTheme.typography.headlineSmall.copy(letterSpacing = 0.32.em), color = Wt.Gold)

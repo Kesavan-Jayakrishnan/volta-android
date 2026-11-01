@@ -113,23 +113,10 @@ fun WtNote(tone: NoteTone, body: String, modifier: Modifier = Modifier, title: S
     }
 }
 
-/**
- * Where you are in a short flow, in words ("STEP 1 OF 2"). Words rather than dots, so it can't be mistaken for a
- * carousel you could swipe.
- */
-@Composable
-fun StepLabel(current: Int, total: Int, modifier: Modifier = Modifier) {
-    Text(
-        "STEP $current OF $total", modifier = modifier,
-        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.14.em), color = Wt.Dim,
-    )
-}
-
 @Preview(backgroundColor = 0xFF0B0D10, showBackground = true)
 @Composable
 private fun ComponentsPreview() = VoltaTheme {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        StepLabel(current = 1, total = 2)
         WtNote(NoteTone.Caution, "Signing in here signs the official MG app out.")
         WtNote(NoteTone.Error, "Routes API isn't enabled for this key's project.", title = "Google said no")
         WtButton("Continue", onClick = {}, modifier = Modifier.fillMaxWidth())
