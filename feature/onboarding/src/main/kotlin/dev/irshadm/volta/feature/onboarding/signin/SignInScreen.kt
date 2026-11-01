@@ -123,11 +123,11 @@ fun SignInScreen(
     }
 }
 
-/** The car from the splash and app icon, lit, fading into the screen's background. The bolt drops in and the lights come on once. */
+/** Just the car from the splash, on the screen's own background, with its lights switching on once. */
 @Composable
 private fun CarHero() {
     Box(Modifier.padding(top = 10.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
-        VoltaCarArt(Modifier.fillMaxWidth(0.96f), animate = true, blendEdges = true)
+        VoltaCarArt(Modifier.fillMaxWidth(0.96f), animate = true, bolt = false, lines = false, background = Wt.Bg, blendEdges = true)
     }
 }
 

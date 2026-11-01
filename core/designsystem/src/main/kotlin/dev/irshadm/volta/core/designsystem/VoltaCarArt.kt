@@ -19,6 +19,8 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -32,27 +34,40 @@ import kotlin.math.exp
 /**
  * Volta's car artwork, the same layers the app icon and splash are drawn from: faint light lines, the car, its
  * light bar and headlights, and the bolt above it. With [animate], the bolt drops in and the lights switch on once,
- * as at the end of the splash; with animations turned off on the phone it simply appears lit.
- * With [blendEdges], the artwork's charcoal backdrop fades out towards every edge, so it sits straight on any dark
- * background without a visible box.
+ * as at the end of the splash; with animations turned off on the phone it simply appears lit. [bolt] and [lines]
+ * leave those layers out, for places that want just the car.
+ *
+ * The car is painted on a flat charcoal backdrop, and most of its body is that same charcoal, so it can't be cut out.
+ * Passing [background] recolours instead: the backdrop maps exactly onto that colour and everything brighter stretches
+ * to keep its contrast, so on that background the car looks as if it had none. [blendEdges] also fades the outer
+ * edges, where the backdrop's own soft vignette would otherwise show.
  */
 @Composable
-fun VoltaCarArt(modifier: Modifier = Modifier, animate: Boolean = false, blendEdges: Boolean = false) {
+fun VoltaCarArt(
+    modifier: Modifier = Modifier,
+    animate: Boolean = false,
+    bolt: Boolean = true,
+    lines: Boolean = true,
+    background: Color? = null,
+    blendEdges: Boolean = false,
+) {
     val still = !animate || LocalReducedMotion.current
     val drop = remember { Animatable(if (still) 1f else 0f) }      // bolt: 0 = above, 1 = in place
     val lights = remember { Animatable(if (still) 1f else 0f) }
     LaunchedEffect(still) {
         if (still) return@LaunchedEffect
-        launch { drop.animateTo(1f, tween(BOLT_MS, delayMillis = 150, easing = LinearEasing)) }
-        lights.animateTo(1f, tween(350, delayMillis = 150 + BOLT_MS))
+        // With the bolt, the lights wait for it to land; without, they come on shortly after the screen opens.
+        if (bolt) launch { drop.animateTo(1f, tween(BOLT_MS, delayMillis = 150, easing = LinearEasing)) }
+        lights.animateTo(1f, tween(if (bolt) 350 else 600, delayMillis = if (bolt) 150 + BOLT_MS else 300))
     }
+    val recolour = remember(background) { background?.let(::backdropTo) }
 
     BoxWithConstraints(modifier.aspectRatio(ART_W / ART_H).then(if (blendEdges) Modifier.fadeEdges() else Modifier)) {
         val w = maxWidth
-        Image(painterResource(R.drawable.volta_art_lines), null, Modifier.fillMaxSize().graphicsLayer { alpha = 0.15f }, contentScale = ContentScale.FillBounds)
-        Image(painterResource(R.drawable.volta_art_car), null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
+        if (lines) Image(painterResource(R.drawable.volta_art_lines), null, Modifier.fillMaxSize().graphicsLayer { alpha = 0.15f }, contentScale = ContentScale.FillBounds)
+        Image(painterResource(R.drawable.volta_art_car), null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds, colorFilter = recolour)
         Image(painterResource(R.drawable.volta_art_lights), null, Modifier.fillMaxSize().graphicsLayer { alpha = lights.value }, contentScale = ContentScale.FillBounds)
-        Image(
+        if (bolt) Image(
             painterResource(R.drawable.volta_art_bolt), null, contentScale = ContentScale.FillBounds,
             modifier = Modifier
                 .offset(x = w * (BOLT_X / ART_W), y = w * (BOLT_Y / ART_W))
@@ -80,6 +95,36 @@ private fun Modifier.fadeEdges(sides: Float = 0.12f, topBottom: Float = 0.2f): M
             drawRect(Brush.verticalGradient(*fade(topBottom)), blendMode = BlendMode.DstIn)
         }
 
+/**
+ * A colour filter that moves the artwork's backdrop charcoal onto [target] and stretches each channel above it, so
+ * white stays white and every line keeps its contrast. Anything darker than the backdrop (a little shadow under the
+ * car) clamps to black.
+ */
+private fun backdropTo(target: Color): ColorFilter {
+    fun channel(from: Float, to: Float): Pair<Float, Float> {
+        val scale = (255f - to) / (255f - from)
+        return scale to (to - from * scale)
+    }
+    val (rs, ro) = channel(BACKDROP_R, target.red * 255f)
+    val (gs, go) = channel(BACKDROP_G, target.green * 255f)
+    val (bs, bo) = channel(BACKDROP_B, target.blue * 255f)
+    return ColorFilter.colorMatrix(
+        ColorMatrix(
+            floatArrayOf(
+                rs, 0f, 0f, 0f, ro,
+                0f, gs, 0f, 0f, go,
+                0f, 0f, bs, 0f, bo,
+                0f, 0f, 0f, 1f, 0f,
+            ),
+        ),
+    )
+}
+
+/** The backdrop the car is painted on, measured from the artwork. */
+private const val BACKDROP_R = 40f
+private const val BACKDROP_G = 42f
+private const val BACKDROP_B = 47f
+
 private const val ART_W = 990f
 private const val ART_H = 750f
 private const val BOLT_X = 445f
@@ -91,5 +136,5 @@ private const val BOLT_MS = 700
 @Preview(backgroundColor = 0xFF0B0D10, showBackground = true)
 @Composable
 private fun VoltaCarArtPreview() = VoltaTheme {
-    VoltaCarArt(Modifier.fillMaxWidth().padding(24.dp), blendEdges = true)
+    VoltaCarArt(Modifier.fillMaxWidth().padding(24.dp), bolt = false, lines = false, background = Wt.Bg, blendEdges = true)
 }
