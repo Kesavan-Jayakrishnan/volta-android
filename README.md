@@ -36,12 +36,20 @@ Tested on the MG Windsor EV. Other MG EVs on i-SMART should sign in; their batte
    tells you exactly what Google said if something is off (API not enabled, key restricted to another app, no
    billing). The key is saved only when every check passes. You can skip this and add it later.
 
-## Your data
+## Your data stays on your phone
 
-- The MG password, MG session and Google key are stored on the phone only, encrypted with AES-256-GCM under an
-  Android Keystore key, and excluded from backups.
-- They are sent only to MG's servers and to Google's APIs. Nothing goes anywhere else.
-- Sign out and uninstall removes everything.
+Volta has **no servers of its own**. There is no Volta account, no cloud sync, no analytics and no crash reporting.
+
+- **Where your car data comes from:** MG's i-SMART servers, the same ones the official MG app uses, with your own
+  login. Volta reads it there and shows it to you; it never sends it anywhere else.
+- **What's stored, and where:** your MG login and session, your Google key and Volta's settings are kept only on
+  your phone. The login and the key are encrypted (AES-256-GCM, Android Keystore key) and excluded from backups.
+- **Who Volta talks to:** MG's i-SMART servers, and Google Maps Platform with your own key for trip planning.
+  Nobody else.
+- **Uninstalling deletes everything.** Nothing is kept anywhere, so after reinstalling (or on a new phone) you sign
+  in and add your Google key again.
+
+More detail in [docs/PRIVACY.md](docs/PRIVACY.md).
 
 ## Build from source
 
@@ -60,6 +68,14 @@ entered in the app. See [docs/BUILD.md](docs/BUILD.md).
 Kotlin, Jetpack Compose, Material 3, Hilt, Coroutines and Flow, OkHttp, kotlinx.serialization, DataStore.
 A multi-module, layered codebase: pure-Kotlin domain and API modules, Android data and UI modules on top.
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) walks through it.
+
+## Thanks
+
+Volta's connection to the car is a Kotlin port of
+[mg-ismart-india-client](https://github.com/john-lazarus/mg-ismart-india-client) by **John Lazarus**, who worked out
+how the MG India app talks to MG's servers. None of the car features would exist without it. Thank you, John.
+
+Icons are from [Lucide](https://lucide.dev). Full licence texts are in [NOTICE.md](NOTICE.md).
 
 ## Licence
 

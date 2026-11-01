@@ -13,7 +13,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/** Byte-exact agreement with the Python client (vectors from tools/make_ismart_vectors.py). */
+/** Byte-exact agreement with the Python client: ismart_vectors.json holds its output for fixed, made-up inputs. */
 class GoldenVectorTest {
     private val v: JsonObject = Json.parseToJsonElement(javaClass.getResource("/ismart_vectors.json")!!.readText()).jsonObject
     private fun s(k: String) = v[k]!!.jsonPrimitive.content
