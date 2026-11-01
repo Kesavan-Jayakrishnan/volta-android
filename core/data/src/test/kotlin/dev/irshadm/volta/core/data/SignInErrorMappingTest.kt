@@ -1,0 +1,22 @@
+package dev.irshadm.volta.core.data
+
+import dev.irshadm.volta.core.data.account.signInErrorOf
+import dev.irshadm.volta.core.domain.SignInError
+import dev.irshadm.volta.core.ismart.IsmartException
+import dev.irshadm.volta.core.ismart.LoginRejectedException
+import dev.irshadm.volta.core.ismart.LoginThrottledException
+import dev.irshadm.volta.core.ismart.NotOwnerException
+import java.io.IOException
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
+class SignInErrorMappingTest {
+    @Test fun `client exceptions map to what the screen shows`() {
+        assertEquals(SignInError.Rejected("Wrong password"), signInErrorOf(LoginRejectedException("Wrong password")))
+        assertEquals(SignInError.Throttled(42L), signInErrorOf(LoginThrottledException(42L)))
+        assertEquals(SignInError.NotOwner, signInErrorOf(NotOwnerException()))
+        assertEquals(SignInError.Offline, signInErrorOf(IOException("timeout")))
+        assertEquals(SignInError.Offline, signInErrorOf(IsmartException("Login failed", IOException("dns"))))
+        assertEquals(SignInError.Other("MG server error: HTTP 500"), signInErrorOf(IsmartException("MG server error: HTTP 500")))
+    }
+}
