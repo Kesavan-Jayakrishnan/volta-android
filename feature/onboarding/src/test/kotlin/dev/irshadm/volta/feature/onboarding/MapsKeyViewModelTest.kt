@@ -54,7 +54,8 @@ class MapsKeyViewModelTest {
 
     @Test fun `editing after a check starts over`() {
         checker.report = failingReport()
-        vm.onInputChange(TEST_KEY); vm.check()
+        vm.onInputChange(TEST_KEY)
+        vm.check()
         vm.onInputChange("$TEST_KEY ")
         assertEquals(KeyPhase.Editing, vm.state.value.phase)
     }

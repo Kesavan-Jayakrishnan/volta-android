@@ -33,13 +33,13 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import dev.irshadm.volta.core.designsystem.Wt
+import dev.irshadm.volta.core.designsystem.VoltaColors
 
 @Composable
-fun WtCard(
+fun VoltaCard(
     modifier: Modifier = Modifier,
-    background: Color = Wt.Surface,
-    border: Color = Wt.Border,
+    background: Color = VoltaColors.Surface,
+    border: Color = VoltaColors.Border,
     radius: Dp = 20.dp,
     padding: PaddingValues = PaddingValues(16.dp),
     content: @Composable ColumnScope.() -> Unit,
@@ -58,22 +58,26 @@ fun WtCard(
 @Composable
 fun StatusTile(icon: ImageVector, tint: Color, label: String, modifier: Modifier = Modifier, alert: Boolean = false, onClick: (() -> Unit)? = null) {
     val interaction = remember { MutableInteractionSource() }
-    WtCard(
-        if (onClick == null) modifier else modifier.pressScale(interaction).clip(RoundedCornerShape(16.dp))
-            .clickable(interaction, indication = null, role = Role.Button, onClick = onClick),
-        background = if (alert) Wt.tint(Wt.Amber, 0.08f) else Wt.Surface,
-        border = if (alert) Wt.tint(Wt.Amber, 0.4f) else Wt.Border,
+    VoltaCard(
+        if (onClick == null) {
+            modifier
+        } else {
+            modifier.pressScale(interaction).clip(RoundedCornerShape(16.dp))
+                .clickable(interaction, indication = null, role = Role.Button, onClick = onClick)
+        },
+        background = if (alert) VoltaColors.tint(VoltaColors.Amber, 0.08f) else VoltaColors.Surface,
+        border = if (alert) VoltaColors.tint(VoltaColors.Amber, 0.4f) else VoltaColors.Border,
         radius = 16.dp,
         padding = PaddingValues(horizontal = 6.dp, vertical = 12.dp),
     ) {
         Box(
-            Modifier.align(Alignment.CenterHorizontally).size(34.dp).clip(RoundedCornerShape(11.dp)).background(Wt.tint(tint)),
+            Modifier.align(Alignment.CenterHorizontally).size(34.dp).clip(RoundedCornerShape(11.dp)).background(VoltaColors.tint(tint)),
             contentAlignment = Alignment.Center,
         ) { Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp)) }
         Text(
             label,
             style = MaterialTheme.typography.labelMedium,
-            color = if (alert) Wt.AmberText else Wt.Text,
+            color = if (alert) VoltaColors.AmberText else VoltaColors.Text,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth(),
             maxLines = 1,
@@ -81,14 +85,14 @@ fun StatusTile(icon: ImageVector, tint: Color, label: String, modifier: Modifier
     }
 }
 
-enum class WtButtonStyle { Primary, Secondary }
+enum class VoltaButtonStyle { Primary, Secondary }
 
 @Composable
-fun WtButton(
+fun VoltaButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    style: WtButtonStyle = WtButtonStyle.Primary,
+    style: VoltaButtonStyle = VoltaButtonStyle.Primary,
     icon: ImageVector? = null,
     enabled: Boolean = true,
 ) {
@@ -96,8 +100,8 @@ fun WtButton(
     val shape = RoundedCornerShape(16.dp)
     val base = modifier.heightIn(min = 54.dp).pressScale(interaction).clip(shape)
     val styled = when (style) {
-        WtButtonStyle.Primary -> base.background(if (enabled) Wt.Gold else Wt.Border)
-        WtButtonStyle.Secondary -> base.border(1.dp, Wt.BorderStrong, shape)
+        VoltaButtonStyle.Primary -> base.background(if (enabled) VoltaColors.Gold else VoltaColors.Border)
+        VoltaButtonStyle.Secondary -> base.border(1.dp, VoltaColors.BorderStrong, shape)
     }
     Row(
         styled.clickable(interaction, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)
@@ -105,7 +109,7 @@ fun WtButton(
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val fg = if (style == WtButtonStyle.Primary) Wt.GoldInk else Wt.Text
+        val fg = if (style == VoltaButtonStyle.Primary) VoltaColors.GoldInk else VoltaColors.Text
         icon?.let { Icon(it, null, tint = fg, modifier = Modifier.size(18.dp)) }
         Text(text, style = MaterialTheme.typography.labelLarge, color = fg)
     }
@@ -113,15 +117,15 @@ fun WtButton(
 
 /** Small toggle chip. */
 @Composable
-fun WtChip(label: String, on: Boolean, onClick: () -> Unit) {
+fun VoltaChip(label: String, on: Boolean, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val shape = RoundedCornerShape(12.dp)
-    val bg by animateColorAsState(if (on) Wt.tint(Wt.Amber, 0.12f) else Wt.tint(Wt.Muted, 0.06f), tween(200), label = "chip")
-    val bd by animateColorAsState(if (on) Wt.tint(Wt.Amber, 0.55f) else Wt.tint(Wt.Muted, 0.22f), tween(200), label = "chipB")
+    val bg by animateColorAsState(if (on) VoltaColors.tint(VoltaColors.Amber, 0.12f) else VoltaColors.tint(VoltaColors.Muted, 0.06f), tween(200), label = "chip")
+    val bd by animateColorAsState(if (on) VoltaColors.tint(VoltaColors.Amber, 0.55f) else VoltaColors.tint(VoltaColors.Muted, 0.22f), tween(200), label = "chipB")
     Text(
         label,
         style = MaterialTheme.typography.labelMedium,
-        color = if (on) Wt.AmberText else Wt.TextSoft,
+        color = if (on) VoltaColors.AmberText else VoltaColors.TextSoft,
         modifier = Modifier.pressScale(interaction).clip(shape).background(bg).border(1.dp, bd, shape)
             .clickable(interaction, indication = null, role = Role.Switch, onClick = onClick)
             .heightIn(min = 36.dp).padding(horizontal = 12.dp, vertical = 9.dp),

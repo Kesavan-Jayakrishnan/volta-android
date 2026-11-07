@@ -6,15 +6,15 @@ import dev.irshadm.volta.core.model.VehicleProfile
 import dev.irshadm.volta.core.planner.Charger
 import dev.irshadm.volta.core.planner.Geo
 import dev.irshadm.volta.core.planner.LatLng
-import dev.irshadm.volta.core.planner.ProfilePoint
-import dev.irshadm.volta.core.planner.RoutePoint
-import dev.irshadm.volta.core.planner.PlanOption
-import dev.irshadm.volta.core.planner.TripPlan
-import dev.irshadm.volta.core.planner.TripPlanner
-import dev.irshadm.volta.core.planner.MealPlanner
-import dev.irshadm.volta.core.planner.MealRules
 import dev.irshadm.volta.core.planner.Meal
 import dev.irshadm.volta.core.planner.MealChoices
+import dev.irshadm.volta.core.planner.MealPlanner
+import dev.irshadm.volta.core.planner.MealRules
+import dev.irshadm.volta.core.planner.PlanOption
+import dev.irshadm.volta.core.planner.ProfilePoint
+import dev.irshadm.volta.core.planner.RoutePoint
+import dev.irshadm.volta.core.planner.TripPlan
+import dev.irshadm.volta.core.planner.TripPlanner
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.io.File
@@ -61,6 +61,7 @@ data class RouteChoice(
 ) {
     val climbM: Double get() = dev.irshadm.volta.core.planner.Terrain.ascentM(elevations)
     val peakM: Double get() = elevations.maxOrNull() ?: 0.0
+
     /** Longest stretch with no DC charger near the route. */
     val longestGapKm: Double get() = (listOf(0.0) + chargers.map { it.alongRouteM }.sorted() + listOf(route.distanceM)).zipWithNext { a, b -> b - a }.maxOrNull()?.div(1000) ?: 0.0
     val trafficDelayMin: Double get() = route.normalDurationS?.let { (route.durationS - it) / 60 }?.coerceAtLeast(0.0) ?: 0.0
@@ -87,8 +88,12 @@ class PlanRepository(
         // One route at a time, so later routes reuse the stretches of road already searched (the costly call).
         val found = routes.map { client.chargersAlongPath(it.path, MIN_DC_KW) }
         routes.mapIndexed { i, route ->
-            RouteChoice(route, samples[i], elevations[i].await(),
-                found[i].map { it.toCharger(samples[i], route.distanceM) }.filter { it.detourM <= 10_000 }.distinctBy { it.id })
+            RouteChoice(
+                route,
+                samples[i],
+                elevations[i].await(),
+                found[i].map { it.toCharger(samples[i], route.distanceM) }.filter { it.detourM <= 10_000 }.distinctBy { it.id },
+            )
         }
     }
 
@@ -117,7 +122,12 @@ class PlanRepository(
      * is open then, and on-road chargers for stops reached at night. Checks restaurants near a few candidate chargers.
      */
     private suspend fun timed(
-        trip: PlannedTrip, startSoc: Double, vehicle: VehicleProfile, settings: TripSettings, prefs: ChargerPreferences, rules: MealRules,
+        trip: PlannedTrip,
+        startSoc: Double,
+        vehicle: VehicleProfile,
+        settings: TripSettings,
+        prefs: ChargerPreferences,
+        rules: MealRules,
     ): PlannedTrip {
         val meals = MealPlanner(vehicle, settings, prefs, rules)
         val departMin = java.util.Calendar.getInstance().apply { timeInMillis = trip.departAt }.let { it.get(java.util.Calendar.HOUR_OF_DAY) * 60 + it.get(java.util.Calendar.MINUTE) }
@@ -125,16 +135,22 @@ class PlanRepository(
         val candidates = meals.mealCandidates(trip.profile, startSoc, trip.chargers, driveMin, departMin)
         val mealOptions = candidates.map { m ->
             val at = java.util.Calendar.getInstance().apply { timeInMillis = trip.departAt + ((m.clock - departMin) * 60_000).toLong() }
-            val day = at.get(java.util.Calendar.DAY_OF_WEEK) - 1                   // Places: 0 = Sunday
+            val day = at.get(java.util.Calendar.DAY_OF_WEEK) - 1 // Places: 0 = Sunday
             val minute = at.get(java.util.Calendar.HOUR_OF_DAY) * 60 + at.get(java.util.Calendar.MINUTE)
-            MealOption(m.meal, m.charger, m.clock, foodCache.getOrPut("${m.charger.id}|${m.meal}|$day") {
-                runCatching { client.mealPlaces(m.charger.position, m.meal, day, minute) }.getOrDefault(emptyList())
-            })
+            MealOption(
+                m.meal,
+                m.charger,
+                m.clock,
+                foodCache.getOrPut("${m.charger.id}|${m.meal}|$day") {
+                    runCatching { client.mealPlaces(m.charger.position, m.meal, day, minute) }.getOrDefault(emptyList())
+                },
+            )
         }
         val food = mealOptions.associate { (it.charger.id to it.meal) to it.spots.firstOrNull()?.name }
         val timed = trip.options.map { o -> o to meals.plan(trip.profile, startSoc, trip.chargers, driveMin, departMin, food, base = o.plan, choices = trip.mealChoices) }
         return trip.copy(
-            options = timed.map { (o, t) -> o.copy(plan = t.plan) }, optionNotes = timed.map { it.second.notes },
+            options = timed.map { (o, t) -> o.copy(plan = t.plan) },
+            optionNotes = timed.map { it.second.notes },
             mealOptions = mealOptions.filter { it.spots.isNotEmpty() }.sortedBy { it.clock },
         )
     }
@@ -143,8 +159,13 @@ class PlanRepository(
 
     /** Re-runs the stop planner on an existing route (new start %, buffers or departure time) — no new route search. */
     suspend fun replan(
-        trip: PlannedTrip, startSoc: Double, vehicle: VehicleProfile, settings: TripSettings, chargerPrefs: ChargerPreferences,
-        departAt: Long = trip.departAt, rules: MealRules = MealRules(),
+        trip: PlannedTrip,
+        startSoc: Double,
+        vehicle: VehicleProfile,
+        settings: TripSettings,
+        chargerPrefs: ChargerPreferences,
+        departAt: Long = trip.departAt,
+        rules: MealRules = MealRules(),
     ): PlannedTrip {
         val goal = trip.options.getOrNull(trip.selected)?.goal
         val options = TripPlanner(vehicle, settings, chargerPrefs).options(trip.profile, startSoc, trip.chargers, trip.route.durationS / 60.0)
@@ -156,12 +177,17 @@ class PlanRepository(
 
     /** Re-plans with new meal choices (no new searches). */
     suspend fun withMeals(
-        trip: PlannedTrip, choices: MealChoices, startSoc: Double, vehicle: VehicleProfile, settings: TripSettings, chargerPrefs: ChargerPreferences, rules: MealRules,
+        trip: PlannedTrip,
+        choices: MealChoices,
+        startSoc: Double,
+        vehicle: VehicleProfile,
+        settings: TripSettings,
+        chargerPrefs: ChargerPreferences,
+        rules: MealRules,
     ): PlannedTrip = replan(trip.copy(mealChoices = choices), startSoc, vehicle, settings, chargerPrefs, trip.departAt, rules)
 
     /** Food / café / fuel-station names within 400 m of a charger (Nearby Search, cached per charger). */
-    suspend fun amenitiesNear(charger: Charger): List<String> =
-        amenityCache.getOrPut(charger.id) { runCatching { client.nearbyAmenities(charger.position) }.getOrDefault(emptyList()) }
+    suspend fun amenitiesNear(charger: Charger): List<String> = amenityCache.getOrPut(charger.id) { runCatching { client.nearbyAmenities(charger.position) }.getOrDefault(emptyList()) }
 
     private val amenityCache = HashMap<String, List<String>>()
 
@@ -211,6 +237,7 @@ class PlanRepository(
 
     companion object {
         const val SAMPLE_M = 200.0
+
         /** "DC fast" threshold for the charger search. */
         const val MIN_DC_KW = 15.0
     }

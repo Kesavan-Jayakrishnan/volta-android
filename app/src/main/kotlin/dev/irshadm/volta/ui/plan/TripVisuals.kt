@@ -4,19 +4,17 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
@@ -26,13 +24,15 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLngBounds
@@ -41,15 +41,15 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.google.maps.android.compose.rememberUpdatedMarkerState
 import dev.irshadm.volta.R
-import dev.irshadm.volta.data.maps.PlannedTrip
 import dev.irshadm.volta.core.designsystem.LocalReducedMotion
-import dev.irshadm.volta.core.designsystem.Wt
-import dev.irshadm.volta.core.designsystem.WtMotion
+import dev.irshadm.volta.core.designsystem.VoltaColors
+import dev.irshadm.volta.core.designsystem.VoltaMotion
 import dev.irshadm.volta.core.planner.PlanOutcome
+import dev.irshadm.volta.data.maps.PlannedTrip
 import com.google.android.gms.maps.model.LatLng as GLatLng
 
 /**
@@ -60,7 +60,7 @@ import com.google.android.gms.maps.model.LatLng as GLatLng
 fun ElevationChart(trip: PlannedTrip, bufferSoc: Double, modifier: Modifier = Modifier) {
     val reduced = LocalReducedMotion.current
     val reveal = remember(trip) { Animatable(if (reduced) 1f else 0f) }
-    LaunchedEffect(trip) { if (!reduced) reveal.animateTo(1f, tween(1100, easing = WtMotion.EaseOut)) }
+    LaunchedEffect(trip) { if (!reduced) reveal.animateTo(1f, tween(1100, easing = VoltaMotion.EaseOut)) }
     val profile = trip.profile
     val trace = trip.plan.socTrace
     val total = trip.route.distanceM
@@ -69,11 +69,11 @@ fun ElevationChart(trip: PlannedTrip, bufferSoc: Double, modifier: Modifier = Mo
     val stops = (trip.plan.outcome as? PlanOutcome.Ok)?.stops ?: (trip.plan.outcome as? PlanOutcome.Unreachable)?.stops.orEmpty()
     val desc = "Elevation from ${minE.toInt()} to ${maxE.toInt()} metres; battery from ${trace.first().socPercent.toInt()} to ${trace.last().socPercent.toInt()} percent"
     val measurer = androidx.compose.ui.text.rememberTextMeasurer()
-    val labelStyle = androidx.compose.ui.text.TextStyle(fontSize = 11.sp, color = Wt.Muted)
+    val labelStyle = androidx.compose.ui.text.TextStyle(fontSize = 11.sp, color = VoltaColors.Muted)
 
     // Compact: the battery line over a low terrain band, the buffer dashed, start and end % labelled on the line.
     Canvas(modifier.fillMaxWidth().height(96.dp).semantics { contentDescription = desc }) {
-        val inset = 7.dp.toPx()                     // room for the end ring and the labels
+        val inset = 7.dp.toPx() // room for the end ring and the labels
         val w = size.width - inset * 2
         val h = size.height
         val top = 10.dp.toPx()
@@ -85,40 +85,47 @@ fun ElevationChart(trip: PlannedTrip, bufferSoc: Double, modifier: Modifier = Mo
             val area = Path().apply {
                 moveTo(x(0.0), h)
                 profile.forEach { lineTo(x(it.distanceM), yE(it.elevationM)) }
-                lineTo(x(total), h); close()
+                lineTo(x(total), h)
+                close()
             }
-            drawPath(area, Wt.tint(Wt.Muted, 0.12f))
+            drawPath(area, VoltaColors.tint(VoltaColors.Muted, 0.12f))
             val ridge = Path().apply {
                 profile.forEachIndexed { i, p -> if (i == 0) moveTo(x(p.distanceM), yE(p.elevationM)) else lineTo(x(p.distanceM), yE(p.elevationM)) }
             }
-            drawPath(ridge, Wt.tint(Wt.Muted, 0.4f), style = Stroke(1.dp.toPx()))
+            drawPath(ridge, VoltaColors.tint(VoltaColors.Muted, 0.4f), style = Stroke(1.dp.toPx()))
 
-            drawLine(Wt.tint(Wt.Amber, 0.5f), Offset(x(0.0), yS(bufferSoc)), Offset(x(total), yS(bufferSoc)), 1.dp.toPx(),
-                pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f)))
+            drawLine(
+                VoltaColors.tint(VoltaColors.Amber, 0.5f),
+                Offset(x(0.0), yS(bufferSoc)),
+                Offset(x(total), yS(bufferSoc)),
+                1.dp.toPx(),
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f)),
+            )
 
             val line = Path().apply {
                 trace.forEachIndexed { i, p -> if (i == 0) moveTo(x(p.distanceM), yS(p.socPercent)) else lineTo(x(p.distanceM), yS(p.socPercent)) }
             }
-            drawPath(line, Wt.Champagne, style = Stroke(2.4.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+            drawPath(line, VoltaColors.Champagne, style = Stroke(2.4.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
             stops.forEach { s ->
                 val sx = x(s.charger.alongRouteM)
-                drawCircle(Wt.Bg, 5.dp.toPx(), Offset(sx, yS(s.departSoc)))
-                drawCircle(Wt.Gold, 3.5.dp.toPx(), Offset(sx, yS(s.departSoc)))
+                drawCircle(VoltaColors.Bg, 5.dp.toPx(), Offset(sx, yS(s.departSoc)))
+                drawCircle(VoltaColors.Gold, 3.5.dp.toPx(), Offset(sx, yS(s.departSoc)))
             }
             val first = trace.first()
             val end = trace.last()
-            drawCircle(Wt.Bg, 4.5.dp.toPx(), Offset(x(end.distanceM), yS(end.socPercent)))
-            drawCircle(if (end.socPercent < bufferSoc) Wt.Amber else Wt.Champagne, 4.5.dp.toPx(), Offset(x(end.distanceM), yS(end.socPercent)), style = Stroke(2.dp.toPx()))
+            drawCircle(VoltaColors.Bg, 4.5.dp.toPx(), Offset(x(end.distanceM), yS(end.socPercent)))
+            drawCircle(if (end.socPercent < bufferSoc) VoltaColors.Amber else VoltaColors.Champagne, 4.5.dp.toPx(), Offset(x(end.distanceM), yS(end.socPercent)), style = Stroke(2.dp.toPx()))
 
             // Start and end percentages sit just above the line at each end; the buffer is named at the left.
-            val startLabel = measurer.measure("${first.socPercent.toInt()} %", labelStyle.copy(color = Wt.TextSoft))
+            val startLabel = measurer.measure("${first.socPercent.toInt()} %", labelStyle.copy(color = VoltaColors.TextSoft))
             drawText(startLabel, topLeft = Offset(x(0.0), (yS(first.socPercent) - startLabel.size.height - 4.dp.toPx()).coerceAtLeast(0f)))
-            val endLabel = measurer.measure("${end.socPercent.toInt()} %", labelStyle.copy(color = if (end.socPercent < bufferSoc) Wt.Amber else Wt.Champagne))
+            val endLabel = measurer.measure("${end.socPercent.toInt()} %", labelStyle.copy(color = if (end.socPercent < bufferSoc) VoltaColors.Amber else VoltaColors.Champagne))
             drawText(endLabel, topLeft = Offset(x(total) - endLabel.size.width, (yS(end.socPercent) - endLabel.size.height - 6.dp.toPx()).coerceAtLeast(0f)))
-            val bufferLabel = measurer.measure("buffer ${bufferSoc.toInt()} %", labelStyle.copy(color = Wt.tint(Wt.Amber, 0.8f)))
+            val bufferLabel = measurer.measure("buffer ${bufferSoc.toInt()} %", labelStyle.copy(color = VoltaColors.tint(VoltaColors.Amber, 0.8f)))
             val by = yS(bufferSoc) + 3.dp.toPx()
-            if (by + bufferLabel.size.height < h - 2.dp.toPx() && kotlin.math.abs(yS(bufferSoc) - yS(first.socPercent)) > 14.dp.toPx())
+            if (by + bufferLabel.size.height < h - 2.dp.toPx() && kotlin.math.abs(yS(bufferSoc) - yS(first.socPercent)) > 14.dp.toPx()) {
                 drawText(bufferLabel, topLeft = Offset(x(0.0), by))
+            }
         }
     }
 }
@@ -135,12 +142,12 @@ fun RouteMap(trip: PlannedTrip, modifier: Modifier = Modifier, bottomPadding: an
 
     val density = LocalDensity.current
     var loaded by remember { mutableStateOf(false) }
-    Box(modifier.fillMaxWidth().height(240.dp).clip(RoundedCornerShape(radius)).background(Wt.Bg)) {
+    Box(modifier.fillMaxWidth().height(240.dp).clip(RoundedCornerShape(radius)).background(VoltaColors.Bg)) {
         KeyedGoogleMap(
             cameraPositionState = camera,
             properties = MapProperties(mapStyleOptions = style),
             uiSettings = MapUiSettings(zoomControlsEnabled = false, mapToolbarEnabled = false, compassEnabled = false),
-            googleMapOptionsFactory = { com.google.android.gms.maps.GoogleMapOptions().backgroundColor(Wt.Bg.toArgb()) },
+            googleMapOptionsFactory = { com.google.android.gms.maps.GoogleMapOptions().backgroundColor(VoltaColors.Bg.toArgb()) },
             contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = bottomPadding),
             onMapLoaded = {
                 val bounds = LatLngBounds.builder().apply { path.forEach { include(it) } }.build()
@@ -148,17 +155,17 @@ fun RouteMap(trip: PlannedTrip, modifier: Modifier = Modifier, bottomPadding: an
                 loaded = true
             },
         ) {
-            Polyline(points = path, color = Wt.Gold, width = 10f)
+            Polyline(points = path, color = VoltaColors.Gold, width = 10f)
             // Volta's own markers: the car where you start, a flag where you're going (no Google pins).
             val carIcon = remember { BitmapDescriptorFactory.fromBitmap(markerBitmap(MarkerGlyph.Car)) }
             val flagIcon = remember { BitmapDescriptorFactory.fromBitmap(markerBitmap(MarkerGlyph.Flag)) }
-            Marker(MarkerState(path.first()), title = "Start", icon = carIcon, anchor = androidx.compose.ui.geometry.Offset(0.5f, 0.5f), zIndex = 3f)
-            Marker(MarkerState(path.last()), title = trip.destination.name, icon = flagIcon, anchor = androidx.compose.ui.geometry.Offset(0.5f, 0.5f), zIndex = 3f)
+            Marker(rememberUpdatedMarkerState(path.first()), title = "Start", icon = carIcon, anchor = androidx.compose.ui.geometry.Offset(0.5f, 0.5f), zIndex = 3f)
+            Marker(rememberUpdatedMarkerState(path.last()), title = trip.destination.name, icon = flagIcon, anchor = androidx.compose.ui.geometry.Offset(0.5f, 0.5f), zIndex = 3f)
             val dot = remember { BitmapDescriptorFactory.fromBitmap(dotBitmap()) }
             trip.chargers.forEach { c ->
                 val planned = c.id in stopIds
                 Marker(
-                    MarkerState(GLatLng(c.position.lat, c.position.lng)),
+                    rememberUpdatedMarkerState(GLatLng(c.position.lat, c.position.lng)),
                     title = c.name,
                     snippet = "${c.maxKw.toInt()} kW · ${(c.alongRouteM / 1000).toInt()} km",
                     icon = if (planned) BitmapDescriptorFactory.defaultMarker(38f) else dot,
@@ -169,10 +176,9 @@ fun RouteMap(trip: PlannedTrip, modifier: Modifier = Modifier, bottomPadding: an
         }
         // Covers the light flash before the dark style and tiles are in.
         val cover by androidx.compose.animation.core.animateFloatAsState(if (loaded || !interactiveMapAvailable) 0f else 1f, androidx.compose.animation.core.tween(350), label = "cover")
-        if (cover > 0f) Box(Modifier.fillMaxSize().graphicsLayer { alpha = cover }.background(Wt.Bg))
+        if (cover > 0f) Box(Modifier.fillMaxSize().graphicsLayer { alpha = cover }.background(VoltaColors.Bg))
     }
 }
-
 
 private enum class MarkerGlyph { Car, Flag }
 
@@ -182,15 +188,23 @@ private fun markerBitmap(glyph: MarkerGlyph): android.graphics.Bitmap {
     val bmp = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
     val c = android.graphics.Canvas(bmp)
     val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
-    p.color = 0xFF0B0D10.toInt(); c.drawCircle(size / 2f, size / 2f, size / 2f, p)
-    p.color = if (glyph == MarkerGlyph.Car) 0xFFF1F1F1.toInt() else 0xFFD4AF7C.toInt(); c.drawCircle(size / 2f, size / 2f, size / 2f - 5, p)
+    p.color = 0xFF0B0D10.toInt()
+    c.drawCircle(size / 2f, size / 2f, size / 2f, p)
+    p.color = if (glyph == MarkerGlyph.Car) 0xFFF1F1F1.toInt() else 0xFFD4AF7C.toInt()
+    c.drawCircle(size / 2f, size / 2f, size / 2f - 5, p)
     // Icons are 24-unit paths, scaled to the badge.
     val path = android.graphics.Path()
     val s = size / 24f * 0.58f
     val off = (size - 24 * s) / 2f
-    val m = android.graphics.Matrix().apply { setScale(s, s); postTranslate(off, off) }
+    val m = android.graphics.Matrix().apply {
+        setScale(s, s)
+        postTranslate(off, off)
+    }
     val stroke = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-        style = android.graphics.Paint.Style.STROKE; strokeWidth = 2.2f * s; strokeCap = android.graphics.Paint.Cap.ROUND; strokeJoin = android.graphics.Paint.Join.ROUND
+        style = android.graphics.Paint.Style.STROKE
+        strokeWidth = 2.2f * s
+        strokeCap = android.graphics.Paint.Cap.ROUND
+        strokeJoin = android.graphics.Paint.Join.ROUND
         color = 0xFF1A1407.toInt()
     }
     // Lucide's car and flag (ISC), as path data.
@@ -210,7 +224,9 @@ private fun dotBitmap(): android.graphics.Bitmap {
     val bmp = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
     val c = android.graphics.Canvas(bmp)
     val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
-    p.color = 0xFF0B0D10.toInt(); c.drawCircle(size / 2f, size / 2f, size / 2f, p)
-    p.color = 0xFF60A5FA.toInt(); c.drawCircle(size / 2f, size / 2f, size / 2f - 4, p)
+    p.color = 0xFF0B0D10.toInt()
+    c.drawCircle(size / 2f, size / 2f, size / 2f, p)
+    p.color = 0xFF60A5FA.toInt()
+    c.drawCircle(size / 2f, size / 2f, size / 2f - 4, p)
     return bmp
 }

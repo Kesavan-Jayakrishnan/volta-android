@@ -1,8 +1,8 @@
 package dev.irshadm.volta.ui.home
 
 import android.content.Context
-import dev.irshadm.volta.ui.components.Wheel
 import dev.irshadm.volta.core.model.TyrePressures
+import dev.irshadm.volta.ui.components.Wheel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.json.JSONArray
@@ -16,10 +16,12 @@ import java.util.Calendar
 object TyreCare {
     private const val PREFS = "tyres"
     const val DEFAULT_TARGET = 33.0
+
     /** Under the target by this much is worth a look. */
     const val GAP = 2.0
 
     private val _version = MutableStateFlow(0)
+
     /** Bumps on every change, so screens re-read. */
     val version: StateFlow<Int> = _version
 
@@ -48,7 +50,7 @@ object TyreCare {
             val psi = w.psi(t)
             val gap = target - psi
             val ack = p.getFloat("ack_${w.name}", Float.NaN)
-            val seen = !ack.isNaN() && psi >= ack - 0.5          // acknowledged at this pressure (or it has come back up)
+            val seen = !ack.isNaN() && psi >= ack - 0.5 // acknowledged at this pressure (or it has come back up)
             if (gap >= GAP && !seen) Check(w, psi, gap) else null
         }.sortedByDescending { it.gap }
         if (own.isNotEmpty() || !carFlag) return own
@@ -76,7 +78,12 @@ object TyreCare {
         val since = Calendar.getInstance().apply { set(Calendar.DAY_OF_YEAR, first.getInt("d") % 1000) }
             .getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, java.util.Locale.ENGLISH) ?: "last week"
         return Wheel.entries.map { w ->
-            val key = when (w) { Wheel.FrontLeft -> "fl"; Wheel.FrontRight -> "fr"; Wheel.RearLeft -> "rl"; Wheel.RearRight -> "rr" }
+            val key = when (w) {
+                Wheel.FrontLeft -> "fl"
+                Wheel.FrontRight -> "fr"
+                Wheel.RearLeft -> "rl"
+                Wheel.RearRight -> "rr"
+            }
             val series = days.map { it.getDouble(key) }
             Trend(w, series, series.first() - series.last(), span, since)
         }

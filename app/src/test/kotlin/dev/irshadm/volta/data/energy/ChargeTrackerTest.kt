@@ -25,7 +25,7 @@ class ChargeTrackerTest {
     @Test fun `the same charge carrying on is not stale`() {
         val going = open.copy(endSoc = 55.0)
         assertFalse(isStale(going, socNow = 56.0, carStartedAt = yesterday + 60_000L))
-        assertFalse(isStale(going, socNow = 54.5, carStartedAt = null))          // a reading wobble, not a drive
+        assertFalse(isStale(going, socNow = 54.5, carStartedAt = null)) // a reading wobble, not a drive
     }
 
     @Test fun `a charge starts from the last reading before it unless that was before a drive`() {

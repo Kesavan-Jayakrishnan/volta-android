@@ -13,9 +13,15 @@ import kotlin.math.abs
  */
 object Feedback {
     @Serializable
-    data class PlaceMemory(val offset: Int = 0, val dismissesInARow: Int = 0, val muted: Boolean = false, val accepted: Int = 0, val dismissed: Int = 0,
-                           /** "Not today here": no suggestions at this place until this time. */
-                           val mutedUntil: Long = 0) {
+    data class PlaceMemory(
+        val offset: Int = 0,
+        val dismissesInARow: Int = 0,
+        val muted: Boolean = false,
+        val accepted: Int = 0,
+        val dismissed: Int = 0,
+        /** "Not today here": no suggestions at this place until this time. */
+        val mutedUntil: Long = 0,
+    ) {
         fun quiet(now: Long = System.currentTimeMillis()) = muted || mutedUntil > now
     }
 
@@ -24,16 +30,13 @@ object Feedback {
 
     private fun key(place: String) = "place:" + place.lowercase()
 
-    fun get(context: Context, place: String): PlaceMemory =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(key(place), null)
-            ?.let { runCatching { json.decodeFromString<PlaceMemory>(it) }.getOrNull() } ?: PlaceMemory()
+    fun get(context: Context, place: String): PlaceMemory = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(key(place), null)
+        ?.let { runCatching { json.decodeFromString<PlaceMemory>(it) }.getOrNull() } ?: PlaceMemory()
 
-    private fun put(context: Context, place: String, m: PlaceMemory) =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(key(place), json.encodeToString(PlaceMemory.serializer(), m)).apply()
+    private fun put(context: Context, place: String, m: PlaceMemory) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(key(place), json.encodeToString(PlaceMemory.serializer(), m)).apply()
 
-    fun all(context: Context): Map<String, PlaceMemory> =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).all.filterKeys { it.startsWith("place:") }
-            .mapNotNull { (k, v) -> (v as? String)?.let { runCatching { k.removePrefix("place:") to json.decodeFromString<PlaceMemory>(it) }.getOrNull() } }.toMap()
+    fun all(context: Context): Map<String, PlaceMemory> = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).all.filterKeys { it.startsWith("place:") }
+        .mapNotNull { (k, v) -> (v as? String)?.let { runCatching { k.removePrefix("place:") to json.decodeFromString<PlaceMemory>(it) }.getOrNull() } }.toMap()
 
     fun accepted(context: Context, place: String) {
         val m = get(context, place)
@@ -51,7 +54,11 @@ object Feedback {
     /** "Not today here": quiet at this place until 4 am tomorrow; counts as one dismissal for the threshold. */
     fun muteToday(context: Context, place: String) {
         val m = get(context, place)
-        val until = java.util.Calendar.getInstance().apply { add(java.util.Calendar.DAY_OF_YEAR, 1); set(java.util.Calendar.HOUR_OF_DAY, 4); set(java.util.Calendar.MINUTE, 0) }.timeInMillis
+        val until = java.util.Calendar.getInstance().apply {
+            add(java.util.Calendar.DAY_OF_YEAR, 1)
+            set(java.util.Calendar.HOUR_OF_DAY, 4)
+            set(java.util.Calendar.MINUTE, 0)
+        }.timeInMillis
         put(context, place, m.copy(offset = (m.offset + 1).coerceAtMost(4), dismissed = m.dismissed + 1, mutedUntil = until))
     }
 }
@@ -63,7 +70,11 @@ object Feedback {
 object Routine {
     data class Slot(val place: String, val weekend: Boolean, val minuteOfDay: Int, val count: Int) {
         val label: String get() = "%s ~%d:%02d %s from %s".format(
-            if (weekend) "Weekends" else "Weekdays", ((minuteOfDay / 60 + 11) % 12) + 1, minuteOfDay % 60, if (minuteOfDay < 720) "AM" else "PM", place,
+            if (weekend) "Weekends" else "Weekdays",
+            ((minuteOfDay / 60 + 11) % 12) + 1,
+            minuteOfDay % 60,
+            if (minuteOfDay < 720) "AM" else "PM",
+            place,
         )
     }
 

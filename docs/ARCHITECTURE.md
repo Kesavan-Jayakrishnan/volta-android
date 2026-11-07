@@ -34,7 +34,7 @@ depends on nothing Android; the data layer implements the domain's interfaces.
 | `:core:maps` | Kotlin | Google Maps Platform transport, error mapping, key checker. |
 | `:core:domain` | Kotlin | Repository interfaces (`AccountRepository`, `MapsKeyRepository`, `SetupRepository`) and use cases. |
 | `:core:data` | Android | Implementations: Keystore-encrypted storage, DataStore, Hilt bindings. |
-| `:core:designsystem` | Android | Theme, colours, type, icons and shared components (`WtButton`, `WtNote`, `VoltaCarArt`). |
+| `:core:designsystem` | Android | Theme, colours, type, icons and shared components (`VoltaButton`, `WtNote`, `VoltaCarArt`). |
 | `:core:testing` | Kotlin | Fakes and `MainDispatcherRule`, shared by every module's unit tests. |
 | `:feature:onboarding` | Android | Sign-in and Google key screens. |
 | `:app` | Android | The app itself: dashboard, trip planner, live trip, energy, settings, Android Auto, widget, background alerts and smart pre-cool, with Room and WorkManager. Its i-SMART link backs the first-run screens through `IsmartAccount`. |

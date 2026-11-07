@@ -27,12 +27,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.irshadm.volta.core.designsystem.VoltaColors
 import dev.irshadm.volta.data.ismart.IsmartRepository
 import dev.irshadm.volta.data.ismart.LinkState
-import dev.irshadm.volta.ui.components.WtButton
-import dev.irshadm.volta.ui.components.WtButtonStyle
-import dev.irshadm.volta.core.designsystem.Wt
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.irshadm.volta.ui.components.VoltaButton
+import dev.irshadm.volta.ui.components.VoltaButtonStyle
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -58,33 +58,52 @@ fun MgAccountSection(vm: AccountViewModel = hiltViewModel()) {
                 Text("Not signed in", style = MaterialTheme.typography.titleSmall)
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    val number = when (val l = link) { is LinkState.Connected -> l.phone; is LinkState.NeedsReconnect -> l.phone; else -> "" }
+                    val number = when (val l = link) {
+                        is LinkState.Connected -> l.phone
+                        is LinkState.NeedsReconnect -> l.phone
+                        else -> ""
+                    }
                     Text("Signed in as +91 $number", style = MaterialTheme.typography.titleSmall)
                     if (link is LinkState.NeedsReconnect) {
-                        Text("Signed out by another app.", style = MaterialTheme.typography.bodySmall, color = Wt.Amber)
-                        WtButton("Reconnect", { scope.launch { vm.ismart.reconnect() } }, Modifier.fillMaxWidth())
+                        Text("Signed out by another app.", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Amber)
+                        VoltaButton("Reconnect", { scope.launch { vm.ismart.reconnect() } }, Modifier.fillMaxWidth())
                     }
                     Text("Control PIN", style = MaterialTheme.typography.titleSmall)
                     Text(
                         "Your 4-digit MG control PIN, needed for lock/unlock and AC. Only a hash is stored, encrypted on this phone. Each command also asks for your fingerprint or screen lock.",
-                        style = MaterialTheme.typography.bodySmall, color = Wt.Muted,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = VoltaColors.Muted,
                     )
                     if (pinSet) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("PIN saved", style = MaterialTheme.typography.bodyMedium, color = Wt.Green, modifier = Modifier.weight(1f))
-                            WtButton("Change", { vm.ismart.clearPin(); pinSet = false }, style = WtButtonStyle.Secondary)
+                            Text("PIN saved", style = MaterialTheme.typography.bodyMedium, color = VoltaColors.Green, modifier = Modifier.weight(1f))
+                            VoltaButton("Change", {
+                                vm.ismart.clearPin()
+                                pinSet = false
+                            }, style = VoltaButtonStyle.Secondary)
                         }
                     } else {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             OutlinedTextField(
-                                value = pin, onValueChange = { pin = it.filter(Char::isDigit).take(4) }, label = { Text("4-digit PIN") },
-                                singleLine = true, visualTransformation = PasswordVisualTransformation(),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword), modifier = Modifier.weight(1f),
+                                value = pin,
+                                onValueChange = { pin = it.filter(Char::isDigit).take(4) },
+                                label = { Text("4-digit PIN") },
+                                singleLine = true,
+                                visualTransformation = PasswordVisualTransformation(),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                                modifier = Modifier.weight(1f),
                             )
-                            WtButton("Save", { vm.ismart.setPin(pin); pin = ""; pinSet = true }, enabled = pin.length == 4)
+                            VoltaButton("Save", {
+                                vm.ismart.setPin(pin)
+                                pin = ""
+                                pinSet = true
+                            }, enabled = pin.length == 4)
                         }
                     }
-                    WtButton("Sign out", { vm.ismart.signOut(); pinSet = false }, Modifier.fillMaxWidth(), style = WtButtonStyle.Secondary)
+                    VoltaButton("Sign out", {
+                        vm.ismart.signOut()
+                        pinSet = false
+                    }, Modifier.fillMaxWidth(), style = VoltaButtonStyle.Secondary)
                 }
             }
         }

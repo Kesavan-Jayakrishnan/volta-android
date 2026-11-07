@@ -8,8 +8,8 @@ import androidx.car.app.Session
 import androidx.car.app.validation.HostValidator
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import dev.irshadm.volta.service.CarCheckWorker
 import dagger.hilt.android.AndroidEntryPoint
+import dev.irshadm.volta.service.CarCheckWorker
 import javax.inject.Inject
 
 /**
@@ -21,9 +21,11 @@ class VoltaCarAppService : CarAppService() {
     @Inject lateinit var deps: CarDeps
 
     /** Debug builds (the sideloaded APK, the Desktop Head Unit) accept any host; release accepts Google's hosts only. */
-    override fun createHostValidator(): HostValidator =
-        if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) HostValidator.ALLOW_ALL_HOSTS_VALIDATOR
-        else HostValidator.Builder(applicationContext).addAllowedHosts(androidx.car.app.R.array.hosts_allowlist_sample).build()
+    override fun createHostValidator(): HostValidator = if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
+        HostValidator.ALLOW_ALL_HOSTS_VALIDATOR
+    } else {
+        HostValidator.Builder(applicationContext).addAllowedHosts(androidx.car.app.R.array.hosts_allowlist_sample).build()
+    }
 
     override fun onCreateSession(): Session = VoltaSession(deps)
 }
@@ -33,8 +35,13 @@ class VoltaSession(private val deps: CarDeps) : Session() {
         // The phone is in the car for as long as this session lives: keep the car data fresh (InCarRefresh), and
         // treat the session's end as "left the car" so the parked alerts get their checks.
         lifecycle.addObserver(object : DefaultLifecycleObserver {
-            override fun onCreate(owner: LifecycleOwner) { deps.inCar.hold("session") }
-            override fun onDestroy(owner: LifecycleOwner) { deps.inCar.release("session"); CarCheckWorker.leftCar(deps.context) }
+            override fun onCreate(owner: LifecycleOwner) {
+                deps.inCar.hold("session")
+            }
+            override fun onDestroy(owner: LifecycleOwner) {
+                deps.inCar.release("session")
+                CarCheckWorker.leftCar(deps.context)
+            }
         })
     }
 

@@ -1,13 +1,13 @@
 package dev.irshadm.volta.di
 
 import android.content.Context
-import dev.irshadm.volta.data.ismart.SecureStore
-import dev.irshadm.volta.core.ismart.MgIsmartClient
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dev.irshadm.volta.core.ismart.MgIsmartClient
+import dev.irshadm.volta.data.ismart.SecureStore
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton

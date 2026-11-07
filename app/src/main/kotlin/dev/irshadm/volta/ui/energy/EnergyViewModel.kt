@@ -2,17 +2,17 @@ package dev.irshadm.volta.ui.energy
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.irshadm.volta.data.SettingsRepository
-import dev.irshadm.volta.data.db.ChargeDao
-import dev.irshadm.volta.data.db.ChargeSessionEntity
-import dev.irshadm.volta.data.db.SocReadingDao
+import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.irshadm.volta.core.model.ChargeCategory
 import dev.irshadm.volta.core.model.EnergyReport
 import dev.irshadm.volta.core.model.EnergySettings
 import dev.irshadm.volta.core.model.SessionEnergy
 import dev.irshadm.volta.core.model.Tariff
 import dev.irshadm.volta.core.model.VehicleProfile
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.irshadm.volta.data.SettingsRepository
+import dev.irshadm.volta.data.db.ChargeDao
+import dev.irshadm.volta.data.db.ChargeSessionEntity
+import dev.irshadm.volta.data.db.SocReadingDao
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -62,11 +62,25 @@ class EnergyViewModel @Inject constructor(
 
     private fun range(s: Selection, e: EnergySettings, t: Tariff): Pair<Long, Long> {
         val now = System.currentTimeMillis()
-        val c = Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0) }
+        val c = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
         return when (s.period) {
-            Period.Month -> { c.set(Calendar.DAY_OF_MONTH, 1); c.timeInMillis to now }
-            Period.Year -> { c.set(Calendar.DAY_OF_YEAR, 1); c.timeInMillis to now }
+            Period.Month -> {
+                c.set(Calendar.DAY_OF_MONTH, 1)
+                c.timeInMillis to now
+            }
+
+            Period.Year -> {
+                c.set(Calendar.DAY_OF_YEAR, 1)
+                c.timeInMillis to now
+            }
+
             Period.Custom -> s.customFrom to s.customTo
+
             // The most recent cycle start: the start day in the latest month that sits on the cycle's grid (a 2-month
             // cycle anchored on October starts on 20 Oct, 20 Dec, 20 Feb, ...).
             Period.Cycle -> {
@@ -78,12 +92,15 @@ class EnergyViewModel @Inject constructor(
         }
     }
 
-    private fun kwhOf(s: ChargeSessionEntity, capacity: Double): Double =
-        ((s.endKwh ?: s.startKwh ?: 0.0) - (s.startKwh ?: 0.0)).takeIf { it > 0 }
-            ?: (((s.endSoc ?: 0.0) - (s.startSoc ?: 0.0)) / 100 * capacity).coerceAtLeast(0.0)
+    private fun kwhOf(s: ChargeSessionEntity, capacity: Double): Double = ((s.endKwh ?: s.startKwh ?: 0.0) - (s.startKwh ?: 0.0)).takeIf { it > 0 }
+        ?: (((s.endSoc ?: 0.0) - (s.startSoc ?: 0.0)) / 100 * capacity).coerceAtLeast(0.0)
 
     private val sixMonthsAgo = Calendar.getInstance().apply {
-        add(Calendar.MONTH, -5); set(Calendar.DAY_OF_MONTH, 1); set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0)
+        add(Calendar.MONTH, -5)
+        set(Calendar.DAY_OF_MONTH, 1)
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
     }.timeInMillis
 
     val state: StateFlow<EnergyUiState> = combine(selection, settings.energySettings, settings.tariff) { s, e, t -> Triple(s, e, t) }.flatMapLatest { (sel, e, t) ->
@@ -121,8 +138,12 @@ class EnergyViewModel @Inject constructor(
         }.dropWhile { it.totalKwh < 0.1 }
     }
 
-    fun select(p: Period) { selection.value = selection.value.copy(period = p) }
-    fun selectCustom(from: Long, to: Long) { selection.value = Selection(Period.Custom, from, to + 86_399_999) }
+    fun select(p: Period) {
+        selection.value = selection.value.copy(period = p)
+    }
+    fun selectCustom(from: Long, to: Long) {
+        selection.value = Selection(Period.Custom, from, to + 86_399_999)
+    }
 
     /** The user corrects a session's type (e.g. a friend's house counted as public). */
     fun setCategory(s: ChargeSessionEntity, c: ChargeCategory) = viewModelScope.launch {

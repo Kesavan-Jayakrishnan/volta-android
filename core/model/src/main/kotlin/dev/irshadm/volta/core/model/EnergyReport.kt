@@ -4,8 +4,8 @@ package dev.irshadm.volta.core.model
 data class SessionEnergy(
     val category: ChargeCategory,
     val batteryKwh: Double,
-    val gridUnits: Double? = null,     // actual units the user entered
-    val costRs: Double? = null,        // actual cost the user entered
+    val gridUnits: Double? = null, // actual units the user entered
+    val costRs: Double? = null, // actual cost the user entered
 )
 
 data class EnergyReport(

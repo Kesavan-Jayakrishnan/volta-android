@@ -12,12 +12,11 @@ class ObserveStartDestinationUseCase @Inject constructor(
     private val accounts: AccountRepository,
     private val setup: SetupRepository,
 ) {
-    operator fun invoke(): Flow<StartDestination> =
-        combine(accounts.account, setup.mapsKeyStepDone) { account, keyStepDone ->
-            when {
-                account is Account.SignedOut -> StartDestination.SignIn
-                !keyStepDone -> StartDestination.MapsKey
-                else -> StartDestination.Home
-            }
+    operator fun invoke(): Flow<StartDestination> = combine(accounts.account, setup.mapsKeyStepDone) { account, keyStepDone ->
+        when {
+            account is Account.SignedOut -> StartDestination.SignIn
+            !keyStepDone -> StartDestination.MapsKey
+            else -> StartDestination.Home
         }
+    }
 }

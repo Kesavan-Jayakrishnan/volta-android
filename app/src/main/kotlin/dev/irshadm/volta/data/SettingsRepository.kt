@@ -10,8 +10,8 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import dev.irshadm.volta.core.model.ChargerPreferences
 import dev.irshadm.volta.core.model.EnergySettings
-import dev.irshadm.volta.core.model.Tariff
 import dev.irshadm.volta.core.model.NetworkPreference
+import dev.irshadm.volta.core.model.Tariff
 import dev.irshadm.volta.core.model.TripSettings
 import dev.irshadm.volta.core.model.VehicleProfile
 import kotlinx.coroutines.flow.Flow
@@ -26,27 +26,36 @@ class SettingsRepository @Inject constructor(private val store: DataStore<Prefer
     /** Meal windows (minutes after midnight), the night start and the meal length; all adjustable in Settings. */
     val mealRules: Flow<dev.irshadm.volta.core.planner.MealRules> = store.data.map { p ->
         val d = dev.irshadm.volta.core.planner.MealRules()
-        fun window(from: Preferences.Key<Int>, to: Preferences.Key<Int>, default: IntRange) =
-            (p[from] ?: default.first)..(p[to] ?: default.last)
+        fun window(from: Preferences.Key<Int>, to: Preferences.Key<Int>, default: IntRange) = (p[from] ?: default.first)..(p[to] ?: default.last)
         dev.irshadm.volta.core.planner.MealRules(
             breakfast = window(BREAKFAST_FROM, BREAKFAST_TO, d.breakfast),
             lunch = window(LUNCH_FROM, LUNCH_TO, d.lunch),
             dinner = window(DINNER_FROM, DINNER_TO, d.dinner),
-            nightFrom = p[NIGHT_FROM] ?: 21 * 60, mealMinutes = p[MEAL_MIN] ?: 35,
+            nightFrom = p[NIGHT_FROM] ?: 21 * 60,
+            mealMinutes = p[MEAL_MIN] ?: 35,
         )
     }
     suspend fun saveMealRules(r: dev.irshadm.volta.core.planner.MealRules) {
         store.edit {
-            it[NIGHT_FROM] = r.nightFrom; it[MEAL_MIN] = r.mealMinutes
-            it[BREAKFAST_FROM] = r.breakfast.first; it[BREAKFAST_TO] = r.breakfast.last
-            it[LUNCH_FROM] = r.lunch.first; it[LUNCH_TO] = r.lunch.last
-            it[DINNER_FROM] = r.dinner.first; it[DINNER_TO] = r.dinner.last
+            it[NIGHT_FROM] = r.nightFrom
+            it[MEAL_MIN] = r.mealMinutes
+            it[BREAKFAST_FROM] = r.breakfast.first
+            it[BREAKFAST_TO] = r.breakfast.last
+            it[LUNCH_FROM] = r.lunch.first
+            it[LUNCH_TO] = r.lunch.last
+            it[DINNER_FROM] = r.dinner.first
+            it[DINNER_TO] = r.dinner.last
         }
     }
 
     /** Smart pre-cool: suggest AC when walking back to a hot car (never sends on its own). */
     val smartPrecool: Flow<SmartPrecool> = store.data.map { p -> SmartPrecool(p[PRECOOL_ON] ?: false, p[PRECOOL_TEMP] ?: 29) }
-    suspend fun saveSmartPrecool(s: SmartPrecool) { store.edit { it[PRECOOL_ON] = s.enabled; it[PRECOOL_TEMP] = s.aboveC } }
+    suspend fun saveSmartPrecool(s: SmartPrecool) {
+        store.edit {
+            it[PRECOOL_ON] = s.enabled
+            it[PRECOOL_TEMP] = s.aboveC
+        }
+    }
 
     /** Places the user named ("Apartment", "Office"), shown on the dashboard when the car is parked there. */
     val savedPlaces: Flow<List<SavedPlace>> = store.data.map { p ->
@@ -132,7 +141,13 @@ class SettingsRepository @Inject constructor(private val store: DataStore<Prefer
         store.edit { p ->
             val lat = e.homeLat
             val lng = e.homeLng
-            if (lat != null && lng != null) { p[HOME_LAT] = lat; p[HOME_LNG] = lng } else { p.remove(HOME_LAT); p.remove(HOME_LNG) }
+            if (lat != null && lng != null) {
+                p[HOME_LAT] = lat
+                p[HOME_LNG] = lng
+            } else {
+                p.remove(HOME_LAT)
+                p.remove(HOME_LNG)
+            }
             p[HOME_RADIUS] = e.homeRadiusM
             p[EFF_HOME] = e.homeEfficiency
             p[RATE_AC] = e.publicAcRatePerKwh
@@ -258,8 +273,7 @@ private val placesJson = kotlinx.serialization.json.Json { ignoreUnknownKeys = t
 
 @kotlinx.serialization.Serializable
 data class SavedPlace(val name: String, val lat: Double, val lng: Double, val radiusM: Double = 150.0, val ssid: String? = null) {
-    fun contains(lat: Double, lng: Double): Boolean =
-        dev.irshadm.volta.core.planner.Geo.distanceM(dev.irshadm.volta.core.planner.LatLng(this.lat, this.lng), dev.irshadm.volta.core.planner.LatLng(lat, lng)) <= radiusM
+    fun contains(lat: Double, lng: Double): Boolean = dev.irshadm.volta.core.planner.Geo.distanceM(dev.irshadm.volta.core.planner.LatLng(this.lat, this.lng), dev.irshadm.volta.core.planner.LatLng(lat, lng)) <= radiusM
 }
 
 data class SmartPrecool(val enabled: Boolean = false, val aboveC: Int = 29)

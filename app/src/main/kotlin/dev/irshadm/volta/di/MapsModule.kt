@@ -2,15 +2,15 @@ package dev.irshadm.volta.di
 
 import android.content.Context
 import android.content.pm.PackageManager
-import dev.irshadm.volta.data.maps.AppIdentity
-import dev.irshadm.volta.data.maps.GoogleMapsClient
-import dev.irshadm.volta.data.maps.PlanRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dev.irshadm.volta.core.domain.MapsKeyRepository
+import dev.irshadm.volta.data.maps.AppIdentity
+import dev.irshadm.volta.data.maps.GoogleMapsClient
+import dev.irshadm.volta.data.maps.PlanRepository
 import okhttp3.OkHttpClient
 import java.security.MessageDigest
 import javax.inject.Singleton
@@ -35,11 +35,9 @@ object MapsModule {
 
     @Provides
     @Singleton
-    fun mapsClient(http: OkHttpClient, identity: AppIdentity, keys: MapsKeyRepository): GoogleMapsClient =
-        GoogleMapsClient(http, keys, identity)
+    fun mapsClient(http: OkHttpClient, identity: AppIdentity, keys: MapsKeyRepository): GoogleMapsClient = GoogleMapsClient(http, keys, identity)
 
     @Provides
     @Singleton
-    fun planRepository(client: GoogleMapsClient, @ApplicationContext context: Context): PlanRepository =
-        PlanRepository(client, context.cacheDir)
+    fun planRepository(client: GoogleMapsClient, @ApplicationContext context: Context): PlanRepository = PlanRepository(client, context.cacheDir)
 }

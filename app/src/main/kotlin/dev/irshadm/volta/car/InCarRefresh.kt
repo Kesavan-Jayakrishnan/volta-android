@@ -12,10 +12,10 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.irshadm.volta.data.ismart.IsmartRepository
 import dev.irshadm.volta.data.ismart.LinkState
 import dev.irshadm.volta.data.trip.TripRepository
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -47,6 +47,7 @@ class InCarRefresh @Inject constructor(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val reasons = mutableSetOf<String>()
     private var job: Job? = null
+
     @Volatile private var lastRefreshAt = 0L
     private var fused: FusedLocationProviderClient? = null
     private val onMove = object : LocationCallback() {
@@ -55,8 +56,13 @@ class InCarRefresh @Inject constructor(
         }
     }
 
-    @Synchronized fun hold(reason: String) { if (reasons.add(reason) && reasons.size == 1) start() }
-    @Synchronized fun release(reason: String) { if (reasons.remove(reason) && reasons.isEmpty()) stop() }
+    @Synchronized fun hold(reason: String) {
+        if (reasons.add(reason) && reasons.size == 1) start()
+    }
+
+    @Synchronized fun release(reason: String) {
+        if (reasons.remove(reason) && reasons.isEmpty()) stop()
+    }
 
     private fun start() {
         active = true
@@ -78,8 +84,10 @@ class InCarRefresh @Inject constructor(
     }
 
     private fun stop() {
-        job?.cancel(); job = null
-        runCatching { fused?.removeLocationUpdates(onMove) }; fused = null
+        job?.cancel()
+        job = null
+        runCatching { fused?.removeLocationUpdates(onMove) }
+        fused = null
         trips.setProjected(false)
         active = false
     }

@@ -7,8 +7,8 @@ import android.content.pm.ServiceInfo
 import android.os.IBinder
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
-import dev.irshadm.volta.data.trip.TripRepository
 import dagger.hilt.android.AndroidEntryPoint
+import dev.irshadm.volta.data.trip.TripRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -35,11 +35,15 @@ class TripService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
-            scope.launch { trips.end(); stopSelf() }
+            scope.launch {
+                trips.end()
+                stopSelf()
+            }
             return START_NOT_STICKY
         }
         ServiceCompat.startForeground(
-            this, Notifications.ID_TRIP,
+            this,
+            Notifications.ID_TRIP,
             Notifications.ongoing(this, "Live trip", "Starting…"),
             ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION,
         )
@@ -51,8 +55,16 @@ class TripService : Service() {
                     val nm = getSystemService(android.app.NotificationManager::class.java)
                     val next = t.nextStop?.let { " · next stop in ${((it.charger.alongRouteM - t.alongM) / 1000).roundToInt()} km" } ?: ""
                     val est = if (t.socEstimated) " (estimated)" else ""
-                    nm.notify(Notifications.ID_TRIP, Notifications.ongoing(this@TripService, "To ${t.planned.destination.name}",
-                        "${t.soc.roundToInt()} %$est · plan ${t.expectedSoc.roundToInt()} %$next", soc = t.soc, behind = -t.deviation))
+                    nm.notify(
+                        Notifications.ID_TRIP,
+                        Notifications.ongoing(
+                            this@TripService,
+                            "To ${t.planned.destination.name}",
+                            "${t.soc.roundToInt()} %$est · plan ${t.expectedSoc.roundToInt()} %$next",
+                            soc = t.soc,
+                            behind = -t.deviation,
+                        ),
+                    )
                     // Sleep until the next check, or until something (Android Auto connecting) wakes the trip early.
                     withTimeoutOrNull(wait.coerceAtLeast(30_000L)) { trips.wake.receive() }
                 }

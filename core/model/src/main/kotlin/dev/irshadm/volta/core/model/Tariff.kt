@@ -57,9 +57,9 @@ data class EnergySettings(
     val dcEfficiency: Double = 0.93,
     val publicAcRatePerKwh: Double = 14.0,
     val dcRatePerKwh: Double = 22.0,
-    val householdUnitsPerCycle: Double = 260.0,   // sample: a flat with ACs, about 130 units a month, until the owner sets it
-    val billCycleStartDay: Int = 20,       // the owner's KSEB cycle starts on the 20th...
-    val billCycleStartMonth: Int = 10,     // ...of October, December, February and so on (1 = January)
+    val householdUnitsPerCycle: Double = 260.0, // sample: a flat with ACs, about 130 units a month, until the owner sets it
+    val billCycleStartDay: Int = 20, // the owner's KSEB cycle starts on the 20th...
+    val billCycleStartMonth: Int = 10, // ...of October, December, February and so on (1 = January)
     val dcThresholdKw: Double = 15.0,
 ) {
     val hasHome: Boolean get() = homeLat != null && homeLng != null

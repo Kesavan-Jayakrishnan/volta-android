@@ -33,5 +33,4 @@ interface SocReadingDao {
 
     @Query("SELECT * FROM soc_readings ORDER BY measuredAtMillis DESC LIMIT :limit")
     fun observeRecent(limit: Int): Flow<List<SocReadingEntity>>
-
 }

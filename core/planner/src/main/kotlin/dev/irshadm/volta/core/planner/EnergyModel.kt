@@ -30,7 +30,9 @@ class EnergyModel(private val vehicle: VehicleProfile) {
 
     fun kmPerKwh(speedKmh: Double): Double = when {
         speedKmh <= CITY_KMH -> vehicle.cityKmPerKwh
+
         speedKmh >= HIGHWAY_KMH -> vehicle.highwayKmPerKwh
+
         else -> {
             val t = (speedKmh - CITY_KMH) / (HIGHWAY_KMH - CITY_KMH)
             vehicle.cityKmPerKwh + (vehicle.highwayKmPerKwh - vehicle.cityKmPerKwh) * t
@@ -51,8 +53,11 @@ class EnergyModel(private val vehicle: VehicleProfile) {
             flat += (b.distanceM - a.distanceM) / 1000.0 / kmPerKwh((a.speedKmh + b.speedKmh) / 2)
             pendingDh += b.elevationM - a.elevationM
             if (abs(pendingDh) >= NOISE_M) {
-                if (pendingDh > 0) climb += potentialKwh(pendingDh) / vehicle.driveEfficiency
-                else regen += potentialKwh(-pendingDh) * vehicle.regenEfficiency
+                if (pendingDh > 0) {
+                    climb += potentialKwh(pendingDh) / vehicle.driveEfficiency
+                } else {
+                    regen += potentialKwh(-pendingDh) * vehicle.regenEfficiency
+                }
                 pendingDh = 0.0
             }
         }
@@ -76,8 +81,11 @@ class EnergyModel(private val vehicle: VehicleProfile) {
             var kwh = (b.distanceM - a.distanceM) / 1000.0 / kmPerKwh((a.speedKmh + b.speedKmh) / 2)
             pendingDh += b.elevationM - a.elevationM
             if (abs(pendingDh) >= NOISE_M) {
-                kwh += if (pendingDh > 0) potentialKwh(pendingDh) / vehicle.driveEfficiency
-                else -potentialKwh(-pendingDh) * vehicle.regenEfficiency
+                kwh += if (pendingDh > 0) {
+                    potentialKwh(pendingDh) / vehicle.driveEfficiency
+                } else {
+                    -potentialKwh(-pendingDh) * vehicle.regenEfficiency
+                }
                 pendingDh = 0.0
             }
             soc = minOf(capSoc, soc - kwh / perPercent)

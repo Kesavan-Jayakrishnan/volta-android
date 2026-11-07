@@ -68,7 +68,7 @@ class OptimalPlanner(
         if (startSoc - drop(0, end) >= minDest) return build(points, startSoc, emptyList(), driveMinutes)
 
         val best = HashMap<Node, Double>()
-        val prev = HashMap<Node, Pair<Node?, Double>>()   // node -> (previous node, arrival SoC at this node)
+        val prev = HashMap<Node, Pair<Node?, Double>>() // node -> (previous node, arrival SoC at this node)
         val queue = PriorityQueue<Entry>(compareBy { it.cost })
         var bestEnd: Pair<Node, Double>? = null
         var bestEndCost = Double.MAX_VALUE
@@ -76,7 +76,10 @@ class OptimalPlanner(
         fun departures(j: Int, arrive: Double, toEnd: Double): List<Double> {
             val levels = sortedSetOf<Double>()
             var d = ceil((arrive + MIN_GAIN) / 5) * 5
-            while (d <= maxTarget + 1e-9) { levels += d; d += 5 }
+            while (d <= maxTarget + 1e-9) {
+                levels += d
+                d += 5
+            }
             val enough = ceil(toEnd + minDest + halfDetour(j) + FINISH_MARGIN)
             if (enough >= arrive + MIN_GAIN && enough <= maxTarget) levels += enough
             return levels.toList()
@@ -85,12 +88,17 @@ class OptimalPlanner(
         fun relax(from: Node?, fromCost: Double, fromStops: Int, depart: Double, fromIdx: Int, fromHalfDetour: Double) {
             // to destination
             val atEnd = depart - fromHalfDetour - drop(fromIdx, end)
-            if (from != null && atEnd >= minDest && fromCost < bestEndCost) { bestEndCost = fromCost; bestEnd = from to atEnd }
+            if (from != null && atEnd >= minDest && fromCost < bestEndCost) {
+                bestEndCost = fromCost
+                bestEnd = from to atEnd
+            }
             for (k in list.indices) {
                 if (idx[k] <= fromIdx || (from != null && k <= from.charger)) continue
                 val arrive = depart - fromHalfDetour - drop(fromIdx, idx[k]) - halfDetour(k)
-                if (arrive < minCharger) { if (drop(fromIdx, idx[k]) > 100) break else continue }
-                if (arrive > MAX_ARRIVE_SOC) continue          // nobody stops to charge with half a battery left
+                if (arrive < minCharger) {
+                    if (drop(fromIdx, idx[k]) > 100) break else continue
+                }
+                if (arrive > MAX_ARRIVE_SOC) continue // nobody stops to charge with half a battery left
                 for (dep in departures(k, arrive, drop(idx[k], end))) {
                     val cost = fromCost + stopWeight + STOP_OVERHEAD_MIN + detourMin(k) +
                         ChargeTime.minutes(vehicle, arrive, dep, list[k].maxKw) - bonus(k)
@@ -138,8 +146,14 @@ class OptimalPlanner(
         val last = model.simulate(points.subList(from, points.size), soc)
         trace += last
         val detourMin = stops.sumOf { it.charger.detourM / 1000.0 / DETOUR_KMH * 60.0 }
-        return TripPlan(PlanOutcome.Ok(stops, last.last().socPercent), trace, points.last().distanceM, driveMinutes + detourMin,
-            model.breakdown(points), vehicle.usableCapacityKwh)
+        return TripPlan(
+            PlanOutcome.Ok(stops, last.last().socPercent),
+            trace,
+            points.last().distanceM,
+            driveMinutes + detourMin,
+            model.breakdown(points),
+            vehicle.usableCapacityKwh,
+        )
     }
 
     /** Cumulative energy (kWh) from the start to each point, same terrain rules as [EnergyModel]. */
@@ -150,8 +164,8 @@ class OptimalPlanner(
     }
 
     companion object {
-        const val STOP_OVERHEAD_MIN = 10.0      // pull in, park, plug in, start/pay, unplug
-        const val MIN_GAIN = 10.0               // a stop must add at least this many %
+        const val STOP_OVERHEAD_MIN = 10.0 // pull in, park, plug in, start/pay, unplug
+        const val MIN_GAIN = 10.0 // a stop must add at least this many %
         const val MAX_ARRIVE_SOC = 50.0
         const val DETOUR_KMH = 35.0
         const val PREFERRED_BONUS_MIN = 4.0

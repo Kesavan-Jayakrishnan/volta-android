@@ -12,8 +12,7 @@ data class RouteSuggestion(val index: Int, val name: String, val facts: List<Str
     companion object {
         private fun name(c: RouteChoice, i: Int) = c.route.label ?: "route ${i + 1}"
 
-        private fun score(c: RouteChoice): Double =
-            c.route.durationS / 60 + c.climbM / 100 * 3 + if (c.longestGapKm >= 70) 20.0 else 0.0
+        private fun score(c: RouteChoice): Double = c.route.durationS / 60 + c.climbM / 100 * 3 + if (c.longestGapKm >= 70) 20.0 else 0.0
 
         fun pick(routes: List<RouteChoice>): RouteSuggestion {
             val scores = routes.map(::score)
@@ -45,8 +44,11 @@ data class RouteSuggestion(val index: Int, val name: String, val facts: List<Str
                 if (!p.route.tolls && others.any { it.route.tolls }) add("no tolls")
                 if (others.any { it.longestGapKm >= 70 } && p.longestGapKm < 70) add("chargers all along the way")
             }
-            return if (reasons.isEmpty()) "The best balance of drive time and battery use."
-            else reasons.joinToString(", ").replaceFirstChar { it.uppercase() } + "."
+            return if (reasons.isEmpty()) {
+                "The best balance of drive time and battery use."
+            } else {
+                reasons.joinToString(", ").replaceFirstChar { it.uppercase() } + "."
+            }
         }
     }
 }

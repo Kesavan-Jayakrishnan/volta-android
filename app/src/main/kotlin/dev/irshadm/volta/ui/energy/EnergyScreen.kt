@@ -66,17 +66,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.irshadm.volta.data.db.ChargeSessionEntity
-import dev.irshadm.volta.ui.components.WtCard
-import dev.irshadm.volta.core.designsystem.WtIcons
-import dev.irshadm.volta.ui.components.appear
 import dev.irshadm.volta.core.designsystem.LocalReducedMotion
-import dev.irshadm.volta.core.designsystem.Wt
-import dev.irshadm.volta.core.designsystem.WtMotion
+import dev.irshadm.volta.core.designsystem.VoltaColors
+import dev.irshadm.volta.core.designsystem.VoltaIcons
+import dev.irshadm.volta.core.designsystem.VoltaMotion
 import dev.irshadm.volta.core.designsystem.tabular
 import dev.irshadm.volta.core.model.ChargeCategory
 import dev.irshadm.volta.core.model.EnergyReport
 import dev.irshadm.volta.core.model.EnergySettings
+import dev.irshadm.volta.data.db.ChargeSessionEntity
+import dev.irshadm.volta.ui.components.VoltaCard
+import dev.irshadm.volta.ui.components.appear
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -84,22 +84,22 @@ import java.util.Locale
 import kotlin.math.roundToInt
 
 private fun color(c: ChargeCategory) = when (c) {
-    ChargeCategory.HOME -> Wt.Green
-    ChargeCategory.PUBLIC_AC -> Wt.BlueSoft
-    ChargeCategory.PUBLIC_DC -> Wt.Gold
+    ChargeCategory.HOME -> VoltaColors.Green
+    ChargeCategory.PUBLIC_AC -> VoltaColors.BlueSoft
+    ChargeCategory.PUBLIC_DC -> VoltaColors.Gold
 }
 
 private fun icon(c: ChargeCategory) = when (c) {
-    ChargeCategory.HOME -> WtIcons.Pin
-    ChargeCategory.PUBLIC_AC -> WtIcons.Plug
-    ChargeCategory.PUBLIC_DC -> WtIcons.Bolt
+    ChargeCategory.HOME -> VoltaIcons.Pin
+    ChargeCategory.PUBLIC_AC -> VoltaIcons.Plug
+    ChargeCategory.PUBLIC_DC -> VoltaIcons.Bolt
 }
 
 private fun rs(x: Double) = "₹" + "%,d".format(x.roundToInt())
 private val dayFmt = SimpleDateFormat("d MMM", Locale.getDefault())
 private val monthFmt = SimpleDateFormat("MMMM", Locale.getDefault())
 
-/** Calendar glyph in the WtIcons stroke style, for the date button in the header. */
+/** Calendar glyph in the VoltaIcons stroke style, for the date button in the header. */
 private val CalendarIcon: ImageVector = ImageVector.Builder("calendar", 24.dp, 24.dp, 24f, 24f).apply {
     listOf("M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z", "M3 10h18M8 3v4M16 3v4").forEach {
         addPath(addPathNodes(it), stroke = SolidColor(Color.White), strokeLineWidth = 2f, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round)
@@ -109,9 +109,8 @@ private val CalendarIcon: ImageVector = ImageVector.Builder("calendar", 24.dp, 2
 /** Sessions under this many kWh on one day fold into a single "tiny top-ups" row. */
 private const val TINY_KWH = 0.5
 
-private fun kwhOf(s: ChargeSessionEntity, capacity: Double): Double =
-    ((s.endKwh ?: s.startKwh ?: 0.0) - (s.startKwh ?: 0.0)).takeIf { it > 0 }
-        ?: (((s.endSoc ?: 0.0) - (s.startSoc ?: 0.0)) / 100 * capacity).coerceAtLeast(0.0)
+private fun kwhOf(s: ChargeSessionEntity, capacity: Double): Double = ((s.endKwh ?: s.startKwh ?: 0.0) - (s.startKwh ?: 0.0)).takeIf { it > 0 }
+    ?: (((s.endSoc ?: 0.0) - (s.startSoc ?: 0.0)) / 100 * capacity).coerceAtLeast(0.0)
 
 private fun costOf(s: ChargeSessionEntity, kwh: Double, r: EnergyReport, e: EnergySettings): Double = s.costRs ?: when (ChargeCategory.valueOf(s.category)) {
     ChargeCategory.HOME -> (s.gridUnits ?: (kwh / e.homeEfficiency)) * r.costPerHomeUnit
@@ -149,9 +148,13 @@ private fun fold(sessions: List<ChargeSessionEntity>, capacity: Double): List<Se
 }
 
 @Composable private fun heroStyle() = MaterialTheme.typography.displayLarge.copy(fontSize = 44.sp, lineHeight = 48.sp, fontWeight = FontWeight.SemiBold)
+
 @Composable private fun billStyle() = MaterialTheme.typography.headlineLarge.copy(fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.SemiBold).tabular()
+
 @Composable private fun statStyle() = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold).tabular()
+
 @Composable private fun rowTitle() = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.SemiBold)
+
 @Composable private fun rowSub() = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp)
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -169,10 +172,10 @@ fun EnergyScreen(onSettings: () -> Unit, vm: EnergyViewModel = hiltViewModel()) 
                     val b = picker.selectedEndDateMillis ?: a
                     if (a != null && b != null) vm.selectCustom(a, b)
                     picking = false
-                }, enabled = picker.selectedStartDateMillis != null) { Text("Show", color = Wt.Gold) }
+                }, enabled = picker.selectedStartDateMillis != null) { Text("Show", color = VoltaColors.Gold) }
             },
-            dismissButton = { TextButton({ picking = false }) { Text("Cancel", color = Wt.Muted) } },
-            colors = DatePickerDefaults.colors(containerColor = Wt.Surface),
+            dismissButton = { TextButton({ picking = false }) { Text("Cancel", color = VoltaColors.Muted) } },
+            colors = DatePickerDefaults.colors(containerColor = VoltaColors.Surface),
         ) {
             DateRangePicker(picker, Modifier.height(480.dp), title = { Text("Pick dates", Modifier.padding(16.dp)) })
         }
@@ -184,33 +187,42 @@ fun EnergyScreen(onSettings: () -> Unit, vm: EnergyViewModel = hiltViewModel()) 
         }
         PeriodSegments(state.period, vm::select, Modifier.padding(top = 12.dp).appear(1))
         if (state.loaded && state.from > 0) {
-            Text("${dayFmt.format(Date(state.from))} – ${dayFmt.format(Date(state.to))}", style = MaterialTheme.typography.bodySmall, color = Wt.Dim,
-                modifier = Modifier.padding(start = 4.dp, top = 8.dp))
+            Text(
+                "${dayFmt.format(Date(state.from))} – ${dayFmt.format(Date(state.to))}",
+                style = MaterialTheme.typography.bodySmall,
+                color = VoltaColors.Dim,
+                modifier = Modifier.padding(start = 4.dp, top = 8.dp),
+            )
         }
         val r = state.report ?: return@Column
 
         HeroCard(r, state.from, state.to, state.period, Modifier.padding(top = 16.dp).appear(2))
         BillCard(r, state, onSettings, Modifier.padding(top = 12.dp).appear(3))
         if (!state.hasHome) {
-            WtCard(Modifier.fillMaxWidth().padding(top = 12.dp).clip(RoundedCornerShape(18.dp)).clickable(role = Role.Button, onClick = onSettings), radius = 18.dp) {
+            VoltaCard(Modifier.fillMaxWidth().padding(top = 12.dp).clip(RoundedCornerShape(18.dp)).clickable(role = Role.Button, onClick = onSettings), radius = 18.dp) {
                 Text("Set your home location", style = MaterialTheme.typography.titleSmall)
-                Text("Charging there counts as home electricity; everything else is public. Settings → Home & electricity.", style = MaterialTheme.typography.bodySmall, color = Wt.Muted)
+                Text("Charging there counts as home electricity; everything else is public. Settings → Home & electricity.", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
             }
         }
         MonthChart(state.months, Modifier.padding(top = 12.dp).appear(4))
 
         Row(Modifier.padding(horizontal = 4.dp).padding(top = 24.dp)) {
             Text("Charging sessions", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f).alignByBaseline())
-            if (state.sessions.isNotEmpty()) Text("hold to change type", style = MaterialTheme.typography.bodySmall, color = Wt.Dim, modifier = Modifier.alignByBaseline())
+            if (state.sessions.isNotEmpty()) Text("hold to change type", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Dim, modifier = Modifier.alignByBaseline())
         }
         if (state.sessions.isNotEmpty()) {
             var editing by remember { mutableStateOf<ChargeSessionEntity?>(null) }
-            editing?.let { s -> CategoryDialog(s, onDismiss = { editing = null }) { c -> vm.setCategory(s, c); editing = null } }
+            editing?.let { s ->
+                CategoryDialog(s, onDismiss = { editing = null }) { c ->
+                    vm.setCategory(s, c)
+                    editing = null
+                }
+            }
             val items = remember(state.sessions, state.capacityKwh) { fold(state.sessions.take(40), state.capacityKwh) }
-            WtCard(Modifier.fillMaxWidth().padding(top = 10.dp).appear(5), radius = 18.dp, padding = PaddingValues(0.dp)) {
+            VoltaCard(Modifier.fillMaxWidth().padding(top = 10.dp).appear(5), radius = 18.dp, padding = PaddingValues(0.dp)) {
                 Column {
                     items.forEachIndexed { i, item ->
-                        if (i > 0) HorizontalDivider(color = Wt.Border)
+                        if (i > 0) HorizontalDivider(color = VoltaColors.Border)
                         when (item) {
                             is SessionItem.One -> SessionRow(item.s, r, state) { editing = item.s }
                             is SessionItem.Tiny -> TinyRow(item, r, state)
@@ -224,7 +236,9 @@ fun EnergyScreen(onSettings: () -> Unit, vm: EnergyViewModel = hiltViewModel()) 
             (if (state.sessions.isEmpty()) "Nothing logged in this period yet. " else "") +
                 "Sessions are recorded whenever the car reports it is plugged in." +
                 (if (onlyHome) " Public and DC sessions appear here with their own colour once you have one." else ""),
-            style = MaterialTheme.typography.bodySmall, color = Wt.Dim, modifier = Modifier.padding(horizontal = 4.dp).padding(top = 14.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = VoltaColors.Dim,
+            modifier = Modifier.padding(horizontal = 4.dp).padding(top = 14.dp),
         )
     }
 }
@@ -233,11 +247,11 @@ fun EnergyScreen(onSettings: () -> Unit, vm: EnergyViewModel = hiltViewModel()) 
 private fun RoundIconButton(icon: ImageVector, description: String, active: Boolean, onClick: () -> Unit) {
     Box(
         Modifier.size(40.dp).clip(CircleShape)
-            .background(if (active) Wt.tint(Wt.Gold, 0.18f) else Wt.Surface)
-            .border(1.dp, if (active) Wt.tint(Wt.Gold, 0.5f) else Wt.Border, CircleShape)
+            .background(if (active) VoltaColors.tint(VoltaColors.Gold, 0.18f) else VoltaColors.Surface)
+            .border(1.dp, if (active) VoltaColors.tint(VoltaColors.Gold, 0.5f) else VoltaColors.Border, CircleShape)
             .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
-    ) { Icon(icon, contentDescription = description, tint = if (active) Wt.Gold else Wt.TextSoft, modifier = Modifier.size(18.dp)) }
+    ) { Icon(icon, contentDescription = description, tint = if (active) VoltaColors.Gold else VoltaColors.TextSoft, modifier = Modifier.size(18.dp)) }
 }
 
 /** "This bill cycle" · the month's name · the year. A custom range is picked from the calendar button, so nothing is lit then. */
@@ -250,11 +264,11 @@ private fun PeriodSegments(selected: Period, onSelect: (Period) -> Unit, modifie
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         items.forEach { (p, label) ->
             val on = p == selected
-            val bg by animateColorAsState(if (on) Wt.Border else Color.Transparent, tween(200), label = "segment")
+            val bg by animateColorAsState(if (on) VoltaColors.Border else Color.Transparent, tween(200), label = "segment")
             Box(
                 Modifier.clip(RoundedCornerShape(11.dp)).background(bg).clickable(role = Role.Tab) { onSelect(p) }.height(34.dp).padding(horizontal = 14.dp),
                 contentAlignment = Alignment.Center,
-            ) { Text(label, style = MaterialTheme.typography.titleSmall, color = if (on) Wt.Text else Wt.Muted) }
+            ) { Text(label, style = MaterialTheme.typography.titleSmall, color = if (on) VoltaColors.Text else VoltaColors.Muted) }
         }
     }
 }
@@ -262,12 +276,12 @@ private fun PeriodSegments(selected: Period, onSelect: (Period) -> Unit, modifie
 /** Money first: the period's charging cost, kWh beside it, then ₹/km, ₹/kWh and the share charged at home. */
 @Composable
 private fun HeroCard(r: EnergyReport, from: Long, to: Long, key: Any, modifier: Modifier) {
-    WtCard(modifier.fillMaxWidth(), radius = 22.dp, padding = PaddingValues(18.dp)) {
-        Text("Charging cost · ${dayFmt.format(Date(from))} – ${dayFmt.format(Date(to))}", style = MaterialTheme.typography.bodySmall, color = Wt.Muted)
+    VoltaCard(modifier.fillMaxWidth(), radius = 22.dp, padding = PaddingValues(18.dp)) {
+        Text("Charging cost · ${dayFmt.format(Date(from))} – ${dayFmt.format(Date(to))}", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
         Row {
             Text(rs(r.totalCost), style = heroStyle(), modifier = Modifier.alignByBaseline())
             Spacer(Modifier.width(10.dp))
-            Text("${r.totalKwh.roundToInt()} kWh", style = MaterialTheme.typography.bodyLarge, color = Wt.Muted, modifier = Modifier.alignByBaseline())
+            Text("${r.totalKwh.roundToInt()} kWh", style = MaterialTheme.typography.bodyLarge, color = VoltaColors.Muted, modifier = Modifier.alignByBaseline())
         }
         val total = r.totalKwh
         if (total > 0.5) {
@@ -276,7 +290,7 @@ private fun HeroCard(r: EnergyReport, from: Long, to: Long, key: Any, modifier: 
             Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
                 if (km != null && perKm != null) Stat("₹%.2f".format(perKm), "per km · ${km.roundToInt()} km")
                 Stat("₹%.1f".format(r.totalCost / total), "per kWh")
-                Stat("${((r.kwh[ChargeCategory.HOME] ?: 0.0) / total * 100).roundToInt()} %", "charged at home", Wt.Green)
+                Stat("${((r.kwh[ChargeCategory.HOME] ?: 0.0) / total * 100).roundToInt()} %", "charged at home", VoltaColors.Green)
             }
         }
         // The split only earns its place once more than one kind of charging has happened.
@@ -288,10 +302,10 @@ private fun HeroCard(r: EnergyReport, from: Long, to: Long, key: Any, modifier: 
                     Column(Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(Modifier.size(8.dp).clip(CircleShape).background(color(c)))
-                            Text(" ${c.label}", style = MaterialTheme.typography.bodySmall, color = Wt.Muted)
+                            Text(" ${c.label}", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
                         }
                         Text("%.1f kWh".format(r.kwh[c] ?: 0.0), style = MaterialTheme.typography.titleSmall.tabular())
-                        Text(rs(if (c == ChargeCategory.HOME) r.homeCost else r.publicCost[c] ?: 0.0), style = MaterialTheme.typography.bodySmall.tabular(), color = Wt.Dim)
+                        Text(rs(if (c == ChargeCategory.HOME) r.homeCost else r.publicCost[c] ?: 0.0), style = MaterialTheme.typography.bodySmall.tabular(), color = VoltaColors.Dim)
                     }
                 }
             }
@@ -300,10 +314,10 @@ private fun HeroCard(r: EnergyReport, from: Long, to: Long, key: Any, modifier: 
 }
 
 @Composable
-private fun Stat(value: String, label: String, color: Color = Wt.Text) {
+private fun Stat(value: String, label: String, color: Color = VoltaColors.Text) {
     Column {
         Text(value, style = statStyle(), color = color)
-        Text(label, style = MaterialTheme.typography.bodySmall, color = Wt.Muted)
+        Text(label, style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
     }
 }
 
@@ -317,34 +331,46 @@ private fun BillCard(r: EnergyReport, state: EnergyUiState, onSettings: () -> Un
     // "So far" is only meaningful when the period is the bill cycle itself: the household's share of the cycle
     // elapsed (an estimate from Settings) plus the car's actual units in the period.
     val used: Double? = if (state.period == Period.Cycle && state.from > 0) {
-        val end = Calendar.getInstance().apply { timeInMillis = state.from; add(Calendar.MONTH, t.billingMonths) }.timeInMillis
+        val end = Calendar.getInstance().apply {
+            timeInMillis = state.from
+            add(Calendar.MONTH, t.billingMonths)
+        }.timeInMillis
         val elapsed = ((state.to - state.from).toDouble() / (end - state.from).coerceAtLeast(1)).coerceIn(0.0, 1.0)
         (state.energy.householdUnitsPerCycle * elapsed + r.homeUnits).coerceAtMost(projected)
-    } else null
+    } else {
+        null
+    }
     val over = projected > limit
     val year = Calendar.getInstance().get(Calendar.YEAR).toString()
-    WtCard(modifier.fillMaxWidth(), radius = 22.dp, padding = PaddingValues(18.dp)) {
+    VoltaCard(modifier.fillMaxWidth(), radius = 22.dp, padding = PaddingValues(18.dp)) {
         Row {
-            Text("KSEB bill · ${t.billingMonths}-month cycle", style = MaterialTheme.typography.bodySmall, color = Wt.Muted, modifier = Modifier.weight(1f).alignByBaseline())
+            Text("KSEB bill · ${t.billingMonths}-month cycle", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted, modifier = Modifier.weight(1f).alignByBaseline())
             Text(
                 t.verifiedOn?.let { "rates ${it.removeSuffix(" $year")}" } ?: "sample rates",
-                style = MaterialTheme.typography.labelSmall, color = if (t.verifiedOn == null) Wt.Amber else Wt.Dim,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (t.verifiedOn == null) VoltaColors.Amber else VoltaColors.Dim,
                 modifier = Modifier.alignByBaseline().clickable(role = Role.Button, onClickLabel = "Check the rates", onClick = onSettings),
             )
         }
         Row {
             Text(rs(r.billWithEv), style = billStyle(), modifier = Modifier.alignByBaseline())
             Spacer(Modifier.width(10.dp))
-            Text("the car adds ${rs(r.billWithEv - r.billWithoutEv)}", style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp).tabular(), color = Wt.AmberText,
-                modifier = Modifier.alignByBaseline())
+            Text(
+                "the car adds ${rs(r.billWithEv - r.billWithoutEv)}",
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp).tabular(),
+                color = VoltaColors.AmberText,
+                modifier = Modifier.alignByBaseline(),
+            )
         }
         SlabGauge(used, projected, limit, state.period, Modifier.padding(top = 6.dp))
         Row {
             Text(
                 used?.let { "${it.roundToInt()} used · ${projected.roundToInt()} projected" } ?: "${projected.roundToInt()} projected for the cycle",
-                style = MaterialTheme.typography.labelSmall.tabular(), color = Wt.Muted, modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.labelSmall.tabular(),
+                color = VoltaColors.Muted,
+                modifier = Modifier.weight(1f),
             )
-            Text(if (over) "past the ${limit.roundToInt()} limit" else "${limit.roundToInt()} before the slab jumps", style = MaterialTheme.typography.labelSmall.tabular(), color = Wt.AmberText)
+            Text(if (over) "past the ${limit.roundToInt()} limit" else "${limit.roundToInt()} before the slab jumps", style = MaterialTheme.typography.labelSmall.tabular(), color = VoltaColors.AmberText)
         }
         // Rate once the whole cycle is re-billed at the flat (non-telescopic) band just above the limit, duty included.
         val flatRate = t.nonTelescopic.first { t.telescopicLimit < it.first }.second * (1 + t.dutyPercent / 100) + t.fuelSurchargePerUnit
@@ -353,21 +379,27 @@ private fun BillCard(r: EnergyReport, state: EnergyUiState, onSettings: () -> Un
         when {
             r.crossesLimit -> Text(
                 "The car pushes this cycle past ${limit.roundToInt()} units, so every unit is billed at the higher flat rate, about ${rs(flatRate)} each.",
-                style = MaterialTheme.typography.bodyMedium, color = Wt.AmberText,
-                modifier = Modifier.padding(top = 4.dp).fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(Wt.tint(Wt.Amber, 0.08f)).padding(10.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = VoltaColors.AmberText,
+                modifier = Modifier.padding(top = 4.dp).fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(VoltaColors.tint(VoltaColors.Amber, 0.08f)).padding(10.dp),
             )
+
             over -> Text(
                 "This cycle is past ${limit.roundToInt()} units even without the car, so every unit is billed at the flat rate, about ${rs(flatRate)} each.",
-                style = MaterialTheme.typography.bodyMedium, color = Wt.AmberText,
-                modifier = Modifier.padding(top = 4.dp).fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(Wt.tint(Wt.Amber, 0.08f)).padding(10.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = VoltaColors.AmberText,
+                modifier = Modifier.padding(top = 4.dp).fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(VoltaColors.tint(VoltaColors.Amber, 0.08f)).padding(10.dp),
             )
+
             headroomKm >= 1 -> Text(
                 buildAnnotatedString {
                     append("Room for about ")
-                    withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = Wt.Text)) { append("${(headroomKm / 10).roundToInt() * 10} km") }
+                    withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = VoltaColors.Text)) { append("${(headroomKm / 10).roundToInt() * 10} km") }
                     append(" more of home charging this cycle. Past the limit, every unit is re-rated at about ${rs(flatRate)}.")
                 },
-                style = MaterialTheme.typography.bodyMedium, color = Wt.TextSoft, modifier = Modifier.padding(top = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = VoltaColors.TextSoft,
+                modifier = Modifier.padding(top = 4.dp),
             )
         }
     }
@@ -378,14 +410,14 @@ private fun BillCard(r: EnergyReport, state: EnergyUiState, onSettings: () -> Un
 private fun SlabGauge(used: Double?, projected: Double, limit: Double, key: Any, modifier: Modifier) {
     val reduced = LocalReducedMotion.current
     val grow = remember(key) { Animatable(if (reduced) 1f else 0f) }
-    LaunchedEffect(key) { if (!reduced) grow.animateTo(1f, tween(900, easing = WtMotion.EaseOut)) }
+    LaunchedEffect(key) { if (!reduced) grow.animateTo(1f, tween(900, easing = VoltaMotion.EaseOut)) }
     val scale = limit * 1.25
     Canvas(modifier.fillMaxWidth().height(10.dp)) {
         val h = size.height
         val w = size.width
         fun px(v: Double) = (w * (v / scale).coerceIn(0.0, 1.0)).toFloat() * grow.value
-        drawRoundRect(Wt.Border, Offset.Zero, Size(w, h), CornerRadius(h / 2))
-        val fill = if (projected > limit) Wt.Amber else Wt.Green
+        drawRoundRect(VoltaColors.Border, Offset.Zero, Size(w, h), CornerRadius(h / 2))
+        val fill = if (projected > limit) VoltaColors.Amber else VoltaColors.Green
         val solidEnd = px(used ?: projected)
         val projEnd = px(projected)
         if (solidEnd > 1f) drawRoundRect(fill, Offset.Zero, Size(solidEnd, h), CornerRadius(h / 2))
@@ -394,11 +426,14 @@ private fun SlabGauge(used: Double?, projected: Double, limit: Double, key: Any,
             val step = 6.dp.toPx()
             clipRect(solidEnd, 0f, projEnd, h) {
                 var x = solidEnd
-                while (x < projEnd) { drawRect(fill.copy(alpha = 0.45f), Offset(x, 0f), Size(stripe, h)); x += step }
+                while (x < projEnd) {
+                    drawRect(fill.copy(alpha = 0.45f), Offset(x, 0f), Size(stripe, h))
+                    x += step
+                }
             }
         }
         val tick = (w * (limit / scale)).toFloat()
-        drawLine(Wt.Gold, Offset(tick, -5.dp.toPx()), Offset(tick, h + 5.dp.toPx()), 2.dp.toPx(), StrokeCap.Round)
+        drawLine(VoltaColors.Gold, Offset(tick, -5.dp.toPx()), Offset(tick, h + 5.dp.toPx()), 2.dp.toPx(), StrokeCap.Round)
     }
 }
 
@@ -407,28 +442,28 @@ private fun SlabGauge(used: Double?, projected: Double, limit: Double, key: Any,
 private fun MonthChart(months: List<MonthBar>, modifier: Modifier) {
     if (months.none { it.totalKwh >= 0.1 }) return
     val max = months.maxOf { it.cost }.coerceAtLeast(1.0)
-    WtCard(modifier.fillMaxWidth(), radius = 22.dp, padding = PaddingValues(horizontal = 18.dp, vertical = 16.dp)) {
+    VoltaCard(modifier.fillMaxWidth(), radius = 22.dp, padding = PaddingValues(horizontal = 18.dp, vertical = 16.dp)) {
         Row {
             Text("By month", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f).alignByBaseline())
-            Text("₹ · kWh", style = MaterialTheme.typography.bodySmall, color = Wt.Muted, modifier = Modifier.alignByBaseline())
+            Text("₹ · kWh", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted, modifier = Modifier.alignByBaseline())
         }
         Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Bottom) {
             months.forEach { m ->
                 val on = m.current
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (m.totalKwh >= 0.1) Text(rs(m.cost), style = MaterialTheme.typography.labelMedium.tabular(), color = if (on) Wt.Text else Wt.Muted)
+                    if (m.totalKwh >= 0.1) Text(rs(m.cost), style = MaterialTheme.typography.labelMedium.tabular(), color = if (on) VoltaColors.Text else VoltaColors.Muted)
                     Box(
                         Modifier.fillMaxWidth().padding(top = 6.dp).height((84 * (m.cost / max)).dp.coerceAtLeast(3.dp))
-                            .clip(RoundedCornerShape(8.dp)).background(if (on) Wt.Green else Wt.Border),
+                            .clip(RoundedCornerShape(8.dp)).background(if (on) VoltaColors.Green else VoltaColors.Border),
                     )
-                    Text(m.label, style = MaterialTheme.typography.labelMedium, color = if (on) Wt.Text else Wt.Muted, modifier = Modifier.padding(top = 8.dp))
-                    Text("${m.totalKwh.roundToInt()} kWh", style = MaterialTheme.typography.labelSmall.tabular(), color = Wt.Dim)
+                    Text(m.label, style = MaterialTheme.typography.labelMedium, color = if (on) VoltaColors.Text else VoltaColors.Muted, modifier = Modifier.padding(top = 8.dp))
+                    Text("${m.totalKwh.roundToInt()} kWh", style = MaterialTheme.typography.labelSmall.tabular(), color = VoltaColors.Dim)
                 }
             }
             // Bars stay narrow while the log is young instead of stretching two months across the card.
             repeat((5 - months.size).coerceAtLeast(0)) { Spacer(Modifier.weight(1f)) }
         }
-        Text("Starts from your first logged month.", style = MaterialTheme.typography.bodySmall, color = Wt.Dim)
+        Text("Starts from your first logged month.", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Dim)
     }
 }
 
@@ -450,19 +485,22 @@ private fun SessionRow(s: ChargeSessionEntity, r: EnergyReport, state: EnergyUiS
         Modifier.fillMaxWidth()
             .combinedClickable(role = Role.Button, onClickLabel = "Change type", onLongClickLabel = "Change type", onLongClick = onEdit, onClick = onEdit)
             .padding(horizontal = 16.dp, vertical = 13.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(Modifier.size(10.dp).clip(CircleShape).background(color(cat)))
         Column(Modifier.weight(1f)) {
             Text(
                 "${s.placeName ?: cat.label} · ${dayFmt.format(Date(s.startedAt))}" + if (end == null) " · charging now" else "",
-                style = rowTitle(), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                style = rowTitle(),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
-            Text(detail, style = rowSub().tabular(), color = Wt.Muted, maxLines = 1, modifier = Modifier.padding(top = 2.dp))
+            Text(detail, style = rowSub().tabular(), color = VoltaColors.Muted, maxLines = 1, modifier = Modifier.padding(top = 2.dp))
         }
         Column(horizontalAlignment = Alignment.End) {
             Text(rs(cost), style = rowTitle().tabular())
-            Text("%.1f kWh".format(kwh), style = rowSub().tabular(), color = Wt.Muted)
+            Text("%.1f kWh".format(kwh), style = rowSub().tabular(), color = VoltaColors.Muted)
         }
     }
 }
@@ -473,12 +511,12 @@ private fun TinyRow(item: SessionItem.Tiny, r: EnergyReport, state: EnergyUiStat
     val kwh = item.sessions.sumOf { kwhOf(it, state.capacityKwh) }
     val cost = item.sessions.sumOf { costOf(it, kwhOf(it, state.capacityKwh), r, state.energy) }
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 13.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Box(Modifier.size(10.dp).clip(CircleShape).background(Wt.BorderStrong))
+        Box(Modifier.size(10.dp).clip(CircleShape).background(VoltaColors.BorderStrong))
         Column(Modifier.weight(1f)) {
-            Text("${item.sessions.size} tiny top-ups · ${dayFmt.format(Date(item.day))}", style = rowTitle(), color = Wt.TextSoft, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text("%.1f kWh together · plugged in, hardly charged".format(kwh), style = rowSub().tabular(), color = Wt.Muted, maxLines = 1, modifier = Modifier.padding(top = 2.dp))
+            Text("${item.sessions.size} tiny top-ups · ${dayFmt.format(Date(item.day))}", style = rowTitle(), color = VoltaColors.TextSoft, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text("%.1f kWh together · plugged in, hardly charged".format(kwh), style = rowSub().tabular(), color = VoltaColors.Muted, maxLines = 1, modifier = Modifier.padding(top = 2.dp))
         }
-        Text(rs(cost), style = rowTitle().tabular(), color = Wt.Muted)
+        Text(rs(cost), style = rowTitle().tabular(), color = VoltaColors.Muted)
     }
 }
 
@@ -486,26 +524,26 @@ private fun TinyRow(item: SessionItem.Tiny, r: EnergyReport, state: EnergyUiStat
 private fun CategoryDialog(s: ChargeSessionEntity, onDismiss: () -> Unit, onPick: (ChargeCategory) -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Wt.Surface,
+        containerColor = VoltaColors.Surface,
         title = { Text("Where was this charge?", style = MaterialTheme.typography.titleMedium) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ChargeCategory.entries.forEach { c ->
                     val on = s.category == c.name
                     Row(
-                        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(if (on) Wt.tint(color(c), 0.14f) else Wt.SurfaceHigh)
-                            .border(1.dp, if (on) Wt.tint(color(c), 0.5f) else Wt.Border, RoundedCornerShape(12.dp))
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(if (on) VoltaColors.tint(color(c), 0.14f) else VoltaColors.SurfaceHigh)
+                            .border(1.dp, if (on) VoltaColors.tint(color(c), 0.5f) else VoltaColors.Border, RoundedCornerShape(12.dp))
                             .clickable { onPick(c) }.padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(icon(c), null, tint = color(c), modifier = Modifier.size(18.dp))
                         Text("  ${c.label}", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-                        if (on) Icon(WtIcons.Check, null, tint = color(c), modifier = Modifier.size(16.dp))
+                        if (on) Icon(VoltaIcons.Check, null, tint = color(c), modifier = Modifier.size(16.dp))
                     }
                 }
             }
         },
-        confirmButton = { TextButton(onDismiss) { Text("Close", color = Wt.Muted) } },
+        confirmButton = { TextButton(onDismiss) { Text("Close", color = VoltaColors.Muted) } },
     )
 }
 
@@ -513,10 +551,10 @@ private fun CategoryDialog(s: ChargeSessionEntity, onDismiss: () -> Unit, onPick
 private fun SplitBar(kwh: Map<ChargeCategory, Double>, key: Any, modifier: Modifier) {
     val reduced = LocalReducedMotion.current
     val grow = remember(key) { Animatable(if (reduced) 1f else 0f) }
-    LaunchedEffect(key) { if (!reduced) grow.animateTo(1f, tween(900, easing = WtMotion.EaseOut)) }
+    LaunchedEffect(key) { if (!reduced) grow.animateTo(1f, tween(900, easing = VoltaMotion.EaseOut)) }
     val total = kwh.values.sum().takeIf { it > 0 } ?: 1.0
     Canvas(modifier.fillMaxWidth().height(10.dp)) {
-        drawRoundRect(Wt.Border, cornerRadius = CornerRadius(5.dp.toPx()))
+        drawRoundRect(VoltaColors.Border, cornerRadius = CornerRadius(5.dp.toPx()))
         var x = 0f
         val gap = 2.dp.toPx()
         ChargeCategory.entries.forEach { c ->

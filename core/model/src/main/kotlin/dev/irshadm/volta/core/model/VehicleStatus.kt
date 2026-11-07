@@ -67,15 +67,23 @@ data class WindowStatus(
 ) {
     val anyOpen: Boolean get() = frontRightOpen || frontLeftOpen || rearLeftOpen || rearRightOpen || sunroofOpen
     val openNames: List<String> get() = listOfNotNull(
-        "driver window".takeIf { frontRightOpen }, "passenger window".takeIf { frontLeftOpen },
-        "rear-left window".takeIf { rearLeftOpen }, "rear-right window".takeIf { rearRightOpen }, "sunroof".takeIf { sunroofOpen },
+        "driver window".takeIf { frontRightOpen },
+        "passenger window".takeIf { frontLeftOpen },
+        "rear-left window".takeIf { rearLeftOpen },
+        "rear-right window".takeIf { rearRightOpen },
+        "sunroof".takeIf { sunroofOpen },
     )
 }
 
 @Serializable
 data class LightStatus(val side: Boolean = false, val dipped: Boolean = false, val main: Boolean = false) {
     val anyOn: Boolean get() = side || dipped || main
-    val label: String get() = when { main -> "High beam"; dipped -> "Headlights"; side -> "Parking lights"; else -> "Off" }
+    val label: String get() = when {
+        main -> "High beam"
+        dipped -> "Headlights"
+        side -> "Parking lights"
+        else -> "Off"
+    }
 }
 
 /**
@@ -93,8 +101,12 @@ data class BodyStatus(
 ) {
     val anyOpen: Boolean get() = frontRightOpen || frontLeftOpen || rearLeftOpen || rearRightOpen || bootOpen || bonnetOpen
     val openNames: List<String> get() = listOfNotNull(
-        "driver door".takeIf { frontRightOpen }, "passenger door".takeIf { frontLeftOpen }, "rear-left door".takeIf { rearLeftOpen },
-        "rear-right door".takeIf { rearRightOpen }, "boot".takeIf { bootOpen }, "bonnet".takeIf { bonnetOpen },
+        "driver door".takeIf { frontRightOpen },
+        "passenger door".takeIf { frontLeftOpen },
+        "rear-left door".takeIf { rearLeftOpen },
+        "rear-right door".takeIf { rearRightOpen },
+        "boot".takeIf { bootOpen },
+        "bonnet".takeIf { bonnetOpen },
     )
 }
 

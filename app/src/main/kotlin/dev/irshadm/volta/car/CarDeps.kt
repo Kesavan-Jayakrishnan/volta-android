@@ -1,6 +1,11 @@
 package dev.irshadm.volta.car
 
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.irshadm.volta.core.model.TripSettings
+import dev.irshadm.volta.core.model.VehicleProfile
+import dev.irshadm.volta.core.model.VehicleStatus
+import dev.irshadm.volta.core.planner.PlanOutcome
 import dev.irshadm.volta.data.SettingsRepository
 import dev.irshadm.volta.data.ismart.IsmartRepository
 import dev.irshadm.volta.data.ismart.LinkState
@@ -10,11 +15,6 @@ import dev.irshadm.volta.data.trip.ActiveTrip
 import dev.irshadm.volta.data.trip.LocationProvider
 import dev.irshadm.volta.data.trip.TripRepository
 import dev.irshadm.volta.service.Alerts
-import dev.irshadm.volta.core.model.TripSettings
-import dev.irshadm.volta.core.model.VehicleProfile
-import dev.irshadm.volta.core.model.VehicleStatus
-import dev.irshadm.volta.core.planner.PlanOutcome
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

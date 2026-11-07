@@ -82,13 +82,7 @@ Icons are from [Lucide](https://lucide.dev). Full licence texts are in [NOTICE.m
 
 ## Licence
 
-[PolyForm Noncommercial 1.0.0](LICENSE.md). In short:
-
-- **Free for personal and other noncommercial use**: use it, change it, build on it, share it.
-- **Commercial use needs permission.** That includes selling the app or a modified version, or using the code in a
-  paid app or service. Open an issue or get in touch to ask.
-
-Because commercial use is restricted, this is *source-available* software rather than open source in the
-OSI sense. Third-party code and icons keep their own licences; see [NOTICE.md](NOTICE.md).
+[Apache License 2.0](LICENSE). Use it, change it, share it or build on it, commercially or not, as long as you keep
+the licence and notices. Third-party code and icons keep their own licences; see [NOTICE.md](NOTICE.md).
 
 Contributions are welcome under the terms in [CONTRIBUTING.md](CONTRIBUTING.md).

@@ -10,12 +10,12 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.net.Uri
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.car.app.CarContext
 import androidx.car.app.model.CarColor
 import androidx.car.app.notification.CarAppExtender
 import androidx.car.app.notification.CarPendingIntent
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import dev.irshadm.volta.MainActivity
 import dev.irshadm.volta.R
@@ -39,6 +39,7 @@ object Notifications {
     const val CHANNEL_URGENT = "act_v2"
     const val CHANNEL_QUIET = "health"
     const val CHANNEL_PRECOOL = "precool"
+
     /** Channels from before the sounds; removed so they don't linger in settings. */
     private val OLD_CHANNELS = listOf("alerts", "urgent")
 
@@ -61,29 +62,41 @@ object Notifications {
     fun createChannels(context: Context) {
         val nm = context.getSystemService(NotificationManager::class.java)
         OLD_CHANNELS.forEach { nm.deleteNotificationChannel(it) }
-        nm.createNotificationChannel(NotificationChannel(CHANNEL_TRIP, "Live trip", NotificationManager.IMPORTANCE_LOW).apply {
-            description = "Ongoing trip tracking: battery against the plan"
-        })
-        nm.createNotificationChannel(NotificationChannel(CHANNEL_URGENT, "Act now", NotificationManager.IMPORTANCE_HIGH).apply {
-            description = "Car moved without you, left unlocked or open, or the next charger is out of reach"
-            setSound(sound(context, R.raw.alert_act), audio)
-            enableVibration(true)
-        })
-        nm.createNotificationChannel(NotificationChannel(CHANNEL_ALERTS, "Car & trip alerts", NotificationManager.IMPORTANCE_HIGH).apply {
-            description = "Falling behind plan, plugs taken at your next stop, charging done, tyres"
-            setSound(sound(context, R.raw.alert_check), audio)
-        })
-        nm.createNotificationChannel(NotificationChannel(CHANNEL_PRECOOL, "Smart pre-cool", NotificationManager.IMPORTANCE_HIGH).apply {
-            description = "Cool the cabin before you get in, and the cooling progress"
-            setSound(sound(context, R.raw.alert_check), audio)
-        })
-        nm.createNotificationChannel(NotificationChannel(CHANNEL_QUIET, "Tips and trends", NotificationManager.IMPORTANCE_LOW).apply {
-            description = "Battery-care tips, slow tyre pressure loss, a weakening 12 V battery (silent)"
-        })
+        nm.createNotificationChannel(
+            NotificationChannel(CHANNEL_TRIP, "Live trip", NotificationManager.IMPORTANCE_LOW).apply {
+                description = "Ongoing trip tracking: battery against the plan"
+            },
+        )
+        nm.createNotificationChannel(
+            NotificationChannel(CHANNEL_URGENT, "Act now", NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "Car moved without you, left unlocked or open, or the next charger is out of reach"
+                setSound(sound(context, R.raw.alert_act), audio)
+                enableVibration(true)
+            },
+        )
+        nm.createNotificationChannel(
+            NotificationChannel(CHANNEL_ALERTS, "Car & trip alerts", NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "Falling behind plan, plugs taken at your next stop, charging done, tyres"
+                setSound(sound(context, R.raw.alert_check), audio)
+            },
+        )
+        nm.createNotificationChannel(
+            NotificationChannel(CHANNEL_PRECOOL, "Smart pre-cool", NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "Cool the cabin before you get in, and the cooling progress"
+                setSound(sound(context, R.raw.alert_check), audio)
+            },
+        )
+        nm.createNotificationChannel(
+            NotificationChannel(CHANNEL_QUIET, "Tips and trends", NotificationManager.IMPORTANCE_LOW).apply {
+                description = "Battery-care tips, slow tyre pressure loss, a weakening 12 V battery (silent)"
+            },
+        )
     }
 
     fun openApp(context: Context): PendingIntent = PendingIntent.getActivity(
-        context, 0, Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+        context,
+        0,
+        Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
 
@@ -96,7 +109,8 @@ object Notifications {
     fun navigate(context: Context, label: String, to: LatLng): Action {
         val code = (to.lat * 1e5).toInt() xor (to.lng * 1e5).toInt()
         val phone = PendingIntent.getActivity(
-            context, code,
+            context,
+            code,
             Intent(Intent.ACTION_VIEW, Uri.parse("google.navigation:q=${to.lat},${to.lng}")).setPackage("com.google.android.apps.maps").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )

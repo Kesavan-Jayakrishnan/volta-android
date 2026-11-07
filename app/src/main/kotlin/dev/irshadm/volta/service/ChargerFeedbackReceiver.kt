@@ -9,12 +9,12 @@ import android.content.pm.PackageManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import dev.irshadm.volta.data.maps.ChargeVerdict
-import dev.irshadm.volta.data.maps.ChargerFeedback
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import dev.irshadm.volta.data.maps.ChargeVerdict
+import dev.irshadm.volta.data.maps.ChargerFeedback
 
 /**
  * "How was <charger>?" after you leave a stop on a live trip: Worked / Had to wait / Broken, one tap each,
@@ -23,7 +23,9 @@ import dagger.hilt.components.SingletonComponent
 class ChargerFeedbackReceiver : BroadcastReceiver() {
     @EntryPoint
     @InstallIn(SingletonComponent::class)
-    interface Deps { fun chargerFeedback(): ChargerFeedback }
+    interface Deps {
+        fun chargerFeedback(): ChargerFeedback
+    }
 
     override fun onReceive(context: Context, intent: Intent) {
         val id = intent.getStringExtra(EXTRA_ID) ?: return
@@ -48,7 +50,8 @@ class ChargerFeedbackReceiver : BroadcastReceiver() {
                 .setContentIntent(Notifications.openApp(context))
             ChargeVerdict.entries.forEachIndexed { i, v ->
                 val pi = PendingIntent.getBroadcast(
-                    context, notificationId * 4 + i,
+                    context,
+                    notificationId * 4 + i,
                     Intent(context, ChargerFeedbackReceiver::class.java).putExtra(EXTRA_ID, chargerId).putExtra(EXTRA_VERDICT, v.name).putExtra(EXTRA_NOTIFICATION, notificationId),
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                 )

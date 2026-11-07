@@ -1,6 +1,9 @@
 # Notices
 
-Volta is licensed under the PolyForm Noncommercial License 1.0.0 (see [LICENSE.md](LICENSE.md)).
+Volta
+Copyright 2026 Irshad
+
+Licensed under the Apache License, Version 2.0 (see [LICENSE](LICENSE)).
 It includes or is derived from the following work, under their own licences.
 
 ## mg-ismart-india-client
@@ -31,7 +34,7 @@ SOFTWARE.
 
 ## Lucide icons
 
-The app's icons in `core/designsystem/.../WtIcons.kt` are from Lucide, https://lucide.dev, used under the
+The app's icons in `core/designsystem/.../VoltaIcons.kt` are from Lucide, https://lucide.dev, used under the
 ISC licence:
 
 ISC License
@@ -78,3 +81,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
+## Car pictures
+
+The car pictures in `app/src/main/res/drawable-nodpi` (`car_*`, `car360_*`, `cartop_*` and `model_*`) were generated
+with Google Gemini, then cut out and aligned for the app. They are illustrations, not photographs from MG or SAIC. The car designs
+and any badges shown belong to their owners, and those rights aren't covered by Volta's licence.

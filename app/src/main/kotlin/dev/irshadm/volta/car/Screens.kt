@@ -18,8 +18,8 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import dev.irshadm.volta.car.CarUi.perform
-import dev.irshadm.volta.data.maps.ChargeVerdict
 import dev.irshadm.volta.core.planner.LatLng
+import dev.irshadm.volta.data.maps.ChargeVerdict
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -29,7 +29,10 @@ import kotlinx.coroutines.launch
 private fun <T> Screen.follow(source: Flow<T>, onEach: (T) -> Unit) {
     lifecycleScope.launch {
         repeatOnLifecycle(Lifecycle.State.STARTED) {
-            source.distinctUntilChanged().collect { onEach(it); invalidate() }
+            source.distinctUntilChanged().collect {
+                onEach(it)
+                invalidate()
+            }
         }
     }
 }
@@ -112,10 +115,14 @@ class ChargerProblemScreen(carContext: CarContext, private val deps: CarDeps, pr
             screenManager.pop()
         }
         val list = ItemList.Builder()
-            .addItem(Row.Builder().setTitle("Had to wait").addText("All plugs were busy when you arrived")
-                .setOnClickListener { report(ChargeVerdict.Waited, "Noted. Volta will plan more time here next time.") }.build())
-            .addItem(Row.Builder().setTitle("Charger broken").addText("I'll drop it and re-plan the rest from here")
-                .setOnClickListener { report(ChargeVerdict.Broken, "Noted. Planning the rest without it…") }.build())
+            .addItem(
+                Row.Builder().setTitle("Had to wait").addText("All plugs were busy when you arrived")
+                    .setOnClickListener { report(ChargeVerdict.Waited, "Noted. Volta will plan more time here next time.") }.build(),
+            )
+            .addItem(
+                Row.Builder().setTitle("Charger broken").addText("I'll drop it and re-plan the rest from here")
+                    .setOnClickListener { report(ChargeVerdict.Broken, "Noted. Planning the rest without it…") }.build(),
+            )
             .build()
         return ListTemplate.Builder().setTitle("What went wrong?").setHeaderAction(Action.BACK).setSingleList(list).build()
     }
@@ -133,7 +140,9 @@ class ChargersScreen(carContext: CarContext, private val deps: CarDeps) : Screen
 
     init {
         lifecycle.addObserver(object : DefaultLifecycleObserver {
-            override fun onStart(owner: LifecycleOwner) { if (rows.isEmpty()) load() }
+            override fun onStart(owner: LifecycleOwner) {
+                if (rows.isEmpty()) load()
+            }
         })
     }
 
@@ -173,5 +182,7 @@ class ChargersScreen(carContext: CarContext, private val deps: CarDeps) : Screen
         return b.setItemList(list.build()).build()
     }
 
-    private companion object { const val RADIUS_M = 25_000.0 }
+    private companion object {
+        const val RADIUS_M = 25_000.0
+    }
 }

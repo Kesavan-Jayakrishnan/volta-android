@@ -9,8 +9,7 @@ import kotlin.test.assertEquals
 
 class ObserveStartDestinationUseCaseTest {
 
-    private suspend fun start(account: Account, keyStepDone: Boolean) =
-        ObserveStartDestinationUseCase(FakeAccountRepository(account), FakeSetupRepository(keyStepDone))().first()
+    private suspend fun start(account: Account, keyStepDone: Boolean) = ObserveStartDestinationUseCase(FakeAccountRepository(account), FakeSetupRepository(keyStepDone))().first()
 
     @Test fun `signed out always starts at sign-in`() = runTest {
         assertEquals(StartDestination.SignIn, start(Account.SignedOut, keyStepDone = false))

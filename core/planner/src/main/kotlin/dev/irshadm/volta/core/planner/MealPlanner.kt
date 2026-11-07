@@ -71,19 +71,21 @@ class MealPlanner(
         return departMin + driveMinutesTo(points, distanceM, scale) + stopsBefore
     }
 
-    private fun stops(p: TripPlan) = when (val o = p.outcome) { is PlanOutcome.Ok -> o.stops; is PlanOutcome.Unreachable -> o.stops }
+    private fun stops(p: TripPlan) = when (val o = p.outcome) {
+        is PlanOutcome.Ok -> o.stops
+        is PlanOutcome.Unreachable -> o.stops
+    }
 
     /**
      * Meal windows you'd be driving through (today's and tomorrow's, as absolute clock minutes). A window counts only
      * if you leave before it opens — leaving inside or after it means you've eaten — and the meal would fall at least
      * 30 min after leaving and 20 min before arriving (otherwise eat before you leave / after you arrive).
      */
-    private fun windowsDuring(departMin: Int, arriveClock: Double): List<Pair<Meal, ClosedFloatingPointRange<Double>>> =
-        listOf(0, 1440).flatMap { off -> rules.windows.map { (m, w) -> m to (w.first + off).toDouble()..(w.last + off).toDouble() } }
-            .filter { (_, w) ->
-                val mealClock = maxOf(w.start, departMin + 30.0)
-                departMin < w.start && mealClock <= w.endInclusive && mealClock <= arriveClock - 20
-            }
+    private fun windowsDuring(departMin: Int, arriveClock: Double): List<Pair<Meal, ClosedFloatingPointRange<Double>>> = listOf(0, 1440).flatMap { off -> rules.windows.map { (m, w) -> m to (w.first + off).toDouble()..(w.last + off).toDouble() } }
+        .filter { (_, w) ->
+            val mealClock = maxOf(w.start, departMin + 30.0)
+            departMin < w.start && mealClock <= w.endInclusive && mealClock <= arriveClock - 20
+        }
 
     /** At night, a charger must be right on the road and not known to close. */
     private fun nightOk(c: Charger) = c.detourM <= rules.nightMaxDetourM && c.open24h != false
@@ -109,8 +111,9 @@ class MealPlanner(
         fun usedTo(m: Double): Double {
             var u = 0.0
             for (i in 1 until t.size) {
-                val a = t[i - 1]; val b = t[i]
-                if (b.distanceM - a.distanceM < 1.0) continue                     // a charge, not driving
+                val a = t[i - 1]
+                val b = t[i]
+                if (b.distanceM - a.distanceM < 1.0) continue // a charge, not driving
                 if (a.distanceM >= m) break
                 val f = ((minOf(b.distanceM, m) - a.distanceM) / (b.distanceM - a.distanceM)).coerceIn(0.0, 1.0)
                 u += (a.socPercent - b.socPercent) * f
@@ -128,7 +131,14 @@ class MealPlanner(
         val trace = plan.socTrace.mapNotNull { p ->
             when {
                 p.distanceM < d - 1 -> p
-                kotlin.math.abs(p.distanceM - d) <= 1 -> if (!jumped) { jumped = true; p.copy(socPercent = s.arriveSoc) } else null
+
+                kotlin.math.abs(p.distanceM - d) <= 1 -> if (!jumped) {
+                    jumped = true
+                    p.copy(socPercent = s.arriveSoc)
+                } else {
+                    null
+                }
+
                 else -> p.copy(socPercent = p.socPercent - gain)
             }
         }
@@ -145,8 +155,12 @@ class MealPlanner(
     }
 
     fun plan(
-        points: List<ProfilePoint>, startSoc: Double, chargers: List<Charger>, driveMinutes: Double, departMin: Int,
-        food: Map<Pair<String, Meal>, String?> = emptyMap(),   // (charger id, meal) → a restaurant nearby serving it (null = none)
+        points: List<ProfilePoint>,
+        startSoc: Double,
+        chargers: List<Charger>,
+        driveMinutes: Double,
+        departMin: Int,
+        food: Map<Pair<String, Meal>, String?> = emptyMap(), // (charger id, meal) → a restaurant nearby serving it (null = none)
         base: TripPlan? = null,
         choices: MealChoices = MealChoices(),
     ): TimedPlan {
@@ -162,8 +176,12 @@ class MealPlanner(
         var usable = chargers
         if (pool.size < chargers.size) {
             val p = planner.plan(points, startSoc, pool, driveMinutes)
-            if (p.outcome is PlanOutcome.Ok) { plan = p; usable = pool }
-            else notes += "No on-road charger works for the night part — charge more before you leave, or use the stops below (some may be off the main road)."
+            if (p.outcome is PlanOutcome.Ok) {
+                plan = p
+                usable = pool
+            } else {
+                notes += "No on-road charger works for the night part — charge more before you leave, or use the stops below (some may be off the main road)."
+            }
         }
         if (plan.outcome !is PlanOutcome.Ok) return TimedPlan(plan, notes)
 
@@ -179,8 +197,10 @@ class MealPlanner(
             if (chosen != null) {
                 val trace = plan.socTrace
                 val existing = stops(plan).firstOrNull { it.charger.id == chosen.id }
-                val arrive = existing?.arriveSoc ?: ((trace.lastOrNull { it.distanceM <= chosen.alongRouteM }?.socPercent ?: startSoc) -
-                    chosen.detourM / 2 / 1000.0 / vehicle.cityKmPerKwh / vehicle.usableCapacityKwh * 100.0)
+                val arrive = existing?.arriveSoc ?: (
+                    (trace.lastOrNull { it.distanceM <= chosen.alongRouteM }?.socPercent ?: startSoc) -
+                        chosen.detourM / 2 / 1000.0 / vehicle.cityKmPerKwh / vehicle.usableCapacityKwh * 100.0
+                    )
                 plan = forceStop(points, plan, startSoc, usable, driveMinutes, chosen, arrive, meal, food[chosen.id to meal])
                 return@repeat
             }
@@ -190,17 +210,21 @@ class MealPlanner(
             val existing = current.firstOrNull { clockAt(points, plan, departMin, it.charger.alongRouteM, scale) in w }
             if (existing != null) {
                 // No restaurant there: eat at the nearest charger that has one, a little outside the window or under the buffer.
-                val moved = if (food[existing.charger.id to meal] != null) null else usable.asSequence()
-                    .filter { c -> food[c.id to meal] != null && c.id != existing.charger.id && rules.foodMoveM >= kotlin.math.abs(c.alongRouteM - existing.charger.alongRouteM) }
-                    .filter { c -> clockAt(points, plan, departMin, c.alongRouteM, scale) in w.widen() }
-                    .sortedBy { c -> kotlin.math.abs(c.alongRouteM - existing.charger.alongRouteM) }
-                    .mapNotNull { c ->
-                        val arrive = existing.arriveSoc - usedBetween(plan, existing.charger.alongRouteM, c.alongRouteM) -
-                            c.detourM / 2 / 1000.0 / vehicle.cityKmPerKwh / vehicle.usableCapacityKwh * 100.0
-                        if (arrive < maxOf(5.0, minCharger - rules.foodSocGrace)) return@mapNotNull null
-                        forceStop(points, withoutStop(plan, existing), startSoc, usable, driveMinutes, c, arrive, meal, food[c.id to meal])
-                            .takeIf { it.outcome is PlanOutcome.Ok }
-                    }.firstOrNull()
+                val moved = if (food[existing.charger.id to meal] != null) {
+                    null
+                } else {
+                    usable.asSequence()
+                        .filter { c -> food[c.id to meal] != null && c.id != existing.charger.id && rules.foodMoveM >= kotlin.math.abs(c.alongRouteM - existing.charger.alongRouteM) }
+                        .filter { c -> clockAt(points, plan, departMin, c.alongRouteM, scale) in w.widen() }
+                        .sortedBy { c -> kotlin.math.abs(c.alongRouteM - existing.charger.alongRouteM) }
+                        .mapNotNull { c ->
+                            val arrive = existing.arriveSoc - usedBetween(plan, existing.charger.alongRouteM, c.alongRouteM) -
+                                c.detourM / 2 / 1000.0 / vehicle.cityKmPerKwh / vehicle.usableCapacityKwh * 100.0
+                            if (arrive < maxOf(5.0, minCharger - rules.foodSocGrace)) return@mapNotNull null
+                            forceStop(points, withoutStop(plan, existing), startSoc, usable, driveMinutes, c, arrive, meal, food[c.id to meal])
+                                .takeIf { it.outcome is PlanOutcome.Ok }
+                        }.firstOrNull()
+                }
                 plan = moved ?: forceStop(points, plan, startSoc, usable, driveMinutes, existing.charger, existing.arriveSoc, meal, food[existing.charger.id to meal])
                 return@repeat
             }
@@ -212,10 +236,14 @@ class MealPlanner(
             val inWindow = usable.filter { c -> clockAt(points, plan, departMin, c.alongRouteM, scale) in w && socAt(c) >= minCharger && free(c) }
                 .sortedWith(compareBy({ food[it.id to meal] == null }, { it.detourM })).firstOrNull()
             // None in the window has food: one with food a little outside it, or reached a little under the buffer.
-            val withFood = if (inWindow != null && food[inWindow.id to meal] != null) null else usable.filter { c ->
-                food[c.id to meal] != null && clockAt(points, plan, departMin, c.alongRouteM, scale) in w.widen() &&
-                    socAt(c) >= maxOf(5.0, minCharger - rules.foodSocGrace) && free(c)
-            }.minByOrNull { it.detourM }
+            val withFood = if (inWindow != null && food[inWindow.id to meal] != null) {
+                null
+            } else {
+                usable.filter { c ->
+                    food[c.id to meal] != null && clockAt(points, plan, departMin, c.alongRouteM, scale) in w.widen() &&
+                        socAt(c) >= maxOf(5.0, minCharger - rules.foodSocGrace) && free(c)
+                }.minByOrNull { it.detourM }
+            }
             val pick = withFood ?: inWindow
             if (pick == null) {
                 notes += "No DC charger around ${meal.label.lowercase()} time on this route — plan a quick food stop on the way."
@@ -229,8 +257,15 @@ class MealPlanner(
 
     /** Keeps [plan]'s stops before [c], stops at [c] for a meal (charging meanwhile), re-plans the rest. */
     private fun forceStop(
-        points: List<ProfilePoint>, plan: TripPlan, startSoc: Double, chargers: List<Charger>, driveMinutes: Double,
-        c: Charger, arriveSoc: Double, meal: Meal, eatery: String?,
+        points: List<ProfilePoint>,
+        plan: TripPlan,
+        startSoc: Double,
+        chargers: List<Charger>,
+        driveMinutes: Double,
+        c: Charger,
+        arriveSoc: Double,
+        meal: Meal,
+        eatery: String?,
     ): TripPlan {
         val d = c.alongRouteM
         val before = stops(plan).filter { it.charger.alongRouteM < d - 1 }

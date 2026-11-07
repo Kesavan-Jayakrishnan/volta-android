@@ -19,7 +19,8 @@ class SignInViewModelTest {
     private val vm = SignInViewModel(accounts)
 
     private fun fill(phone: String = "98000 00012", password: String = "secret12") {
-        vm.onPhoneChange(phone); vm.onPasswordChange(password)
+        vm.onPhoneChange(phone)
+        vm.onPasswordChange(password)
     }
 
     @Test fun `pasted number drops the country code`() {

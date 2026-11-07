@@ -86,6 +86,7 @@ object LoginFrame {
 
     sealed interface Result {
         data class Ok(val session: Session) : Result
+
         /** Definitive server verdict (bad password, unregistered, daily limit). Never retry automatically. */
         data class Rejected(val message: String) : Result
     }

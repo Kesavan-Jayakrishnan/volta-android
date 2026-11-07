@@ -16,8 +16,7 @@ class MealPlannerTest {
     private val meals = MealPlanner(car, settings, ChargerPreferences())
 
     private fun road(km: Double, speed: Double = 60.0) = (0..(km * 5).toInt()).map { ProfilePoint(it * 200.0, 0.0, speed) }
-    private fun charger(id: String, km: Double, detourM: Double = 0.0, open24h: Boolean? = null) =
-        Charger(id, "C$id", LatLng(0.0, km / 111.0), 50.0, alongRouteM = km * 1000, detourM = detourM, open24h = open24h)
+    private fun charger(id: String, km: Double, detourM: Double = 0.0, open24h: Boolean? = null) = Charger(id, "C$id", LatLng(0.0, km / 111.0), 50.0, alongRouteM = km * 1000, detourM = detourM, open24h = open24h)
 
     private fun stops(p: TripPlan) = (p.outcome as PlanOutcome.Ok).stops
 
@@ -29,9 +28,9 @@ class MealPlannerTest {
         val r = meals.plan(points, 90.0, chargers, 180.0, departMin = 6 * 60, food = mapOf(("b" to Meal.Breakfast) to "Udupi Hotel"))
         val meal = stops(r.plan).firstOrNull { it.meal == Meal.Breakfast }
         assertNotNull(meal)
-        assertEquals("b", meal.charger.id)                    // the one with food
+        assertEquals("b", meal.charger.id) // the one with food
         assertEquals("Udupi Hotel", meal.mealPlace)
-        assertTrue(meal.departSoc > meal.arriveSoc)           // charges while eating
+        assertTrue(meal.departSoc > meal.arriveSoc) // charges while eating
     }
 
     @Test

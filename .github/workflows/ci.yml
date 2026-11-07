@@ -20,6 +20,10 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
+      - name: Formatting
+        run: ./gradlew spotlessCheck
+      - name: Static analysis
+        run: ./gradlew detekt
       - name: Unit tests
         run: ./gradlew test
       - name: Debug build

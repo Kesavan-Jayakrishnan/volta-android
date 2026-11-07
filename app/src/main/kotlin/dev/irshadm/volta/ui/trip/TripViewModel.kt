@@ -2,12 +2,12 @@ package dev.irshadm.volta.ui.trip
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.irshadm.volta.data.db.TripEntity
 import dev.irshadm.volta.data.ismart.IsmartRepository
 import dev.irshadm.volta.data.ismart.LinkState
 import dev.irshadm.volta.data.trip.ActiveTrip
 import dev.irshadm.volta.data.trip.TripRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -36,14 +36,29 @@ class TripViewModel @Inject constructor(
     drives: dev.irshadm.volta.data.trip.DriveLogger,
     settings: dev.irshadm.volta.data.SettingsRepository,
 ) : ViewModel() {
-    init { viewModelScope.launch { runCatching { drives.backfill(); drives.resplit() } } }
+    init {
+        viewModelScope.launch {
+            runCatching {
+                drives.backfill()
+                drives.resplit()
+            }
+        }
+    }
 
-    private val clock = flow { while (true) { emit(System.currentTimeMillis()); delay(1_000) } }
+    private val clock = flow {
+        while (true) {
+            emit(System.currentTimeMillis())
+            delay(1_000)
+        }
+    }
     private val checking = kotlinx.coroutines.flow.MutableStateFlow(false)
 
     val state: StateFlow<TripUiState> = combine(
         combine(trips.active, trips.recent(1_000), ismart.link) { a, r, l -> Triple(a, r, l) },
-        clock, checking, settings.vehicleProfile, ismart.status,
+        clock,
+        checking,
+        settings.vehicleProfile,
+        ismart.status,
     ) { (a, r, l), n, c, v, s ->
         // Below ~5 % the car's range guess is too coarse to scale up to 100 %.
         val claim = s?.soc?.value?.let { sr -> sr.carRangeKm?.takeIf { sr.socPercent >= 5 }?.let { it / sr.socPercent * 100 } }

@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 /** The MG i-SMART account on this phone. */
 sealed interface Account {
     data object SignedOut : Account
+
     /** [phone] is the 10-digit mobile number, without +91. */
     data class SignedIn(val phone: String) : Account
 }
@@ -13,10 +14,13 @@ sealed interface Account {
 sealed interface SignInError {
     /** MG said no (wrong password, unregistered number, daily limit). Never retried automatically. */
     data class Rejected(val message: String) : SignInError
+
     /** Too many sign-ins this hour; the next one is allowed at [retryAtMillis]. */
     data class Throttled(val retryAtMillis: Long) : SignInError
+
     /** The account is a shared (secondary) one, which gets no battery data. */
     data object NotOwner : SignInError
+
     /** MG's servers couldn't be reached. */
     data object Offline : SignInError
     data class Other(val message: String) : SignInError

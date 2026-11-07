@@ -1,12 +1,14 @@
 package dev.irshadm.volta.data.maps
 
+import dev.irshadm.volta.core.maps.MapsKeyProvider
+import dev.irshadm.volta.core.maps.MissingMapsKeyException
 import dev.irshadm.volta.core.planner.Geo
 import dev.irshadm.volta.core.planner.LatLng
+import dev.irshadm.volta.core.planner.Meal
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
-import dev.irshadm.volta.core.planner.Meal
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -17,8 +19,6 @@ import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
-import dev.irshadm.volta.core.maps.MapsKeyProvider
-import dev.irshadm.volta.core.maps.MissingMapsKeyException
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -50,7 +50,10 @@ class GoogleMapsClient(
     /** Fails with a message that says where to add the key, rather than letting Google answer "API key missing". */
     private fun apiKey(): String = keys.currentKey()?.takeIf { it.isNotBlank() } ?: throw MissingMapsKeyException()
 
-    private val json = Json { ignoreUnknownKeys = true; explicitNulls = false }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        explicitNulls = false
+    }
     private val jsonType = "application/json".toMediaType()
 
     /** The certificate Google last accepted; starts with the one Android reports. */
@@ -73,7 +76,10 @@ class GoogleMapsClient(
             for (c in identity.candidates.filter { it != req.header("X-Android-Cert") }) {
                 val retry = req.newBuilder().header("X-Android-Cert", c).build()
                 val body = runCatching { executeWithRetry(retry) }.getOrElse { if (it is IdentityRefused) null else throw it }
-                if (body != null) { cert = c; return body }
+                if (body != null) {
+                    cert = c
+                    return body
+                }
             }
             val sent = req.header("X-Android-Cert").orEmpty()
             throw MapsApiException("${e.message} (sent ${identity.packageName} · ${sent.chunked(2).take(4).joinToString(":")}…, ${identity.candidates.size} certificate(s) tried)")
@@ -108,8 +114,7 @@ class GoogleMapsClient(
         }
     }
 
-    private suspend fun post(url: String, body: JsonObject, fieldMask: String?): String =
-        execute(request(url, fieldMask).post(body.toString().toRequestBody(jsonType)).build())
+    private suspend fun post(url: String, body: JsonObject, fieldMask: String?): String = execute(request(url, fieldMask).post(body.toString().toRequestBody(jsonType)).build())
 
     // ---- Places Autocomplete (Essentials) ----
 
@@ -122,11 +127,17 @@ class GoogleMapsClient(
             near?.let {
                 putJsonObject("locationBias") {
                     putJsonObject("circle") {
-                        putJsonObject("center") { put("latitude", it.lat); put("longitude", it.lng) }
+                        putJsonObject("center") {
+                            put("latitude", it.lat)
+                            put("longitude", it.lng)
+                        }
                         put("radius", 50_000.0)
                     }
                 }
-                putJsonObject("origin") { put("latitude", it.lat); put("longitude", it.lng) }
+                putJsonObject("origin") {
+                    put("latitude", it.lat)
+                    put("longitude", it.lng)
+                }
             }
         }
         val res = json.decodeFromString<AutocompleteResponse>(post("$placesBase/places:autocomplete", body, null))
@@ -157,8 +168,7 @@ class GoogleMapsClient(
     }
 
     /** The first photo Google has for a place (a charger), as a resource name for [photo]; null when it has none. */
-    suspend fun placePhotoName(placeId: String): String? =
-        json.decodeFromString<PhotosDto>(execute(request("$placesBase/places/$placeId", "photos").get().build())).photos.firstOrNull()?.name
+    suspend fun placePhotoName(placeId: String): String? = json.decodeFromString<PhotosDto>(execute(request("$placesBase/places/$placeId", "photos").get().build())).photos.firstOrNull()?.name
 
     /** A place photo's bytes, at most [maxWidthPx] wide (Place Photos: asks for the image link, then downloads it). */
     suspend fun photo(name: String, maxWidthPx: Int = 900): ByteArray? {
@@ -201,7 +211,12 @@ class GoogleMapsClient(
 
     private suspend fun computeRoutes(origin: LatLng, destination: LatLng, avoidTolls: Boolean, via: LatLng? = null): List<RouteResult> {
         fun waypoint(p: LatLng) = buildJsonObject {
-            putJsonObject("location") { putJsonObject("latLng") { put("latitude", p.lat); put("longitude", p.lng) } }
+            putJsonObject("location") {
+                putJsonObject("latLng") {
+                    put("latitude", p.lat)
+                    put("longitude", p.lng)
+                }
+            }
         }
         val body = buildJsonObject {
             put("origin", waypoint(origin))
@@ -209,8 +224,28 @@ class GoogleMapsClient(
             put("travelMode", "DRIVE")
             put("routingPreference", "TRAFFIC_AWARE")
             put("computeAlternativeRoutes", via == null)
-            via?.let { v -> putJsonArray("intermediates") { add(buildJsonObject { put("via", true); put("location", buildJsonObject { putJsonObject("latLng") { put("latitude", v.lat); put("longitude", v.lng) } }) }) } }
-            putJsonArray("extraComputations") { add("TOLLS"); add("TRAFFIC_ON_POLYLINE") }
+            via?.let { v ->
+                putJsonArray("intermediates") {
+                    add(
+                        buildJsonObject {
+                            put("via", true)
+                            put(
+                                "location",
+                                buildJsonObject {
+                                    putJsonObject("latLng") {
+                                        put("latitude", v.lat)
+                                        put("longitude", v.lng)
+                                    }
+                                },
+                            )
+                        },
+                    )
+                }
+            }
+            putJsonArray("extraComputations") {
+                add("TOLLS")
+                add("TRAFFIC_ON_POLYLINE")
+            }
             put("polylineQuality", "HIGH_QUALITY")
             put("regionCode", "IN")
             put("languageCode", "en-IN")
@@ -264,7 +299,10 @@ class GoogleMapsClient(
             put("rankPreference", "DISTANCE")
             putJsonObject("locationRestriction") {
                 putJsonObject("circle") {
-                    putJsonObject("center") { put("latitude", at.lat); put("longitude", at.lng) }
+                    putJsonObject("center") {
+                        put("latitude", at.lat)
+                        put("longitude", at.lng)
+                    }
                     put("radius", radiusM)
                 }
             }
@@ -280,8 +318,7 @@ class GoogleMapsClient(
      * passes, looks again up to 1.5 km and takes restaurants that don't say they skip the meal (30+ reviews), so a
      * meal stop still gets somewhere to eat.
      */
-    suspend fun mealPlaces(at: LatLng, meal: Meal, dayOfWeek: Int, minuteOfDay: Int, radiusM: Double = 500.0): List<MealSpot> =
-        mealPlaces(at, meal, dayOfWeek, minuteOfDay, radiusM, strict = true).ifEmpty { mealPlaces(at, meal, dayOfWeek, minuteOfDay, 1_500.0, strict = false) }
+    suspend fun mealPlaces(at: LatLng, meal: Meal, dayOfWeek: Int, minuteOfDay: Int, radiusM: Double = 500.0): List<MealSpot> = mealPlaces(at, meal, dayOfWeek, minuteOfDay, radiusM, strict = true).ifEmpty { mealPlaces(at, meal, dayOfWeek, minuteOfDay, 1_500.0, strict = false) }
 
     private suspend fun mealPlaces(at: LatLng, meal: Meal, dayOfWeek: Int, minuteOfDay: Int, radiusM: Double, strict: Boolean): List<MealSpot> {
         val body = buildJsonObject {
@@ -291,7 +328,10 @@ class GoogleMapsClient(
             put("rankPreference", "POPULARITY")
             putJsonObject("locationRestriction") {
                 putJsonObject("circle") {
-                    putJsonObject("center") { put("latitude", at.lat); put("longitude", at.lng) }
+                    putJsonObject("center") {
+                        put("latitude", at.lat)
+                        put("longitude", at.lng)
+                    }
                     put("radius", radiusM)
                 }
             }
@@ -321,7 +361,10 @@ class GoogleMapsClient(
             put("rankPreference", "DISTANCE")
             putJsonObject("locationRestriction") {
                 putJsonObject("circle") {
-                    putJsonObject("center") { put("latitude", at.lat); put("longitude", at.lng) }
+                    putJsonObject("center") {
+                        put("latitude", at.lat)
+                        put("longitude", at.lng)
+                    }
                     put("radius", radiusM)
                 }
             }
@@ -344,7 +387,10 @@ class GoogleMapsClient(
             put("rankPreference", "DISTANCE")
             putJsonObject("locationRestriction") {
                 putJsonObject("circle") {
-                    putJsonObject("center") { put("latitude", at.lat); put("longitude", at.lng) }
+                    putJsonObject("center") {
+                        put("latitude", at.lat)
+                        put("longitude", at.lng)
+                    }
                     put("radius", radiusM)
                 }
             }
@@ -355,9 +401,11 @@ class GoogleMapsClient(
             val ccs = p.evChargeOptions?.connectorAggregation.orEmpty().filter { it.type == "EV_CONNECTOR_TYPE_CCS_COMBO_2" }
             val kw = ccs.maxOfOrNull { it.maxChargeRateKw ?: 0.0 } ?: 0.0
             if (kw < 25) return@mapNotNull null
-            ChargerDto(id = p.id ?: return@mapNotNull null, name = p.displayName?.text ?: "EV charger", address = p.formattedAddress,
+            ChargerDto(
+                id = p.id ?: return@mapNotNull null, name = p.displayName?.text ?: "EV charger", address = p.formattedAddress,
                 position = LatLng(loc.latitude, loc.longitude), maxKw = kw, connectorCount = ccs.sumOf { it.count ?: 0 }.takeIf { it > 0 },
-                availableCount = ccs.mapNotNull { it.availableCount }.takeIf { it.isNotEmpty() }?.sum(), viaDistanceM = null, open24h = null)
+                availableCount = ccs.mapNotNull { it.availableCount }.takeIf { it.isNotEmpty() }?.sum(), viaDistanceM = null, open24h = null,
+            )
         }.take(max)
     }
 
@@ -412,7 +460,12 @@ class GoogleMapsClient(
                 put("textQuery", "EV charging station")
                 put("pageSize", 20)
                 putJsonObject("searchAlongRouteParameters") { putJsonObject("polyline") { put("encodedPolyline", encodedPolyline) } }
-                putJsonObject("routingParameters") { putJsonObject("origin") { put("latitude", origin.lat); put("longitude", origin.lng) } }
+                putJsonObject("routingParameters") {
+                    putJsonObject("origin") {
+                        put("latitude", origin.lat)
+                        put("longitude", origin.lng)
+                    }
+                }
                 putJsonObject("evOptions") {
                     put("minimumChargingRateKw", minKw)
                     putJsonArray("connectorTypes") { add("EV_CONNECTOR_TYPE_CCS_COMBO_2") }
@@ -445,8 +498,10 @@ class GoogleMapsClient(
 
     companion object {
         const val ELEVATION_BATCH = 256
+
         /** 240 × 500 m ≈ 120 km per charger-search segment. */
         const val SEGMENT_POINTS = 240
+
         /** Charger search results are reused for this long. */
         const val SEARCH_TTL_MS = 6 * 3_600_000L
         const val DAILY_LIMIT = "Google's daily limit for charger searches is used up. It resets at 1:30 pm India time — " +
@@ -486,18 +541,28 @@ data class SlowStretch(val startIndex: Int, val endIndex: Int, val lengthM: Doub
 /** Joins Google's speed readings into stretches of 1 km or more (jams from 500 m), longest first. */
 private fun slowStretches(path: List<LatLng>, intervals: List<RoutesResponse.Speed>): List<SlowStretch> {
     val out = ArrayList<SlowStretch>()
-    var start = -1; var end = -1; var jam = false
+    var start = -1
+    var end = -1
+    var jam = false
     fun flush() {
         if (start < 0) return
         val len = (start until end.coerceAtMost(path.lastIndex)).sumOf { Geo.distanceM(path[it], path[it + 1]) }
         if (len >= if (jam) 500.0 else 1_000.0) out += SlowStretch(start, end, len, jam)
-        start = -1; jam = false
+        start = -1
+        jam = false
     }
     intervals.sortedBy { it.startPolylinePointIndex }.forEach { iv ->
         val slow = iv.speed == "SLOW" || iv.speed == "TRAFFIC_JAM"
-        if (!slow) { flush(); return@forEach }
-        if (start < 0) start = iv.startPolylinePointIndex
-        else if (iv.startPolylinePointIndex - end > 3) { flush(); start = iv.startPolylinePointIndex }
+        if (!slow) {
+            flush()
+            return@forEach
+        }
+        if (start < 0) {
+            start = iv.startPolylinePointIndex
+        } else if (iv.startPolylinePointIndex - end > 3) {
+            flush()
+            start = iv.startPolylinePointIndex
+        }
         end = iv.endPolylinePointIndex
         if (iv.speed == "TRAFFIC_JAM") jam = true
     }
@@ -537,14 +602,20 @@ data class ChargerDto(
 }
 
 @Serializable private data class TextDto(val text: String = "")
+
 @Serializable private data class PhotoDto(val name: String = "")
+
 @Serializable private data class PhotosDto(val photos: List<PhotoDto> = emptyList())
+
 @Serializable private data class PhotoMediaDto(val photoUri: String? = null)
+
 @Serializable private data class LatLngDto(val latitude: Double, val longitude: Double)
 
 @Serializable private data class AutocompleteResponse(val suggestions: List<Suggestion> = emptyList()) {
     @Serializable data class Suggestion(val placePrediction: Prediction? = null)
+
     @Serializable data class Prediction(val placeId: String, val text: TextDto = TextDto(), val structuredFormat: Structured? = null, val distanceMeters: Int? = null)
+
     @Serializable data class Structured(val mainText: TextDto? = null, val secondaryText: TextDto? = null)
 }
 
@@ -557,9 +628,13 @@ data class ChargerDto(
     val regularOpeningHours: Hours? = null,
 ) {
     @Serializable data class Hours(val periods: List<Period> = emptyList())
+
     @Serializable data class Period(val open: Point? = null, val close: Point? = null)
+
     @Serializable data class Point(val day: Int? = null, val hour: Int? = null, val minute: Int? = null)
+
     @Serializable data class EvOptions(val connectorCount: Int? = null, val connectorAggregation: List<Agg> = emptyList())
+
     @Serializable data class Agg(
         val type: String? = null,
         val maxChargeRateKw: Double? = null,
@@ -582,7 +657,11 @@ data class ChargerDto(
         val primaryTypeDisplayName: TextDto? = null,
         val photos: List<PhotoDto> = emptyList(),
     ) {
-        fun serves(meal: Meal) = when (meal) { Meal.Breakfast -> servesBreakfast; Meal.Lunch -> servesLunch; Meal.Dinner -> servesDinner }
+        fun serves(meal: Meal) = when (meal) {
+            Meal.Breakfast -> servesBreakfast
+            Meal.Lunch -> servesLunch
+            Meal.Dinner -> servesDinner
+        }
 
         /** Open from [t] (minutes into the week, Sunday 00:00 = 0) for [minutes]? null = hours unknown. */
         fun openFor(t: Int, minutes: Int): Boolean? {
@@ -590,7 +669,7 @@ data class ChargerDto(
             val week = 7 * 1440
             return periods.any { p ->
                 val o = p.open ?: return@any false
-                val c = p.close ?: return@any true                     // open around the clock
+                val c = p.close ?: return@any true // open around the clock
                 val from = (o.day ?: 0) * 1440 + (o.hour ?: 0) * 60 + (o.minute ?: 0)
                 var to = (c.day ?: 0) * 1440 + (c.hour ?: 0) * 60 + (c.minute ?: 0)
                 if (to <= from) to += week
@@ -621,10 +700,15 @@ private val NOT_BREAKFAST = setOf(
         val travelAdvisory: Advisory? = null,
         val warnings: List<String> = emptyList(),
     )
+
     @Serializable data class Advisory(val tollInfo: kotlinx.serialization.json.JsonObject? = null, val speedReadingIntervals: List<Speed> = emptyList())
+
     @Serializable data class Speed(val startPolylinePointIndex: Int = 0, val endPolylinePointIndex: Int = 0, val speed: String? = null)
+
     @Serializable data class Poly(val encodedPolyline: String = "")
+
     @Serializable data class Leg(val steps: List<Step> = emptyList())
+
     @Serializable data class Step(val distanceMeters: Int = 0, val staticDuration: String? = null)
 }
 
@@ -642,5 +726,6 @@ private val NOT_BREAKFAST = setOf(
     val nextPageToken: String? = null,
 ) {
     @Serializable data class Summary(val legs: List<Leg> = emptyList())
+
     @Serializable data class Leg(val distanceMeters: Int? = null, val duration: String? = null)
 }

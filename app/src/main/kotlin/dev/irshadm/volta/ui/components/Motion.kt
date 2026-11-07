@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import dev.irshadm.volta.core.designsystem.LocalReducedMotion
-import dev.irshadm.volta.core.designsystem.WtMotion
+import dev.irshadm.volta.core.designsystem.VoltaMotion
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -22,8 +22,11 @@ import kotlinx.coroutines.launch
 /** Every pressable shrinks to 0.97 while held — instant feedback on touch-down. */
 fun Modifier.pressScale(interaction: MutableInteractionSource): Modifier = composed {
     val pressed by interaction.collectIsPressedAsState()
-    val scale by animateFloatAsState(if (pressed) 0.97f else 1f, tween(WtMotion.PRESS_MS, easing = WtMotion.EaseOut), label = "press")
-    graphicsLayer { scaleX = scale; scaleY = scale }
+    val scale by animateFloatAsState(if (pressed) 0.97f else 1f, tween(VoltaMotion.PRESS_MS, easing = VoltaMotion.EaseOut), label = "press")
+    graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+    }
 }
 
 /** Staggered entrance: fade + 12dp rise, [index] × 60 ms after first composition. Plays once. */
@@ -38,9 +41,14 @@ fun Modifier.appear(index: Int): Modifier = composed {
         if (dev.irshadm.volta.ui.splash.SplashGate.holding) {
             androidx.compose.runtime.snapshotFlow { dev.irshadm.volta.ui.splash.SplashGate.holding }.first { !it }
             delay(80L + index * 90L)
-        } else delay(index * WtMotion.STAGGER_MS.toLong())
-        launch { alpha.animateTo(1f, tween(420, easing = WtMotion.EaseOut)) }
-        rise.animateTo(0f, tween(560, easing = WtMotion.EaseOut))
+        } else {
+            delay(index * VoltaMotion.STAGGER_MS.toLong())
+        }
+        launch { alpha.animateTo(1f, tween(420, easing = VoltaMotion.EaseOut)) }
+        rise.animateTo(0f, tween(560, easing = VoltaMotion.EaseOut))
     }
-    graphicsLayer { this.alpha = alpha.value; translationY = rise.value * px }
+    graphicsLayer {
+        this.alpha = alpha.value
+        translationY = rise.value * px
+    }
 }

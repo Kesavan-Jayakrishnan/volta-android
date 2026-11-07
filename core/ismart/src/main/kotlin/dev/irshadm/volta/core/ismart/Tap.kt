@@ -36,7 +36,7 @@ object Tap {
         val ackCounter: Int? = null,
         val ackRequired: Boolean? = null,
         val appDataLength: Int? = null,
-        val appDataEncoding: Int? = null,      // 0 = perUnaligned
+        val appDataEncoding: Int? = null, // 0 = perUnaligned
         val appProtocolVersion: Int? = null,
         val testFlag: Int? = null,
         val result: Int? = null,
@@ -45,8 +45,10 @@ object Tap {
 
     fun encodeDispatcher(d: Dispatcher): ByteArray {
         val w = BitWriter()
-        listOf(d.uid, d.token, d.vin, d.eventId, d.ulCounter, d.dlCounter, d.ackCounter, d.ackRequired, d.appDataLength,
-            d.appDataEncoding, d.appProtocolVersion, d.testFlag, d.result, d.errorMessage).forEach { w.bit(it != null) }
+        listOf(
+            d.uid, d.token, d.vin, d.eventId, d.ulCounter, d.dlCounter, d.ackCounter, d.ackRequired, d.appDataLength,
+            d.appDataEncoding, d.appProtocolVersion, d.testFlag, d.result, d.errorMessage,
+        ).forEach { w.bit(it != null) }
         d.uid?.let { w.ia5Fixed(it, 50) }
         d.token?.let { w.ia5Fixed(it, 40) }
         w.ia5Fixed(d.applicationId, 3)
@@ -94,14 +96,13 @@ object Tap {
 
     // ---------------- requests ----------------
 
-    private fun requestDispatcher(uid: String, token: String, vin: String, appId: String, app: ByteArray, eventId: Long, nowS: Long, messageId: Int = 1) =
-        encodeDispatcher(
-            Dispatcher(
-                uid = uid, token = token, applicationId = appId, vin = vin, messageId = messageId, eventCreationTime = nowS,
-                eventId = eventId, ulCounter = 0, dlCounter = 0, ackCounter = 0, ackRequired = false, appDataLength = app.size,
-                appDataEncoding = 0, appProtocolVersion = APP_PROTOCOL, testFlag = 2, result = 0,
-            ),
-        )
+    private fun requestDispatcher(uid: String, token: String, vin: String, appId: String, app: ByteArray, eventId: Long, nowS: Long, messageId: Int = 1) = encodeDispatcher(
+        Dispatcher(
+            uid = uid, token = token, applicationId = appId, vin = vin, messageId = messageId, eventCreationTime = nowS,
+            eventId = eventId, ulCounter = 0, dlCounter = 0, ackCounter = 0, ackRequired = false, appDataLength = app.size,
+            appDataEncoding = 0, appProtocolVersion = APP_PROTOCOL, testFlag = 2, result = 0,
+        ),
+    )
 
     private fun frameV21(dispatcher: ByteArray, app: ByteArray): String {
         val dLen = dispatcher.size + 3
@@ -111,12 +112,11 @@ object Tap {
     }
 
     fun statusRequest(uid: String, token: String, vin: String, eventId: Long, nowS: Long): String {
-        val app = BitWriter().int(2, 0, 255).toByteArray()      // OTARVMVehicleStatusReq { vehStatusReqType 2 }
+        val app = BitWriter().int(2, 0, 255).toByteArray() // OTARVMVehicleStatusReq { vehStatusReqType 2 }
         return frameV21(requestDispatcher(uid, token, vin, STATUS_APP, app, eventId, nowS), app)
     }
 
-    fun chargeRequest(uid: String, token: String, vin: String, eventId: Long, nowS: Long): String =
-        frameV21(requestDispatcher(uid, token, vin, STATUS_APP, ByteArray(0), eventId, nowS, CHARGE_MESSAGE_ID), ByteArray(0))
+    fun chargeRequest(uid: String, token: String, vin: String, eventId: Long, nowS: Long): String = frameV21(requestDispatcher(uid, token, vin, STATUS_APP, ByteArray(0), eventId, nowS, CHARGE_MESSAGE_ID), ByteArray(0))
 
     /** OTARVCReq: remote command [type] with (paramId, value) pairs. */
     fun controlRequest(uid: String, token: String, vin: String, eventId: Long, type: Int, params: List<Pair<Int, ByteArray>>, nowS: Long): String {
@@ -169,8 +169,10 @@ object Tap {
         val w = BitWriter()
         // OPTIONAL bitmap: uid token vin eventID messageCounter ackRequired stateless crqm basicPosition
         // networkInfo simInfo hmiLanguage applicationDataEncoding testFlag result errorMessage
-        listOf(d.uid != null, d.token != null, d.vin != null, d.eventId != null, d.messageCounter != null, false, false, false,
-            false, false, d.simInfo != null, false, d.appDataEncoding != null, d.testFlag != null, d.result != null, d.errorMessage != null)
+        listOf(
+            d.uid != null, d.token != null, d.vin != null, d.eventId != null, d.messageCounter != null, false, false, false,
+            false, false, d.simInfo != null, false, d.appDataEncoding != null, d.testFlag != null, d.result != null, d.errorMessage != null,
+        )
             .forEach { w.bit(it) }
         d.uid?.let { w.ia5Fixed(it, 50) }
         d.token?.let { w.ia5Fixed(it, 40) }
@@ -205,8 +207,14 @@ object Tap {
         if (p[5]) r.bit()
         if (p[6]) r.bit()
         if (p[7]) r.bit()
-        if (p[8]) { r.int(-90_000_000, 90_000_000); r.int(-180_000_000, 180_000_000) }
-        if (p[9]) { repeat(4) { r.numericFixed(3) }; r.int(0, 99) }
+        if (p[8]) {
+            r.int(-90_000_000, 90_000_000)
+            r.int(-180_000_000, 180_000_000)
+        }
+        if (p[9]) {
+            repeat(4) { r.numericFixed(3) }
+            r.int(0, 99)
+        }
         val sim = if (p[10]) r.numericFixed(19) else null
         if (p[11]) r.int(0, 4)
         val icc = r.numericFixed(20)
@@ -256,8 +264,15 @@ object Tap {
     // ---------------- vehicle status payloads ----------------
 
     data class Position(
-        val latitudeMicro: Long, val longitudeMicro: Long, val altitudeM: Int, val heading: Int, val speedTenths: Int,
-        val hdop: Int, val satellites: Int, val timeSeconds: Long, val gpsStatus: Int,
+        val latitudeMicro: Long,
+        val longitudeMicro: Long,
+        val altitudeM: Int,
+        val heading: Int,
+        val speedTenths: Int,
+        val hdop: Int,
+        val satellites: Int,
+        val timeSeconds: Long,
+        val gpsStatus: Int,
     )
 
     private fun readPosition(r: BitReader) = Position(
@@ -274,38 +289,98 @@ object Tap {
 
     /** RvsBasicStatus513 — raw protocol units. */
     data class BasicStatus(
-        val driverDoor: Boolean, val passengerDoor: Boolean, val rearLeftDoor: Boolean, val rearRightDoor: Boolean,
-        val boot: Boolean, val bonnet: Boolean, val locked: Boolean,
-        val driverWindow: Boolean?, val passengerWindow: Boolean?, val rearLeftWindow: Boolean?, val rearRightWindow: Boolean?,
+        val driverDoor: Boolean,
+        val passengerDoor: Boolean,
+        val rearLeftDoor: Boolean,
+        val rearRightDoor: Boolean,
+        val boot: Boolean,
+        val bonnet: Boolean,
+        val locked: Boolean,
+        val driverWindow: Boolean?,
+        val passengerWindow: Boolean?,
+        val rearLeftWindow: Boolean?,
+        val rearRightWindow: Boolean?,
         val sunroof: Boolean?,
-        val tyreFrontRight: Int?, val tyreFrontLeft: Int?, val tyreRearRight: Int?, val tyreRearLeft: Int?, val tyreMonitor: Int?,
-        val sideLights: Boolean, val dippedBeam: Boolean, val mainBeam: Boolean, val alarm: Int?,
-        val engineStatus: Int, val powerMode: Int, val lastKeySeen: Int, val journeyDistance: Int, val journeyId: Long,
-        val interiorTemp: Int, val exteriorTemp: Int, val fuelLevelPrc: Int, val fuelRange: Int, val remoteClimate: Int,
-        val seatHeatLeft: Int?, val seatHeatRight: Int?, val canBusActive: Boolean, val lastCanActivity: Long,
-        val clusterFuelSegment: Int, val mileage: Long, val batteryVoltage: Int, val ext1: Long?, val ext2: Long?, val handBrake: Boolean,
+        val tyreFrontRight: Int?,
+        val tyreFrontLeft: Int?,
+        val tyreRearRight: Int?,
+        val tyreRearLeft: Int?,
+        val tyreMonitor: Int?,
+        val sideLights: Boolean,
+        val dippedBeam: Boolean,
+        val mainBeam: Boolean,
+        val alarm: Int?,
+        val engineStatus: Int,
+        val powerMode: Int,
+        val lastKeySeen: Int,
+        val journeyDistance: Int,
+        val journeyId: Long,
+        val interiorTemp: Int,
+        val exteriorTemp: Int,
+        val fuelLevelPrc: Int,
+        val fuelRange: Int,
+        val remoteClimate: Int,
+        val seatHeatLeft: Int?,
+        val seatHeatRight: Int?,
+        val canBusActive: Boolean,
+        val lastCanActivity: Long,
+        val clusterFuelSegment: Int,
+        val mileage: Long,
+        val batteryVoltage: Int,
+        val ext1: Long?,
+        val ext2: Long?,
+        val handBrake: Boolean,
     )
 
     private fun readBasic(r: BitReader): BasicStatus {
         val p = BooleanArray(15) { r.bit() }
         fun ob(i: Int) = if (p[i]) r.bit() else null
         fun oi(i: Int) = if (p[i]) r.int(0, 255).toInt() else null
-        val dd = r.bit(); val pd = r.bit(); val rl = r.bit(); val rr = r.bit(); val bt = r.bit(); val bn = r.bit(); val lk = r.bit()
-        val dw = ob(0); val pw = ob(1); val rlw = ob(2); val rrw = ob(3); val sr = ob(4)
-        val tfr = oi(5); val tfl = oi(6); val trr = oi(7); val trl = oi(8); val tm = oi(9)
-        val side = r.bit(); val dip = r.bit(); val main = r.bit()
+        val dd = r.bit()
+        val pd = r.bit()
+        val rl = r.bit()
+        val rr = r.bit()
+        val bt = r.bit()
+        val bn = r.bit()
+        val lk = r.bit()
+        val dw = ob(0)
+        val pw = ob(1)
+        val rlw = ob(2)
+        val rrw = ob(3)
+        val sr = ob(4)
+        val tfr = oi(5)
+        val tfl = oi(6)
+        val trr = oi(7)
+        val trl = oi(8)
+        val tm = oi(9)
+        val side = r.bit()
+        val dip = r.bit()
+        val main = r.bit()
         val alarm = oi(10)
-        val engine = r.int(0, 255).toInt(); val power = r.int(0, 255).toInt(); val key = r.int(0, 65535).toInt()
-        val jd = r.int(0, 65535).toInt(); val jid = r.int(0, I31)
-        val it = r.int(-128, 127).toInt(); val et = r.int(-128, 127).toInt()
-        val fuel = r.int(0, 255).toInt(); val range = r.int(0, 65535).toInt(); val climate = r.int(0, 255).toInt()
-        val shl = oi(11); val shr = oi(12)
-        val can = r.bit(); val canT = r.int(0, I31); val seg = r.int(0, 255).toInt(); val mileage = r.int(0, I31); val volt = r.int(0, 65535).toInt()
+        val engine = r.int(0, 255).toInt()
+        val power = r.int(0, 255).toInt()
+        val key = r.int(0, 65535).toInt()
+        val jd = r.int(0, 65535).toInt()
+        val jid = r.int(0, I31)
+        val it = r.int(-128, 127).toInt()
+        val et = r.int(-128, 127).toInt()
+        val fuel = r.int(0, 255).toInt()
+        val range = r.int(0, 65535).toInt()
+        val climate = r.int(0, 255).toInt()
+        val shl = oi(11)
+        val shr = oi(12)
+        val can = r.bit()
+        val canT = r.int(0, I31)
+        val seg = r.int(0, 255).toInt()
+        val mileage = r.int(0, I31)
+        val volt = r.int(0, 65535).toInt()
         val e1 = if (p[13]) r.int(0, I31) else null
         val e2 = if (p[14]) r.int(0, I31) else null
         val hb = r.bit()
-        return BasicStatus(dd, pd, rl, rr, bt, bn, lk, dw, pw, rlw, rrw, sr, tfr, tfl, trr, trl, tm, side, dip, main, alarm,
-            engine, power, key, jd, jid, it, et, fuel, range, climate, shl, shr, can, canT, seg, mileage, volt, e1, e2, hb)
+        return BasicStatus(
+            dd, pd, rl, rr, bt, bn, lk, dw, pw, rlw, rrw, sr, tfr, tfl, trr, trl, tm, side, dip, main, alarm,
+            engine, power, key, jd, jid, it, et, fuel, range, climate, shl, shr, can, canT, seg, mileage, volt, e1, e2, hb,
+        )
     }
 
     data class StatusFrame(val statusTime: Long, val position: Position, val basic: BasicStatus, val alerts: List<Pair<Int, Int>>)
@@ -334,12 +409,32 @@ object Tap {
     /** RvsChargingStatus — raw protocol units (see [ChargeStatus] for scaled values). */
     data class ChargeFrame(
         val statusTime: Long,
-        val realtimePower: Int, val powerLevelPrc: Int?, val charging: Boolean, val gunConnected: Boolean, val fuelRange: Int,
-        val chargingType: Int, val timeLevelPrc: Int?, val startTime: Long?, val endTime: Long?, val current: Int, val voltage: Int,
-        val pileId: String?, val pileSupplier: String?, val workingCurrent: Int?, val workingVoltage: Int?,
-        val mileageSinceCharge: Int?, val powerUsageSinceCharge: Int?, val mileageOfDay: Int?, val powerUsageOfDay: Int?,
-        val staticConsumption: Int?, val phase: Int?, val duration: Long?, val lastChargeEndingPower: Int?, val totalCapacity: Int?,
-        val fotaLowestVoltage: Int?, val mileage: Long,
+        val realtimePower: Int,
+        val powerLevelPrc: Int?,
+        val charging: Boolean,
+        val gunConnected: Boolean,
+        val fuelRange: Int,
+        val chargingType: Int,
+        val timeLevelPrc: Int?,
+        val startTime: Long?,
+        val endTime: Long?,
+        val current: Int,
+        val voltage: Int,
+        val pileId: String?,
+        val pileSupplier: String?,
+        val workingCurrent: Int?,
+        val workingVoltage: Int?,
+        val mileageSinceCharge: Int?,
+        val powerUsageSinceCharge: Int?,
+        val mileageOfDay: Int?,
+        val powerUsageOfDay: Int?,
+        val staticConsumption: Int?,
+        val phase: Int?,
+        val duration: Long?,
+        val lastChargeEndingPower: Int?,
+        val totalCapacity: Int?,
+        val fotaLowestVoltage: Int?,
+        val mileage: Long,
     )
 
     fun decodeChargeApp(app: ByteArray): ChargeFrame {
@@ -351,19 +446,34 @@ object Tap {
         fun o31(i: Int) = if (p[i]) r.int(0, I31) else null
         val rp = r.int(0, 65535).toInt()
         val level = o16(0)
-        val st = r.bit(); val gun = r.bit()
-        val range = r.int(0, 65535).toInt(); val type = r.int(0, 255).toInt()
-        val tl = o16(1); val start = o31(2); val end = o31(3)
-        val cur = r.int(0, 65535).toInt(); val volt = r.int(0, 65535).toInt()
+        val st = r.bit()
+        val gun = r.bit()
+        val range = r.int(0, 65535).toInt()
+        val type = r.int(0, 255).toInt()
+        val tl = o16(1)
+        val start = o31(2)
+        val end = o31(3)
+        val cur = r.int(0, 65535).toInt()
+        val volt = r.int(0, 65535).toInt()
         val pile = if (p[4]) r.ia5(0, 64) else null
         val sup = if (p[5]) r.ia5(0, 64) else null
-        val wc = o16(6); val wv = o16(7); val ms = o16(8); val pu = o16(9); val md = o16(10); val pd = o16(11); val sec = o16(12)
+        val wc = o16(6)
+        val wv = o16(7)
+        val ms = o16(8)
+        val pu = o16(9)
+        val md = o16(10)
+        val pd = o16(11)
+        val sec = o16(12)
         val phase = if (p[13]) r.int(0, 255).toInt() else null
-        val dur = o31(14); val lce = o16(15); val cap = o16(16)
+        val dur = o31(14)
+        val lce = o16(15)
+        val cap = o16(16)
         val fota = if (p[17]) r.int(0, 255).toInt() else null
         val mileage = r.int(0, I31)
         // extendedData1..4 follow; not used.
-        return ChargeFrame(time, rp, level, st, gun, range, type, tl, start, end, cur, volt, pile, sup, wc, wv, ms, pu, md, pd, sec,
-            phase, dur, lce, cap, fota, mileage)
+        return ChargeFrame(
+            time, rp, level, st, gun, range, type, tl, start, end, cur, volt, pile, sup, wc, wv, ms, pu, md, pd, sec,
+            phase, dur, lce, cap, fota, mileage,
+        )
     }
 }

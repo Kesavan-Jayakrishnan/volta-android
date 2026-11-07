@@ -1,13 +1,13 @@
 package dev.irshadm.volta.car
 
-import dev.irshadm.volta.data.maps.ChargeVerdict
-import dev.irshadm.volta.data.maps.ChargerDto
-import dev.irshadm.volta.data.maps.ChargerFeedback
 import dev.irshadm.volta.core.planner.Charger
 import dev.irshadm.volta.core.planner.LatLng
 import dev.irshadm.volta.core.planner.Meal
 import dev.irshadm.volta.core.planner.ProfilePoint
 import dev.irshadm.volta.core.planner.Stop
+import dev.irshadm.volta.data.maps.ChargeVerdict
+import dev.irshadm.volta.data.maps.ChargerDto
+import dev.irshadm.volta.data.maps.ChargerFeedback
 import org.junit.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -19,11 +19,11 @@ import kotlin.test.assertTrue
 class CarModelsTest {
     private val now = 1_792_990_000_000L
     private val totalM = 450_000.0
+
     /** Flat route at 80 km/h, a point every 200 m. */
     private val profile = (0..(totalM / 200).toInt()).map { ProfilePoint(it * 200.0, 20.0, 80.0) }
 
-    private fun charger(id: String, name: String, alongKm: Double, kw: Double = 60.0, free: Int? = 2, count: Int? = 4) =
-        Charger(id, name, LatLng(10.0 + alongKm / 1000, 76.0), kw, alongKm * 1000, connectorCount = count, availableCount = free, open24h = true)
+    private fun charger(id: String, name: String, alongKm: Double, kw: Double = 60.0, free: Int? = 2, count: Int? = 4) = Charger(id, name, LatLng(10.0 + alongKm / 1000, 76.0), kw, alongKm * 1000, connectorCount = count, availableCount = free, open24h = true)
 
     private val palakkad = charger("p", "Highway DC hub, Palakkad", 58.0)
     private val salem = charger("s", "Zeon Charging - Salem bypass", 248.0, free = null, count = null)
@@ -133,7 +133,9 @@ class CarModelsTest {
     @Test fun `reach times run in order and include dwell`() {
         val f = facts(20.0, 64.0, 63.0)
         val t = CarModels.reachTimes(f)
-        val a = t.at(stops[0]); val b = t.at(stops[1]); val c = t.at(stops[2])
+        val a = t.at(stops[0])
+        val b = t.at(stops[1])
+        val c = t.at(stops[2])
         assertTrue(a < b && b < c && c < t.destination)
         // 38 km at 80 km/h ≈ 28.5 min to the first stop.
         assertEquals(28.5, (a - now) / 60_000.0, 0.6)
@@ -185,8 +187,7 @@ class CarModelsTest {
 
     @Test fun `nearby chargers are nearest first with your history`() {
         val here = LatLng(10.0, 76.0)
-        fun dto(id: String, name: String, dLat: Double, kw: Double, free: Int?, count: Int?) =
-            ChargerDto(id, name, null, LatLng(10.0 + dLat, 76.0), kw, count, free, null)
+        fun dto(id: String, name: String, dLat: Double, kw: Double, free: Int?, count: Int?) = ChargerDto(id, name, null, LatLng(10.0 + dLat, 76.0), kw, count, free, null)
         val found = listOf(dto("far", "Aluva", 0.10, 120.0, 1, 4), dto("near", "Edappally", 0.04, 60.0, 2, 2), dto("mid", "Vyttila", 0.06, 30.0, null, null))
         val history = mapOf(
             "near" to List(3) { ChargerFeedback.Entry(ChargeVerdict.Worked, now - 10 * 86_400_000L) },

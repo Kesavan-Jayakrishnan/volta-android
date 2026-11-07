@@ -2,6 +2,12 @@ package dev.irshadm.volta.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.irshadm.volta.core.ismart.RemoteCommand
+import dev.irshadm.volta.core.model.BodyStatus
+import dev.irshadm.volta.core.model.SocReading
+import dev.irshadm.volta.core.model.VehicleProfile
+import dev.irshadm.volta.core.model.VehicleStatus
 import dev.irshadm.volta.data.SettingsRepository
 import dev.irshadm.volta.data.SocRepository
 import dev.irshadm.volta.data.ismart.CommandState
@@ -9,17 +15,11 @@ import dev.irshadm.volta.data.ismart.IsmartRepository
 import dev.irshadm.volta.data.ismart.LinkState
 import dev.irshadm.volta.ui.components.CarHeroState
 import dev.irshadm.volta.ui.components.CarShot
-import dev.irshadm.volta.core.ismart.RemoteCommand
-import dev.irshadm.volta.core.model.BodyStatus
-import dev.irshadm.volta.core.model.SocReading
-import dev.irshadm.volta.core.model.VehicleProfile
-import dev.irshadm.volta.core.model.VehicleStatus
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -65,6 +65,7 @@ data class HomeUiState(
     val car: dev.irshadm.volta.data.ismart.CarIdentity = dev.irshadm.volta.data.ismart.CarIdentity.Unknown,
 ) {
     val refreshing: Boolean get() = (link as? LinkState.Connected)?.refreshing == true
+
     /** Signed in, nothing from the car yet, and a read is on its way: the dashboard shows its skeleton. */
     val waitingForCar: Boolean get() = mode == DataMode.Live && vehicle == null && refreshing
 
@@ -112,12 +113,20 @@ class HomeViewModel @Inject constructor(
     private var lastGeoKey: String? = null
     private var lastLandmarkKey: String? = null
     private val placeName = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+
     /** A name the user gave this spot (or "Home"), which beats any looked-up landmark. */
     private val namedPlace = combine(vehicleSource, settings.savedPlaces, settings.energySettings) { (v, _), saved, energy ->
         val g = v?.gps?.value ?: return@combine null
         saved.firstOrNull { it.contains(g.latitude, g.longitude) }?.name
-            ?: if (energy.hasHome && dev.irshadm.volta.core.planner.Geo.distanceM(dev.irshadm.volta.core.planner.LatLng(energy.homeLat!!, energy.homeLng!!),
-                    dev.irshadm.volta.core.planner.LatLng(g.latitude, g.longitude)) <= energy.homeRadiusM) "Home" else null
+            ?: if (energy.hasHome && dev.irshadm.volta.core.planner.Geo.distanceM(
+                    dev.irshadm.volta.core.planner.LatLng(energy.homeLat!!, energy.homeLng!!),
+                    dev.irshadm.volta.core.planner.LatLng(g.latitude, g.longitude),
+                ) <= energy.homeRadiusM
+            ) {
+                "Home"
+            } else {
+                null
+            }
     }
     private val place = combine(placeName, namedPlace) { looked, named ->
         if (named == null) looked else (listOf(named) + looked.orEmpty().split(", ").filter { it.isNotBlank() && !it.startsWith("Near ") }).joinToString(", ")
@@ -135,9 +144,21 @@ class HomeViewModel @Inject constructor(
         // Newest stored reading or the live status, whichever is newer.
         val soc = listOfNotNull(manual, vehicle?.soc?.value).maxByOrNull { it.measuredAtMillis }
         val temps = dev.irshadm.volta.data.weather.CabinModel.temps(vehicle, w, now)
-        val km = vehicle?.distanceSinceLastChargeKm?.value; val kwh = vehicle?.energySinceLastChargeKwh?.value
-        val care = if (mode == DataMode.Live) dev.irshadm.volta.service.BatteryCare.tip(context, vehicle, temps.outsideC, usualKm.value,
-            if (km != null && kwh != null && kwh >= 1) km / kwh else profile.cityKmPerKwh, profile.usableCapacityKwh, now) else null
+        val km = vehicle?.distanceSinceLastChargeKm?.value
+        val kwh = vehicle?.energySinceLastChargeKwh?.value
+        val care = if (mode == DataMode.Live) {
+            dev.irshadm.volta.service.BatteryCare.tip(
+                context,
+                vehicle,
+                temps.outsideC,
+                usualKm.value,
+                if (km != null && kwh != null && kwh >= 1) km / kwh else profile.cityKmPerKwh,
+                profile.usableCapacityKwh,
+                now,
+            )
+        } else {
+            null
+        }
         val tip = care?.takeIf { !dismissedToday(it.key, now) }
         HomeUiState(true, soc, profile, vehicle, mode, link, cmd, ismart.hasPin, now, place, temps, tip, plugInSoc.value, charger, ismart.car.value)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
@@ -200,8 +221,11 @@ class HomeViewModel @Inject constructor(
                 .distinctUntilChanged()
                 .collectLatest { want ->
                     while (want) {
-                        if (spin.link.value is dev.irshadm.volta.data.charger.SpinCharger.Link.Off) runCatching { spin.connect() }
-                        else runCatching { spin.refreshState() }
+                        if (spin.link.value is dev.irshadm.volta.data.charger.SpinCharger.Link.Off) {
+                            runCatching { spin.connect() }
+                        } else {
+                            runCatching { spin.refreshState() }
+                        }
                         delay(20_000)
                     }
                 }
@@ -219,10 +243,17 @@ class HomeViewModel @Inject constructor(
 
     /** Start (true) or stop (false) charging at the home charger; the car's next readings confirm it. */
     fun setCharging(start: Boolean) = viewModelScope.launch {
-        if (!spin.charge(start)) { delay(8_000); spin.clearFailure(); return@launch }
+        if (!spin.charge(start)) {
+            delay(8_000)
+            spin.clearFailure()
+            return@launch
+        }
         // The charger confirms within seconds; only wait on the car when the charger couldn't tell.
         val confirmed = spin.state.value?.let { (it == dev.irshadm.volta.data.charger.SpinCharger.ChargerState.Charging) == start } == true
-        if (confirmed) { ismart.refresh(); return@launch }
+        if (confirmed) {
+            ismart.refresh()
+            return@launch
+        }
         chargePending.value = start
         // The car takes a little while to report the change.
         for (wait in listOf(8_000L, 15_000L, 30_000L, 37_000L)) {
@@ -233,7 +264,9 @@ class HomeViewModel @Inject constructor(
         chargePending.value = null
     }
 
-    override fun onCleared() { spin.disconnect() }
+    override fun onCleared() {
+        spin.disconnect()
+    }
 
     private fun dismissedToday(key: String, now: Long) = tipPrefs.getLong(key, -1) == now / 86_400_000L
 
@@ -242,7 +275,6 @@ class HomeViewModel @Inject constructor(
         tipPrefs.edit().putLong(key, System.currentTimeMillis() / 86_400_000L).apply()
         dismissed.value++
     }
-
 
     /** Long-press on the location chip: remember a name for where the car is now. */
     fun nameCurrentPlace(name: String) {
@@ -253,5 +285,4 @@ class HomeViewModel @Inject constructor(
     fun reconnect() = viewModelScope.launch { ismart.reconnect() }
     fun send(cmd: RemoteCommand) = viewModelScope.launch { ismart.send(cmd) }
     fun clearCommand() = ismart.clearCommand()
-
 }

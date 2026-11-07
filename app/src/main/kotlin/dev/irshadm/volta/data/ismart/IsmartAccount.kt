@@ -32,11 +32,10 @@ class IsmartAccount @Inject constructor(private val ismart: IsmartRepository) : 
 
     override val rejection: StateFlow<String?> = ismart.rejection
 
-    override suspend fun signIn(phone: String, password: String): Result<Unit> =
-        ismart.signIn(phone, password).recoverCatching { e ->
-            // IsmartRepository wraps the client's exception in a friendly message; the original is the cause.
-            throw SignInException(signInErrorOf(e.cause ?: e))
-        }
+    override suspend fun signIn(phone: String, password: String): Result<Unit> = ismart.signIn(phone, password).recoverCatching { e ->
+        // IsmartRepository wraps the client's exception in a friendly message; the original is the cause.
+        throw SignInException(signInErrorOf(e.cause ?: e))
+    }
 
     override fun signOut() = ismart.signOut()
 

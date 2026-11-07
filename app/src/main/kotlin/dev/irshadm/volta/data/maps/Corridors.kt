@@ -49,7 +49,6 @@ object Corridors {
         Town("Bengaluru", LatLng(12.9716, 77.5946)), Town("Mangaluru", LatLng(12.9141, 74.8560)),
     )
 
-    /** Up to three well-spread towns the route passes (not the start or the end), e.g. "Kottayam, Muvattupuzha, Angamaly". */
     /** The closest known town to [p] within 15 km, to name a stretch of road ("near Kottarakkara"). */
     fun nearest(p: LatLng): String? = towns.minByOrNull { Geo.distanceM(it.at, p) }?.takeIf { Geo.distanceM(it.at, p) < 15_000 }?.name
 
@@ -63,10 +62,10 @@ object Corridors {
             // Bypasses skirt city centres (Kollam, Kottayam), so cities count from further away than towns.
             if (off > (if (t.city) 6_000 else 3_000) || nearest.distanceM < 20_000 || nearest.distanceM > total - 20_000) null else t to nearest.distanceM
         }.sortedBy { it.second }
+
         // Cities first (Kollam, Kottayam, Kochi…); towns fill in when the route passes fewer than two cities.
         // At most three, spread over the trip so the names read as a journey.
-        fun spread(list: List<Pair<Town, Double>>, n: Int) =
-            if (list.size <= n) list else List(n) { k -> list.minBy { kotlin.math.abs(it.second - total * (k + 1) / (n + 1)) } }.distinct()
+        fun spread(list: List<Pair<Town, Double>>, n: Int) = if (list.size <= n) list else List(n) { k -> list.minBy { kotlin.math.abs(it.second - total * (k + 1) / (n + 1)) } }.distinct()
         val cities = spread(passed.filter { it.first.city }, 3)
         val picked = if (cities.size >= 2) cities else (cities + spread(passed.filter { !it.first.city }, 3 - cities.size))
         return picked.sortedBy { it.second }.map { it.first.name }

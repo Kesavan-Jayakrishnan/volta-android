@@ -18,6 +18,7 @@ class GoogleMapsKeyCheckerTest {
     private var savedKey: String? = null
 
     @Before fun start() = server.start()
+
     @After fun stop() = server.close()
 
     private fun api() = GoogleApi(OkHttpClient(), identity) { savedKey }
@@ -27,7 +28,8 @@ class GoogleMapsKeyCheckerTest {
         .body("""{"error":{"code":403,"message":"denied","status":"PERMISSION_DENIED","details":[{"reason":"$reason"}]}}""").build()
 
     @Test fun `both APIs answering means the key passes`() = runTest {
-        server.enqueue(ok()); server.enqueue(ok())
+        server.enqueue(ok())
+        server.enqueue(ok())
         val report = checker().check("  KEY123  ")
         assertTrue(report.passed)
 
@@ -41,7 +43,8 @@ class GoogleMapsKeyCheckerTest {
     }
 
     @Test fun `a refused API is reported with its problem`() = runTest {
-        server.enqueue(ok()); server.enqueue(denied("SERVICE_DISABLED"))
+        server.enqueue(ok())
+        server.enqueue(denied("SERVICE_DISABLED"))
         val report = checker().check("KEY123")
         assertFalse(report.passed)
         val (api, failure) = report.firstFailure!!
@@ -56,7 +59,8 @@ class GoogleMapsKeyCheckerTest {
     }
 
     @Test fun `normal calls read the saved key each time`() = runTest {
-        server.enqueue(ok("""{"a":1}""")); server.enqueue(ok())
+        server.enqueue(ok("""{"a":1}"""))
+        server.enqueue(ok())
         savedKey = "FIRST"
         assertEquals("""{"a":1}""", api().post(server.url("/x").toString(), "{}", "f"))
         savedKey = "SECOND"

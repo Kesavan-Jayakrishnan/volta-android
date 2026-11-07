@@ -20,10 +20,10 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import dagger.hilt.android.EntryPointAccessors
 import dev.irshadm.volta.QuickActionActivity
 import dev.irshadm.volta.R
 import dev.irshadm.volta.service.Notifications
-import dagger.hilt.android.EntryPointAccessors
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
@@ -33,6 +33,7 @@ import kotlin.math.roundToInt
  */
 object Cooling {
     const val TARGET_C = 24
+
     /** Below this the cabin is fine as it is. */
     const val COMFY_BELOW = 29.0
 
@@ -127,9 +128,15 @@ class CoolingWorker(context: Context, params: WorkerParameters) : CoroutineWorke
         // After a couple of minutes, trust the car over the clock: if the AC is off, the cool is over.
         if (elapsed >= 2.0) {
             runCatching { ismart.refresh(includeCharge = false) }
-            if (ismart.status.value?.climateRunning?.value == false) { done(ctx, s); return Result.success() }
+            if (ismart.status.value?.climateRunning?.value == false) {
+                done(ctx, s)
+                return Result.success()
+            }
         }
-        if (elapsed >= s.minutes || elapsed > 20) { done(ctx, s); return Result.success() }
+        if (elapsed >= s.minutes || elapsed > 20) {
+            done(ctx, s)
+            return Result.success()
+        }
         progress(ctx, s)
         schedule(ctx, 60)
         return Result.success()
@@ -157,8 +164,10 @@ class CoolingWorker(context: Context, params: WorkerParameters) : CoroutineWorke
         val fraction = (s.elapsedMin(now) / s.minutes).coerceIn(0.0, 1.0)
         val styled = runCatching {
             // Android 16+: a progress-centric notification the system can promote to a status-bar chip.
-            b.setStyle(NotificationCompat.ProgressStyle().setProgress((fraction * 100).toInt()).setStyledByProgress(true)
-                .setProgressTrackerIcon(androidx.core.graphics.drawable.IconCompat.createWithResource(ctx, R.drawable.ic_shortcut_precool)))
+            b.setStyle(
+                NotificationCompat.ProgressStyle().setProgress((fraction * 100).toInt()).setStyledByProgress(true)
+                    .setProgressTrackerIcon(androidx.core.graphics.drawable.IconCompat.createWithResource(ctx, R.drawable.ic_shortcut_precool)),
+            )
             b.setRequestPromotedOngoing(true)
             true
         }.getOrDefault(false)
@@ -187,7 +196,9 @@ class CoolingWorker(context: Context, params: WorkerParameters) : CoroutineWorke
     }
 
     private fun sheetIntent(ctx: Context): PendingIntent = PendingIntent.getActivity(
-        ctx, 12, Intent(Intent.ACTION_VIEW, Uri.parse("volta://action/precool"), ctx, QuickActionActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        ctx,
+        12,
+        Intent(Intent.ACTION_VIEW, Uri.parse("volta://action/precool"), ctx, QuickActionActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
 
@@ -199,7 +210,8 @@ class CoolingWorker(context: Context, params: WorkerParameters) : CoroutineWorke
 
         fun schedule(context: Context, delaySeconds: Long) {
             WorkManager.getInstance(context).enqueueUniqueWork(
-                WORK, ExistingWorkPolicy.REPLACE,
+                WORK,
+                ExistingWorkPolicy.REPLACE,
                 OneTimeWorkRequestBuilder<CoolingWorker>().setInitialDelay(delaySeconds, TimeUnit.SECONDS).setInputData(workDataOf()).build(),
             )
         }
