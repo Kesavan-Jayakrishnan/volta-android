@@ -146,7 +146,7 @@ fun EnergySettingsSection(vm: EnergySettingsViewModel = hiltViewModel()) {
                 modifier = Modifier.weight(1f),
             )
         }
-        Text("KSEB LT-1A tariff (per month: units@₹). Copy the rates from your latest bill.", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
+        Text("Electricity tariff (per month: units@₹). Copy the rates from your latest bill.", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
         OutlinedTextField(tele, { tele = it }, label = { Text("Telescopic slabs (up to 250/month)") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(flat, { flat = it }, label = { Text("Above 250 — all units at band rate (up to@₹)") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(

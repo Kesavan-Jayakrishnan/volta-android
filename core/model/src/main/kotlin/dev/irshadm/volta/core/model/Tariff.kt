@@ -3,7 +3,7 @@ package dev.irshadm.volta.core.model
 import kotlin.math.max
 
 /**
- * KSEB LT-1A domestic tariff. Rates are per unit per MONTH; a bi-monthly bill doubles
+ * Slab-based domestic tariff. The defaults are Kerala's KSEB LT-1A rates. Rates are per unit per MONTH; a bi-monthly bill doubles
  * the slab limits. Defaults are the most-cited 2025–27 figures found on 2026-10-26 and MUST be
  * confirmed against the user's bill (the screen shows when they were last verified).
  */
@@ -58,7 +58,7 @@ data class EnergySettings(
     val publicAcRatePerKwh: Double = 14.0,
     val dcRatePerKwh: Double = 22.0,
     val householdUnitsPerCycle: Double = 260.0, // sample: a flat with ACs, about 130 units a month, until the owner sets it
-    val billCycleStartDay: Int = 20, // the owner's KSEB cycle starts on the 20th...
+    val billCycleStartDay: Int = 20, // the owner's bill cycle starts on the 20th...
     val billCycleStartMonth: Int = 10, // ...of October, December, February and so on (1 = January)
     val dcThresholdKw: Double = 15.0,
 ) {

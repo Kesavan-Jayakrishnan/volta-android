@@ -52,10 +52,12 @@ Without these the release APK is built unsigned.
 
 Pushing a tag like `v0.1.0` runs [the release workflow](../.github/workflows/release.yml). The tag has to match
 `versionName`. It runs the tests, builds and signs the APK, then publishes `volta.apk` with its SHA-256 and the signing
-certificate's SHA-1. The APK never includes `MAPS_API_KEY`, because anyone could use a key built into a public APK.
+certificate's SHA-1. Anyone can pull a key out of a public APK, so the `MAPS_API_KEY` built into it must be restricted
+to the Maps SDK and this app's package and certificate. Google doesn't charge for Maps SDK use. Never build in a key that
+can call Routes or Places.
 
-It needs four repository secrets: `VOLTA_KEYSTORE_BASE64` (the keystore, base64-encoded), `VOLTA_STORE_PASSWORD`,
-`VOLTA_KEY_ALIAS` and `VOLTA_KEY_PASSWORD`.
+It needs five repository secrets: `VOLTA_KEYSTORE_BASE64` (the keystore, base64-encoded), `VOLTA_STORE_PASSWORD`,
+`VOLTA_KEY_ALIAS`, `VOLTA_KEY_PASSWORD` and `MAPS_API_KEY`.
 
 Keep a backup of the keystore outside this repository. Android only installs an update signed with the same key, so
 losing it means everyone has to uninstall and start again.

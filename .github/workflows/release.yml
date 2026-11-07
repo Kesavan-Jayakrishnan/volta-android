@@ -40,12 +40,14 @@ jobs:
           fi
           printf '%s' "$VOLTA_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
           echo "VOLTA_STORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
-      # MAPS_API_KEY is left out on purpose: a key built into a public APK would bill its owner for everyone's use.
+      # This key only works for the Maps SDK and only for this app, and Google doesn't charge for Maps SDK use, so it
+      # can ship in a public APK. Routes and places use the key each person enters in the app.
       - name: Signed release build
         env:
           VOLTA_STORE_PASSWORD: ${{ secrets.VOLTA_STORE_PASSWORD }}
           VOLTA_KEY_ALIAS: ${{ secrets.VOLTA_KEY_ALIAS }}
           VOLTA_KEY_PASSWORD: ${{ secrets.VOLTA_KEY_PASSWORD }}
+          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
         run: ./gradlew :app:assembleRelease
       - name: Verify and describe the APK
         run: |
@@ -65,8 +67,6 @@ jobs:
           Android 10 or newer. You need an MG i-SMART owner account and your own [Google Maps key](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/docs/GOOGLE-API-KEY.md).
 
           Signing in signs you out of the MG app, because MG allows one session at a time.
-
-          This APK doesn't include the interactive map, which needs a key at build time. Trip planning works with the key you enter in the app. To get the map, [build it yourself](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/docs/BUILD.md).
 
           **APK SHA-256** (compare with \`shasum -a 256 volta.apk\`)
           \`$apk_sha256\`

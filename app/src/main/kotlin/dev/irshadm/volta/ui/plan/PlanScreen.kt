@@ -1027,7 +1027,8 @@ private fun MapHeader(trip: PlannedTrip, state: PlanUiState, onEdit: () -> Unit,
     Box(Modifier.fillMaxWidth().height(300.dp).clipToBounds()) {
         // The map reserves the title block at the bottom, so the route (and Google's logo) sit in the clear top part.
         RouteMap(trip, Modifier.fillMaxWidth().height(300.dp), bottomPadding = 120.dp, radius = 0.dp)
-        if (trip.plan.outcome is PlanOutcome.Ok) {
+        // The preview draws on the map, and the Maps SDK never starts in a build without a map key.
+        if (trip.plan.outcome is PlanOutcome.Ok && interactiveMapAvailable) {
             Row(
                 Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(12.dp).clip(RoundedCornerShape(50)).background(VoltaColors.Gold)
                     .clickable(role = Role.Button, onClick = onPreview).padding(start = 10.dp, end = 14.dp, top = 8.dp, bottom = 8.dp),

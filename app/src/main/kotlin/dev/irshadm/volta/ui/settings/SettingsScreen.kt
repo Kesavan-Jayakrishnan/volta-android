@@ -461,7 +461,7 @@ private fun MainPage(vm: SettingsViewModel, open: (Page) -> Unit) {
 
     Label("Energy")
     Group {
-        NavRow(VoltaIcons.Home, VoltaColors.Champagne, "Home electricity", "KSEB · ${e.householdUnitsPerCycle.roundToInt()} units/bill" + (tariff.verifiedOn?.let { " · checked $it" } ?: " · sample rates")) { open(Page.Electricity) }
+        NavRow(VoltaIcons.Home, VoltaColors.Champagne, "Home electricity", "${e.householdUnitsPerCycle.roundToInt()} units/bill" + (tariff.verifiedOn?.let { " · checked $it" } ?: " · sample rates")) { open(Page.Electricity) }
         Divider()
         NavRow(VoltaIcons.Rupee, VoltaColors.Champagne, "Public charging prices", "AC ₹%s · DC ₹%s per kWh".format(e.publicAcRatePerKwh.toString().removeSuffix(".0"), e.dcRatePerKwh.toString().removeSuffix(".0"))) { open(Page.Prices) }
     }
@@ -866,7 +866,7 @@ private fun ElectricityPage(vm: SettingsViewModel) {
             { vm.saveEnergy(e.copy(billCycleStartMonth = e.billCycleStartMonth % 12 + 1)) },
         )
     }
-    Label("KSEB tariff (per month)")
+    Label("Electricity tariff (per month)")
     Group {
         var from = 0
         t.telescopic.forEach { (size, rate) ->
@@ -910,7 +910,7 @@ private fun TariffDialog(t: dev.irshadm.volta.core.model.Tariff, onDismiss: () -
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = VoltaColors.Surface,
-        title = { Text("KSEB slabs", style = MaterialTheme.typography.titleMedium) },
+        title = { Text("Tariff slabs", style = MaterialTheme.typography.titleMedium) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Copy from your bill as units@₹, separated by spaces.", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
