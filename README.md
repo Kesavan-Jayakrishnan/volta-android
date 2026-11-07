@@ -21,8 +21,8 @@ There is no Volta server and no analytics: your login and key stay on your phone
 - **Android Auto** and a home-screen widget.
 
 Only tested on the MG Windsor EV so far. Other MG EVs on i-SMART should sign in and show their data, but none has been
-run yet. The Comet EV, ZS EV, M9, Cyberster and Hector Tomahawk EV have their own picture, and anything else shows the
-Windsor. The 360° view is Windsor-only. Their battery figures can be set in Settings → Car until model profiles arrive.
+run yet. The Comet EV, ZS EV, M9, Cyberster and Hector Tomahawk EV have their own pictures, with only the 360° view still
+pending, and anything else shows the Windsor. Their battery figures can be set in Settings → Car until model profiles arrive.
 
 ## What you need
 
