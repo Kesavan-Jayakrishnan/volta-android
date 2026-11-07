@@ -137,7 +137,7 @@ fun HomeScreen(onPlanTrip: () -> Unit, onSettings: () -> Unit, viewModel: HomeVi
         Header(state, onSettings, Modifier.appear(0))
         LinkBanner(state, viewModel, onSettings, Modifier.padding(horizontal = 16.dp).padding(top = 10.dp))
 
-        if (state.waitingForCar) SkeletonCar(state.car.isWindsor, Modifier.onGloballyPositioned {
+        if (state.waitingForCar) SkeletonCar(state.car.model, Modifier.onGloballyPositioned {
             val b = it.boundsInWindow()
             heroTop = b.top - topPx; heroH = b.height
         }.appear(1))
@@ -147,7 +147,7 @@ fun HomeScreen(onPlanTrip: () -> Unit, onSettings: () -> Unit, viewModel: HomeVi
                 dev.irshadm.volta.ui.splash.HeroAnchor.bounds = b
                 heroTop = b.top - topPx; heroH = b.height
             }.appear(1)) {
-                CarHero(hero, forceDiagram, onToggleView = { forceDiagram = !forceDiagram }, backdrop = false, lowWheels = lowWheels, onTyreTap = { tyresOpen = true }, windsor = state.car.isWindsor)
+                CarHero(hero, forceDiagram, onToggleView = { forceDiagram = !forceDiagram }, backdrop = false, lowWheels = lowWheels, onTyreTap = { tyresOpen = true }, model = state.car.model)
                 state.vehicle?.let { v ->
                     val context = LocalContext.current
                     AttentionBanner(v, state.nowMillis, onFix = { cmd ->

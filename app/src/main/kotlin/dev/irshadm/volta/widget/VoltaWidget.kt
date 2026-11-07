@@ -135,15 +135,15 @@ object VoltaWidget {
         }
     }
 
-    /** The same car photo as the dashboard: charging, lights, locked or unlocked. */
+    /** The car as on the dashboard: charging, lights, locked or unlocked. */
     private fun carImage(context: Context, v: VehicleStatus?): Int {
         val shot = when {
-            v?.charging?.value == true -> "charging"
-            v?.lightsOn?.value == true -> "lights"
-            v?.locked?.value == false -> "unlocked"
-            else -> "locked"
+            v?.charging?.value == true -> dev.irshadm.volta.ui.components.CarShot.Charging
+            v?.lightsOn?.value == true -> dev.irshadm.volta.ui.components.CarShot.Lights
+            v?.locked?.value == false -> dev.irshadm.volta.ui.components.CarShot.Unlocked
+            else -> dev.irshadm.volta.ui.components.CarShot.Locked
         }
-        return context.resources.getIdentifier("car360_${shot}_1", "drawable", context.packageName).takeIf { it != 0 } ?: R.drawable.car360_locked_1
+        return dev.irshadm.volta.ui.components.CarPictures.small(dev.irshadm.volta.data.ismart.CarIdentity.saved(context).model, shot)
     }
 
     /** "106 km" with the unit smaller and grey, like an iOS widget's hero number. */

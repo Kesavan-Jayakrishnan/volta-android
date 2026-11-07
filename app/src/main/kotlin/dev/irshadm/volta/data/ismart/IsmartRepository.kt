@@ -68,8 +68,8 @@ class IsmartRepository @Inject constructor(
     val status: StateFlow<VehicleStatus?> = _status
 
     /** The signed-in car's model, saved at sign-in so the dashboard knows which picture to show. */
-    private val carPrefs = context.getSharedPreferences("car", android.content.Context.MODE_PRIVATE)
-    private val _car = MutableStateFlow(carPrefs.getString(CAR_NAME, null)?.let(::CarIdentity) ?: CarIdentity.Unknown)
+    private val carPrefs = context.getSharedPreferences(CAR_PREFS, android.content.Context.MODE_PRIVATE)
+    private val _car = MutableStateFlow(CarIdentity.saved(context))
     val car: StateFlow<CarIdentity> = _car
 
     private val _command = MutableStateFlow<CommandState>(CommandState.Idle)
@@ -332,5 +332,4 @@ internal fun isDriving(powerMode: Int, engineStatus: Int, climateRunning: Boolea
     return true
 }
 
-private const val CAR_NAME = "car.name"
 private const val FIRST_READ_TRIES = 6

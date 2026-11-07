@@ -436,12 +436,12 @@ class QuickActionActivity : FragmentActivity() {
             else -> Wt.Champagne
         }
         val shot = when {
-            v?.charging?.value == true -> "charging"
-            v?.lightsOn?.value == true -> "lights"
-            v?.locked?.value == false -> "unlocked"
-            else -> "locked"
+            v?.charging?.value == true -> dev.irshadm.volta.ui.components.CarShot.Charging
+            v?.lightsOn?.value == true -> dev.irshadm.volta.ui.components.CarShot.Lights
+            v?.locked?.value == false -> dev.irshadm.volta.ui.components.CarShot.Unlocked
+            else -> dev.irshadm.volta.ui.components.CarShot.Locked
         }
-        val res = resources.getIdentifier("car360_${shot}_1", "drawable", packageName).takeIf { it != 0 } ?: R.drawable.car360_locked_1
+        val res = dev.irshadm.volta.ui.components.CarPictures.small(dev.irshadm.volta.data.ismart.CarIdentity.saved(this).model, shot)
         Box(
             Modifier.fillMaxWidth().height(132.dp).clip(RoundedCornerShape(20.dp)).background(Wt.Bg)
                 .drawBehind {
