@@ -34,14 +34,8 @@ All tests must pass. New logic comes with unit tests; ViewModels are tested agai
 
 ## Your contribution and the licence
 
-Volta is licensed under PolyForm Noncommercial 1.0.0. By opening a pull request you agree that:
-
-1. the contribution is your own work, or you have the right to submit it; and
-2. you license it to the project under the same terms as the project, **and** grant the maintainer the right to
-   also license it under other terms, including commercial ones.
-
-Point 2 keeps the option of offering commercial licences, which the noncommercial licence alone would block for
-code the maintainer didn't write.
+Volta is licensed under the [Apache License 2.0](LICENSE). By opening a pull request you confirm the contribution is
+your own work, or that you have the right to submit it, and you license it under the same terms.
 
 ## Security
 
