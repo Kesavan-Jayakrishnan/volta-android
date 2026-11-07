@@ -321,7 +321,7 @@ private fun Stat(value: String, label: String, color: Color = VoltaColors.Text) 
     }
 }
 
-/** KSEB bill for one cycle, how much the car adds, and how close the household is to the flat-rate jump, in units and in km. */
+/** Electricity bill for one cycle, how much the car adds, and how close the household is to the flat-rate jump, in units and in km. */
 @Composable
 private fun BillCard(r: EnergyReport, state: EnergyUiState, onSettings: () -> Unit, modifier: Modifier) {
     val t = state.tariff
@@ -344,7 +344,7 @@ private fun BillCard(r: EnergyReport, state: EnergyUiState, onSettings: () -> Un
     val year = Calendar.getInstance().get(Calendar.YEAR).toString()
     VoltaCard(modifier.fillMaxWidth(), radius = 22.dp, padding = PaddingValues(18.dp)) {
         Row {
-            Text("KSEB bill · ${t.billingMonths}-month cycle", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted, modifier = Modifier.weight(1f).alignByBaseline())
+            Text("Electricity bill · ${t.billingMonths}-month cycle", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted, modifier = Modifier.weight(1f).alignByBaseline())
             Text(
                 t.verifiedOn?.let { "rates ${it.removeSuffix(" $year")}" } ?: "sample rates",
                 style = MaterialTheme.typography.labelSmall,
