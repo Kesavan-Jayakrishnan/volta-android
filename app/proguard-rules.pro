@@ -12,6 +12,9 @@
 # The car host reads the CarAppService by name from the manifest.
 -keep class dev.irshadm.volta.car.VoltaCarAppService { *; }
 
+# ML Kit creates its component registrars by reflection, from names in the manifest.
+-keep class * implements com.google.firebase.components.ComponentRegistrar { <init>(); }
+
 # Readable crash lines in Play's reports.
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
