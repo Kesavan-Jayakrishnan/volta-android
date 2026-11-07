@@ -20,9 +20,9 @@ There is no Volta server and no analytics: your login and key stay on your phone
 - **Smart pre-cool:** suggests cooling the car before you walk out. It always asks first.
 - **Android Auto** and a home-screen widget.
 
-Built and tested on the MG Windsor EV. Other MG EVs on i-SMART sign in and show their data, with a picture of the
-Comet EV, ZS EV, M9, Cyberster or Hector Tomahawk EV. Anything else shows the Windsor. The 360° view is Windsor-only.
-Their battery figures can be set in Settings → Car until model profiles arrive.
+Only tested on the MG Windsor EV so far. Other MG EVs on i-SMART should sign in and show their data, but none has been
+run yet. The Comet EV, ZS EV, M9, Cyberster and Hector Tomahawk EV have their own picture, and anything else shows the
+Windsor. The 360° view is Windsor-only. Their battery figures can be set in Settings → Car until model profiles arrive.
 
 ## What you need
 
