@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The 360° viewer looks its frames up by name at runtime (Car360Frames.load), which the resource shrinker can't
+     see, so without this release builds keep only the frames the code names directly. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/car360_*" />
