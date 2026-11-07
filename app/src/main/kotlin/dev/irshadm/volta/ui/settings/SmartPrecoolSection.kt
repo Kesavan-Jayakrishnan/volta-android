@@ -55,9 +55,9 @@ import dev.irshadm.volta.service.smart.Feedback
 import dev.irshadm.volta.service.smart.Narrator
 import dev.irshadm.volta.service.smart.Routine
 import dev.irshadm.volta.service.smart.SmartPrecool
-import dev.irshadm.volta.ui.components.WtButton
-import dev.irshadm.volta.ui.components.WtButtonStyle
-import dev.irshadm.volta.core.designsystem.Wt
+import dev.irshadm.volta.ui.components.VoltaButton
+import dev.irshadm.volta.ui.components.VoltaButtonStyle
+import dev.irshadm.volta.core.designsystem.VoltaColors
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -153,17 +153,17 @@ fun SmartPrecoolSection(vm: SmartPrecoolViewModel = hiltViewModel()) {
         val wifi = remember { SmartPrecool.currentWifi(context) }
         AlertDialog(
             onDismissRequest = { adding = false },
-            containerColor = Wt.Surface,
+            containerColor = VoltaColors.Surface,
             title = { Text("Add this place", style = MaterialTheme.typography.titleMedium) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(wifi?.let { "Uses where you are now and the Wi-Fi “$it”." } ?: "Not on Wi-Fi — connect to this place's Wi-Fi first for the best signal.",
-                        style = MaterialTheme.typography.bodySmall, color = if (wifi == null) Wt.AmberText else Wt.Muted)
+                        style = MaterialTheme.typography.bodySmall, color = if (wifi == null) VoltaColors.AmberText else VoltaColors.Muted)
                     OutlinedTextField(name, { name = it }, singleLine = true, placeholder = { Text("Office") }, modifier = Modifier.fillMaxWidth())
                 }
             },
-            confirmButton = { TextButton({ vm.addHere(name); adding = false }, enabled = name.isNotBlank()) { Text("Save", color = Wt.Gold) } },
-            dismissButton = { TextButton({ adding = false }) { Text("Cancel", color = Wt.Muted) } },
+            confirmButton = { TextButton({ vm.addHere(name); adding = false }, enabled = name.isNotBlank()) { Text("Save", color = VoltaColors.Gold) } },
+            dismissButton = { TextButton({ adding = false }) { Text("Cancel", color = VoltaColors.Muted) } },
         )
     }
 
@@ -172,67 +172,67 @@ fun SmartPrecoolSection(vm: SmartPrecoolViewModel = hiltViewModel()) {
             Column(Modifier.weight(1f)) {
                 Text("Suggest AC when I head to the car", style = MaterialTheme.typography.bodyMedium)
                 Text("Daytime, car parked, inside and outside above ${cfg.aboveC}°. One suggestion per departure — you always confirm with your fingerprint.",
-                    style = MaterialTheme.typography.bodySmall, color = Wt.Muted)
+                    style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
             }
-            Switch(cfg.enabled, { vm.save(cfg.copy(enabled = it)) }, colors = SwitchDefaults.colors(checkedTrackColor = Wt.Champagne, checkedThumbColor = Wt.Bg))
+            Switch(cfg.enabled, { vm.save(cfg.copy(enabled = it)) }, colors = SwitchDefaults.colors(checkedTrackColor = VoltaColors.Champagne, checkedThumbColor = VoltaColors.Bg))
         }
         if (!cfg.enabled) return@Column
 
-        Text("Above ${cfg.aboveC}° (it learns per place from your answers)", style = MaterialTheme.typography.labelMedium, color = Wt.TextSoft)
+        Text("Above ${cfg.aboveC}° (it learns per place from your answers)", style = MaterialTheme.typography.labelMedium, color = VoltaColors.TextSoft)
         Slider(cfg.aboveC.toFloat(), { vm.save(cfg.copy(aboveC = it.toInt())) }, valueRange = 25f..35f, steps = 9,
-            colors = SliderDefaults.colors(thumbColor = Wt.Gold, activeTrackColor = Wt.Gold, inactiveTrackColor = Wt.Border))
+            colors = SliderDefaults.colors(thumbColor = VoltaColors.Gold, activeTrackColor = VoltaColors.Gold, inactiveTrackColor = VoltaColors.Border))
 
         if (!allowed) {
             Text("Needs location “Allow all the time” so Android can notice you leaving a place or walking back to the car.",
-                style = MaterialTheme.typography.bodySmall, color = Wt.AmberText)
-            WtButton("Allow location", {
+                style = MaterialTheme.typography.bodySmall, color = VoltaColors.AmberText)
+            VoltaButton("Allow location", {
                 val hasFine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
                 if (!hasFine) fine.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
                 else context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")))
-            }, style = WtButtonStyle.Secondary)
+            }, style = VoltaButtonStyle.Secondary)
         }
 
         if (allowed && !onFoot && android.os.Build.VERSION.SDK_INT >= 29) {
             Text("Optional: let Volta notice when you're walking, so it can say \"cool it while you walk there\" and skip passing the car in a cab.",
-                style = MaterialTheme.typography.bodySmall, color = Wt.Muted)
-            WtButton("Allow walking detection", { activity.launch(Manifest.permission.ACTIVITY_RECOGNITION) }, style = WtButtonStyle.Secondary)
+                style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
+            VoltaButton("Allow walking detection", { activity.launch(Manifest.permission.ACTIVITY_RECOGNITION) }, style = VoltaButtonStyle.Secondary)
         }
 
-        Text("Uses your Places: leaving one's Wi-Fi means you're heading to the car (Settings → Places).", style = MaterialTheme.typography.bodySmall, color = Wt.Muted)
+        Text("Uses your Places: leaving one's Wi-Fi means you're heading to the car (Settings → Places).", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
         val muted = memory.filterValues { it.muted }
         if (muted.isNotEmpty()) {
-            Text("MUTED", style = MaterialTheme.typography.labelSmall, color = Wt.Dim)
+            Text("MUTED", style = MaterialTheme.typography.labelSmall, color = VoltaColors.Dim)
             muted.keys.forEach { place ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(place.replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-                    Text("Unmute", style = MaterialTheme.typography.labelMedium, color = Wt.Gold, modifier = Modifier.clickable { vm.unmute(place) }.padding(6.dp))
+                    Text("Unmute", style = MaterialTheme.typography.labelMedium, color = VoltaColors.Gold, modifier = Modifier.clickable { vm.unmute(place) }.padding(6.dp))
                 }
             }
         }
 
         // Routine learned from drives.
-        Text("YOUR ROUTINE", style = MaterialTheme.typography.labelSmall, color = Wt.Dim)
+        Text("YOUR ROUTINE", style = MaterialTheme.typography.labelSmall, color = VoltaColors.Dim)
         if (routine.isEmpty()) Text("Learning — needs about 1–2 weeks of drives. Until then it uses Wi-Fi + temperature only.",
-            style = MaterialTheme.typography.bodySmall, color = Wt.Muted)
-        routine.forEach { Text("• ${it.label}  (${it.count}×)", style = MaterialTheme.typography.bodySmall, color = Wt.TextSoft) }
+            style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
+        routine.forEach { Text("• ${it.label}  (${it.count}×)", style = MaterialTheme.typography.bodySmall, color = VoltaColors.TextSoft) }
 
         // On-device AI.
-        Text("ON-DEVICE AI", style = MaterialTheme.typography.labelSmall, color = Wt.Dim)
+        Text("ON-DEVICE AI", style = MaterialTheme.typography.labelSmall, color = VoltaColors.Dim)
         when (ai) {
             Narrator.State.Ready -> {
-                Text("Gemini Nano ready — writes suggestions and this summary on your phone, offline.", style = MaterialTheme.typography.bodySmall, color = Wt.Green)
-                note?.let { Text("✦ $it", style = MaterialTheme.typography.bodyMedium, color = Wt.TextSoft) }
+                Text("Gemini Nano ready — writes suggestions and this summary on your phone, offline.", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Green)
+                note?.let { Text("✦ $it", style = MaterialTheme.typography.bodyMedium, color = VoltaColors.TextSoft) }
             }
             Narrator.State.Downloadable -> Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Gemini Nano can be downloaded (free, one time).", style = MaterialTheme.typography.bodySmall, color = Wt.Muted, modifier = Modifier.weight(1f))
-                WtButton("Download", { vm.downloadAi() }, style = WtButtonStyle.Secondary)
+                Text("Gemini Nano can be downloaded (free, one time).", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted, modifier = Modifier.weight(1f))
+                VoltaButton("Download", { vm.downloadAi() }, style = VoltaButtonStyle.Secondary)
             }
             Narrator.State.Downloading -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                CircularProgressIndicator(color = Wt.Gold, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
-                Text("Downloading Gemini Nano…", style = MaterialTheme.typography.bodySmall, color = Wt.Muted)
+                CircularProgressIndicator(color = VoltaColors.Gold, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
+                Text("Downloading Gemini Nano…", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
             }
             Narrator.State.Unavailable -> Text("Gemini Nano isn't available on this phone right now — suggestions use plain text.",
-                style = MaterialTheme.typography.bodySmall, color = Wt.Muted)
+                style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
         }
     }
 }

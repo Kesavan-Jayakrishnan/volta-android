@@ -79,16 +79,16 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.irshadm.volta.ui.components.CarHero
 import dev.irshadm.volta.ui.components.StatusTile
-import dev.irshadm.volta.ui.components.WtButton
-import dev.irshadm.volta.ui.components.WtButtonStyle
-import dev.irshadm.volta.ui.components.WtCard
-import dev.irshadm.volta.ui.components.WtChip
-import dev.irshadm.volta.core.designsystem.WtIcons
+import dev.irshadm.volta.ui.components.VoltaButton
+import dev.irshadm.volta.ui.components.VoltaButtonStyle
+import dev.irshadm.volta.ui.components.VoltaCard
+import dev.irshadm.volta.ui.components.VoltaChip
+import dev.irshadm.volta.core.designsystem.VoltaIcons
 import dev.irshadm.volta.ui.components.appear
 import dev.irshadm.volta.ui.components.pressScale
 import dev.irshadm.volta.core.designsystem.LocalReducedMotion
-import dev.irshadm.volta.core.designsystem.Wt
-import dev.irshadm.volta.core.designsystem.WtMotion
+import dev.irshadm.volta.core.designsystem.VoltaColors
+import dev.irshadm.volta.core.designsystem.VoltaMotion
 import dev.irshadm.volta.core.designsystem.tabular
 import dev.irshadm.volta.core.model.SocReading
 import dev.irshadm.volta.core.model.SocSource
@@ -110,7 +110,7 @@ fun HomeScreen(onPlanTrip: () -> Unit, onSettings: () -> Unit, viewModel: HomeVi
         indicator = {
             PullToRefreshDefaults.Indicator(
                 state = pullState, isRefreshing = state.refreshing && !state.waitingForCar,
-                containerColor = Wt.Surface, color = Wt.Gold,
+                containerColor = VoltaColors.Surface, color = VoltaColors.Gold,
                 modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding(),
             )
         },
@@ -166,7 +166,7 @@ fun HomeScreen(onPlanTrip: () -> Unit, onSettings: () -> Unit, viewModel: HomeVi
             }
         } else if (state.mode == DataMode.Live) {
             val landed = dev.irshadm.volta.ui.splash.SplashGate.landed
-            val lineAlpha by androidx.compose.animation.core.animateFloatAsState(if (landed) 1f else 0f, tween(480, easing = WtMotion.EaseOut), label = "locationLine")
+            val lineAlpha by androidx.compose.animation.core.animateFloatAsState(if (landed) 1f else 0f, tween(480, easing = VoltaMotion.EaseOut), label = "locationLine")
             Box(Modifier.fillMaxWidth().padding(horizontal = 20.dp).height(34.dp).graphicsLayer { alpha = lineAlpha }, contentAlignment = Alignment.Center) {
                 LocationLine(state, viewModel::nameCurrentPlace)
             }
@@ -200,17 +200,17 @@ private fun Header(state: HomeUiState, onSettings: () -> Unit, modifier: Modifie
                     slow = false
                     if (state.waitingForCar) { kotlinx.coroutines.delay(20_000); slow = true }
                 }
-                val (dot, label) = if (state.waitingForCar) Wt.Gold to (if (slow) "Waking your car, this can take a minute" else "Reading your car…")
+                val (dot, label) = if (state.waitingForCar) VoltaColors.Gold to (if (slow) "Waking your car, this can take a minute" else "Reading your car…")
                     else sourceLabel(state)
                 Box(Modifier.size(7.dp).clip(CircleShape).background(dot))
-                Text(label, style = MaterialTheme.typography.bodyMedium, color = Wt.Muted)
+                Text(label, style = MaterialTheme.typography.bodyMedium, color = VoltaColors.Muted)
             }
         }
     }
 }
 
 private fun sourceLabel(state: HomeUiState): Pair<Color, String> {
-    val r = state.soc ?: return Wt.Dim to "No battery reading yet"
+    val r = state.soc ?: return VoltaColors.Dim to "No battery reading yet"
     val mins = r.ageMinutes(state.nowMillis)
     val age = when {
         mins < 1 -> "just now"
@@ -219,8 +219,8 @@ private fun sourceLabel(state: HomeUiState): Pair<Color, String> {
         else -> "${mins / (24 * 60)} d ago"
     }
     return when (r.source) {
-        SocSource.MANUAL -> Wt.Gold to "Manual · $age"
-        SocSource.ISMART -> if (mins > 60) Wt.Amber to "Car data from $age" else Wt.Green to "Live · updated $age"
+        SocSource.MANUAL -> VoltaColors.Gold to "Manual · $age"
+        SocSource.ISMART -> if (mins > 60) VoltaColors.Amber to "Car data from $age" else VoltaColors.Green to "Live · updated $age"
     }
 }
 
@@ -230,17 +230,17 @@ private fun LinkBanner(state: HomeUiState, vm: HomeViewModel, onSettings: () -> 
     val link = state.link
     AnimatedVisibility(link is LinkState.NeedsReconnect || (link is LinkState.Connected && link.error != null) || link is LinkState.SignedOut) {
         when (link) {
-            is LinkState.NeedsReconnect -> WtCard(modifier.fillMaxWidth(), background = Wt.tint(Wt.Amber, 0.10f), border = Wt.tint(Wt.Amber, 0.45f)) {
+            is LinkState.NeedsReconnect -> VoltaCard(modifier.fillMaxWidth(), background = VoltaColors.tint(VoltaColors.Amber, 0.10f), border = VoltaColors.tint(VoltaColors.Amber, 0.45f)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Icon(WtIcons.Warning, null, tint = Wt.Amber, modifier = Modifier.size(20.dp))
+                    Icon(VoltaIcons.Warning, null, tint = VoltaColors.Amber, modifier = Modifier.size(20.dp))
                     Column(Modifier.weight(1f)) {
-                        Text("Car connection lost", style = MaterialTheme.typography.titleSmall, color = Wt.AmberText)
-                        Text("Signed out by another app. Live data is paused.", style = MaterialTheme.typography.bodySmall, color = Wt.AmberText)
+                        Text("Car connection lost", style = MaterialTheme.typography.titleSmall, color = VoltaColors.AmberText)
+                        Text("Signed out by another app. Live data is paused.", style = MaterialTheme.typography.bodySmall, color = VoltaColors.AmberText)
                     }
-                    WtButton("Reconnect", { vm.reconnect() })
+                    VoltaButton("Reconnect", { vm.reconnect() })
                 }
             }
-            is LinkState.Connected -> Text(link.error.orEmpty(), style = MaterialTheme.typography.bodySmall, color = Wt.Amber, modifier = modifier)
+            is LinkState.Connected -> Text(link.error.orEmpty(), style = MaterialTheme.typography.bodySmall, color = VoltaColors.Amber, modifier = modifier)
             // Signed out, the sign-in screen covers the app; nothing to show here.
             LinkState.SignedOut -> Unit
         }
@@ -248,7 +248,7 @@ private fun LinkBanner(state: HomeUiState, vm: HomeViewModel, onSettings: () -> 
 }
 
 private enum class CarActivity(val label: String, val color: Color) {
-    Charging("Charging", Wt.Green), PluggedIn("Plugged in", Wt.BlueSoft), Driving("Driving", Wt.Gold), Parked("Parked", Wt.Muted)
+    Charging("Charging", VoltaColors.Green), PluggedIn("Plugged in", VoltaColors.BlueSoft), Driving("Driving", VoltaColors.Gold), Parked("Parked", VoltaColors.Muted)
 }
 
 /** Parked / driving / charging at a glance, next to the car's name. */
@@ -277,7 +277,7 @@ private fun StatusChip(v: dev.irshadm.volta.core.model.VehicleStatus, chargerCha
     )
     androidx.compose.animation.AnimatedContent(activity to detail, label = "chip") { (a, d) ->
         Row(
-            Modifier.clip(RoundedCornerShape(50)).background(Wt.tint(a.color, 0.14f)).border(1.dp, Wt.tint(a.color, 0.35f), RoundedCornerShape(50))
+            Modifier.clip(RoundedCornerShape(50)).background(VoltaColors.tint(a.color, 0.14f)).border(1.dp, VoltaColors.tint(a.color, 0.35f), RoundedCornerShape(50))
                 .padding(horizontal = 10.dp, vertical = 5.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {

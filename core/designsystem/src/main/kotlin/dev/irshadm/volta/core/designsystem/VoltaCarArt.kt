@@ -136,5 +136,5 @@ private const val BOLT_MS = 700
 @Preview(backgroundColor = 0xFF0B0D10, showBackground = true)
 @Composable
 private fun VoltaCarArtPreview() = VoltaTheme {
-    VoltaCarArt(Modifier.fillMaxWidth().padding(24.dp), bolt = false, lines = false, background = Wt.Bg, blendEdges = true)
+    VoltaCarArt(Modifier.fillMaxWidth().padding(24.dp), bolt = false, lines = false, background = VoltaColors.Bg, blendEdges = true)
 }

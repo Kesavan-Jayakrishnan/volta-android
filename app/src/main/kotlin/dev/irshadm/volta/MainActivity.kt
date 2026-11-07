@@ -29,9 +29,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dev.irshadm.volta.ui.components.BottomTab
-import dev.irshadm.volta.ui.components.ComingSoon
-import dev.irshadm.volta.ui.components.WtBottomBar
-import dev.irshadm.volta.core.designsystem.WtIcons
+import dev.irshadm.volta.ui.components.VoltaBottomBar
+import dev.irshadm.volta.core.designsystem.VoltaIcons
 import dev.irshadm.volta.ui.home.HomeScreen
 import dev.irshadm.volta.ui.plan.PlanScreen
 import dev.irshadm.volta.ui.trip.TripScreen
@@ -42,8 +41,8 @@ import dev.irshadm.volta.core.domain.StartDestination
 import dev.irshadm.volta.feature.onboarding.mapskey.MapsKeyMode
 import dev.irshadm.volta.feature.onboarding.mapskey.MapsKeyRoute
 import dev.irshadm.volta.feature.onboarding.signin.SignInRoute
-import dev.irshadm.volta.core.designsystem.Wt
-import dev.irshadm.volta.core.designsystem.WtMotion
+import dev.irshadm.volta.core.designsystem.VoltaColors
+import dev.irshadm.volta.core.designsystem.VoltaMotion
 import dev.irshadm.volta.core.designsystem.VoltaTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -51,8 +50,8 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.dark(Wt.Bg.toArgb()),
-            navigationBarStyle = SystemBarStyle.dark(Wt.Bg.toArgb()),
+            statusBarStyle = SystemBarStyle.dark(VoltaColors.Bg.toArgb()),
+            navigationBarStyle = SystemBarStyle.dark(VoltaColors.Bg.toArgb()),
         )
         super.onCreate(savedInstanceState)
         setContent {
@@ -101,11 +100,11 @@ class MainActivity : FragmentActivity() {
 }
 
 private val Tabs = listOf(
-    BottomTab("battery", "Dashboard", WtIcons.Dashboard),
-    BottomTab("plan", "Plan", WtIcons.Pin),
-    BottomTab("trip", "Trip", WtIcons.Route),
-    BottomTab("energy", "Energy", WtIcons.Bars),
-    BottomTab("settings", "Settings", WtIcons.Gear),
+    BottomTab("battery", "Dashboard", VoltaIcons.Dashboard),
+    BottomTab("plan", "Plan", VoltaIcons.Pin),
+    BottomTab("trip", "Trip", VoltaIcons.Route),
+    BottomTab("energy", "Energy", VoltaIcons.Bars),
+    BottomTab("settings", "Settings", VoltaIcons.Gear),
 )
 
 @Composable
@@ -119,13 +118,13 @@ private fun AppNav() {
         restoreState = true
     }
     Scaffold(
-        containerColor = Wt.Bg,
-        bottomBar = { WtBottomBar(Tabs, current) { go(it.route) } },
+        containerColor = VoltaColors.Bg,
+        bottomBar = { VoltaBottomBar(Tabs, current) { go(it.route) } },
     ) { padding ->
         NavHost(
             nav,
             startDestination = "battery",
-            modifier = Modifier.fillMaxSize().background(Wt.Bg).padding(bottom = padding.calculateBottomPadding()),
+            modifier = Modifier.fillMaxSize().background(VoltaColors.Bg).padding(bottom = padding.calculateBottomPadding()),
             enterTransition = { fadeIn(tween(260)) },
             exitTransition = { fadeOut(tween(180)) },
         ) {

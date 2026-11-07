@@ -47,8 +47,8 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import dev.irshadm.volta.R
 import dev.irshadm.volta.data.maps.PlannedTrip
 import dev.irshadm.volta.core.designsystem.LocalReducedMotion
-import dev.irshadm.volta.core.designsystem.Wt
-import dev.irshadm.volta.core.designsystem.WtMotion
+import dev.irshadm.volta.core.designsystem.VoltaColors
+import dev.irshadm.volta.core.designsystem.VoltaMotion
 import dev.irshadm.volta.core.planner.PlanOutcome
 import com.google.android.gms.maps.model.LatLng as GLatLng
 
@@ -60,7 +60,7 @@ import com.google.android.gms.maps.model.LatLng as GLatLng
 fun ElevationChart(trip: PlannedTrip, bufferSoc: Double, modifier: Modifier = Modifier) {
     val reduced = LocalReducedMotion.current
     val reveal = remember(trip) { Animatable(if (reduced) 1f else 0f) }
-    LaunchedEffect(trip) { if (!reduced) reveal.animateTo(1f, tween(1100, easing = WtMotion.EaseOut)) }
+    LaunchedEffect(trip) { if (!reduced) reveal.animateTo(1f, tween(1100, easing = VoltaMotion.EaseOut)) }
     val profile = trip.profile
     val trace = trip.plan.socTrace
     val total = trip.route.distanceM
@@ -69,7 +69,7 @@ fun ElevationChart(trip: PlannedTrip, bufferSoc: Double, modifier: Modifier = Mo
     val stops = (trip.plan.outcome as? PlanOutcome.Ok)?.stops ?: (trip.plan.outcome as? PlanOutcome.Unreachable)?.stops.orEmpty()
     val desc = "Elevation from ${minE.toInt()} to ${maxE.toInt()} metres; battery from ${trace.first().socPercent.toInt()} to ${trace.last().socPercent.toInt()} percent"
     val measurer = androidx.compose.ui.text.rememberTextMeasurer()
-    val labelStyle = androidx.compose.ui.text.TextStyle(fontSize = 11.sp, color = Wt.Muted)
+    val labelStyle = androidx.compose.ui.text.TextStyle(fontSize = 11.sp, color = VoltaColors.Muted)
 
     // Compact: the battery line over a low terrain band, the buffer dashed, start and end % labelled on the line.
     Canvas(modifier.fillMaxWidth().height(96.dp).semantics { contentDescription = desc }) {
@@ -87,35 +87,35 @@ fun ElevationChart(trip: PlannedTrip, bufferSoc: Double, modifier: Modifier = Mo
                 profile.forEach { lineTo(x(it.distanceM), yE(it.elevationM)) }
                 lineTo(x(total), h); close()
             }
-            drawPath(area, Wt.tint(Wt.Muted, 0.12f))
+            drawPath(area, VoltaColors.tint(VoltaColors.Muted, 0.12f))
             val ridge = Path().apply {
                 profile.forEachIndexed { i, p -> if (i == 0) moveTo(x(p.distanceM), yE(p.elevationM)) else lineTo(x(p.distanceM), yE(p.elevationM)) }
             }
-            drawPath(ridge, Wt.tint(Wt.Muted, 0.4f), style = Stroke(1.dp.toPx()))
+            drawPath(ridge, VoltaColors.tint(VoltaColors.Muted, 0.4f), style = Stroke(1.dp.toPx()))
 
-            drawLine(Wt.tint(Wt.Amber, 0.5f), Offset(x(0.0), yS(bufferSoc)), Offset(x(total), yS(bufferSoc)), 1.dp.toPx(),
+            drawLine(VoltaColors.tint(VoltaColors.Amber, 0.5f), Offset(x(0.0), yS(bufferSoc)), Offset(x(total), yS(bufferSoc)), 1.dp.toPx(),
                 pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f)))
 
             val line = Path().apply {
                 trace.forEachIndexed { i, p -> if (i == 0) moveTo(x(p.distanceM), yS(p.socPercent)) else lineTo(x(p.distanceM), yS(p.socPercent)) }
             }
-            drawPath(line, Wt.Champagne, style = Stroke(2.4.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
+            drawPath(line, VoltaColors.Champagne, style = Stroke(2.4.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
             stops.forEach { s ->
                 val sx = x(s.charger.alongRouteM)
-                drawCircle(Wt.Bg, 5.dp.toPx(), Offset(sx, yS(s.departSoc)))
-                drawCircle(Wt.Gold, 3.5.dp.toPx(), Offset(sx, yS(s.departSoc)))
+                drawCircle(VoltaColors.Bg, 5.dp.toPx(), Offset(sx, yS(s.departSoc)))
+                drawCircle(VoltaColors.Gold, 3.5.dp.toPx(), Offset(sx, yS(s.departSoc)))
             }
             val first = trace.first()
             val end = trace.last()
-            drawCircle(Wt.Bg, 4.5.dp.toPx(), Offset(x(end.distanceM), yS(end.socPercent)))
-            drawCircle(if (end.socPercent < bufferSoc) Wt.Amber else Wt.Champagne, 4.5.dp.toPx(), Offset(x(end.distanceM), yS(end.socPercent)), style = Stroke(2.dp.toPx()))
+            drawCircle(VoltaColors.Bg, 4.5.dp.toPx(), Offset(x(end.distanceM), yS(end.socPercent)))
+            drawCircle(if (end.socPercent < bufferSoc) VoltaColors.Amber else VoltaColors.Champagne, 4.5.dp.toPx(), Offset(x(end.distanceM), yS(end.socPercent)), style = Stroke(2.dp.toPx()))
 
             // Start and end percentages sit just above the line at each end; the buffer is named at the left.
-            val startLabel = measurer.measure("${first.socPercent.toInt()} %", labelStyle.copy(color = Wt.TextSoft))
+            val startLabel = measurer.measure("${first.socPercent.toInt()} %", labelStyle.copy(color = VoltaColors.TextSoft))
             drawText(startLabel, topLeft = Offset(x(0.0), (yS(first.socPercent) - startLabel.size.height - 4.dp.toPx()).coerceAtLeast(0f)))
-            val endLabel = measurer.measure("${end.socPercent.toInt()} %", labelStyle.copy(color = if (end.socPercent < bufferSoc) Wt.Amber else Wt.Champagne))
+            val endLabel = measurer.measure("${end.socPercent.toInt()} %", labelStyle.copy(color = if (end.socPercent < bufferSoc) VoltaColors.Amber else VoltaColors.Champagne))
             drawText(endLabel, topLeft = Offset(x(total) - endLabel.size.width, (yS(end.socPercent) - endLabel.size.height - 6.dp.toPx()).coerceAtLeast(0f)))
-            val bufferLabel = measurer.measure("buffer ${bufferSoc.toInt()} %", labelStyle.copy(color = Wt.tint(Wt.Amber, 0.8f)))
+            val bufferLabel = measurer.measure("buffer ${bufferSoc.toInt()} %", labelStyle.copy(color = VoltaColors.tint(VoltaColors.Amber, 0.8f)))
             val by = yS(bufferSoc) + 3.dp.toPx()
             if (by + bufferLabel.size.height < h - 2.dp.toPx() && kotlin.math.abs(yS(bufferSoc) - yS(first.socPercent)) > 14.dp.toPx())
                 drawText(bufferLabel, topLeft = Offset(x(0.0), by))
@@ -135,12 +135,12 @@ fun RouteMap(trip: PlannedTrip, modifier: Modifier = Modifier, bottomPadding: an
 
     val density = LocalDensity.current
     var loaded by remember { mutableStateOf(false) }
-    Box(modifier.fillMaxWidth().height(240.dp).clip(RoundedCornerShape(radius)).background(Wt.Bg)) {
+    Box(modifier.fillMaxWidth().height(240.dp).clip(RoundedCornerShape(radius)).background(VoltaColors.Bg)) {
         KeyedGoogleMap(
             cameraPositionState = camera,
             properties = MapProperties(mapStyleOptions = style),
             uiSettings = MapUiSettings(zoomControlsEnabled = false, mapToolbarEnabled = false, compassEnabled = false),
-            googleMapOptionsFactory = { com.google.android.gms.maps.GoogleMapOptions().backgroundColor(Wt.Bg.toArgb()) },
+            googleMapOptionsFactory = { com.google.android.gms.maps.GoogleMapOptions().backgroundColor(VoltaColors.Bg.toArgb()) },
             contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = bottomPadding),
             onMapLoaded = {
                 val bounds = LatLngBounds.builder().apply { path.forEach { include(it) } }.build()
@@ -148,7 +148,7 @@ fun RouteMap(trip: PlannedTrip, modifier: Modifier = Modifier, bottomPadding: an
                 loaded = true
             },
         ) {
-            Polyline(points = path, color = Wt.Gold, width = 10f)
+            Polyline(points = path, color = VoltaColors.Gold, width = 10f)
             // Volta's own markers: the car where you start, a flag where you're going (no Google pins).
             val carIcon = remember { BitmapDescriptorFactory.fromBitmap(markerBitmap(MarkerGlyph.Car)) }
             val flagIcon = remember { BitmapDescriptorFactory.fromBitmap(markerBitmap(MarkerGlyph.Flag)) }
@@ -169,7 +169,7 @@ fun RouteMap(trip: PlannedTrip, modifier: Modifier = Modifier, bottomPadding: an
         }
         // Covers the light flash before the dark style and tiles are in.
         val cover by androidx.compose.animation.core.animateFloatAsState(if (loaded || !interactiveMapAvailable) 0f else 1f, androidx.compose.animation.core.tween(350), label = "cover")
-        if (cover > 0f) Box(Modifier.fillMaxSize().graphicsLayer { alpha = cover }.background(Wt.Bg))
+        if (cover > 0f) Box(Modifier.fillMaxSize().graphicsLayer { alpha = cover }.background(VoltaColors.Bg))
     }
 }
 

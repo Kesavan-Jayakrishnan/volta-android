@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
  * Stroke icons (24×24, 2 px, round caps and joins) from Lucide (https://lucide.dev, ISC licence; see NOTICE).
  * The names are Volta's; the Lucide name is in each icon's id. Tint them with Icon(tint = …).
  */
-object WtIcons {
+object VoltaIcons {
     private fun icon(name: String, vararg paths: String) = ImageVector.Builder(name, 24.dp, 24.dp, 24f, 24f).apply {
         paths.forEach {
             addPath(

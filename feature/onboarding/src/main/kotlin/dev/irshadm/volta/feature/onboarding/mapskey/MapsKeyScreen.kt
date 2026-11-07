@@ -40,12 +40,12 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.irshadm.volta.core.designsystem.NoteTone
 import dev.irshadm.volta.core.designsystem.VoltaTheme
-import dev.irshadm.volta.core.designsystem.Wt
-import dev.irshadm.volta.core.designsystem.WtButton
-import dev.irshadm.volta.core.designsystem.WtButtonStyle
-import dev.irshadm.volta.core.designsystem.WtIcons
-import dev.irshadm.volta.core.designsystem.WtNote
-import dev.irshadm.volta.core.designsystem.WtTextButton
+import dev.irshadm.volta.core.designsystem.VoltaColors
+import dev.irshadm.volta.core.designsystem.VoltaButton
+import dev.irshadm.volta.core.designsystem.VoltaButtonStyle
+import dev.irshadm.volta.core.designsystem.VoltaIcons
+import dev.irshadm.volta.core.designsystem.VoltaNote
+import dev.irshadm.volta.core.designsystem.VoltaTextButton
 import dev.irshadm.volta.core.maps.ApiCheck
 import dev.irshadm.volta.core.maps.AppIdentity
 import dev.irshadm.volta.core.maps.KeyCheckReport
@@ -89,22 +89,22 @@ fun MapsKeyScreen(
     val uri = LocalUriHandler.current
     val report = (state.phase as? KeyPhase.Checked)?.report
     Column(
-        Modifier.fillMaxSize().background(Wt.Bg).statusBarsPadding().navigationBarsPadding().imePadding()
+        Modifier.fillMaxSize().background(VoltaColors.Bg).statusBarsPadding().navigationBarsPadding().imePadding()
             .verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        if (mode == MapsKeyMode.Settings) Icon(WtIcons.Back, "Back", tint = Wt.Text, modifier = Modifier.size(24.dp).clip(RoundedCornerShape(8.dp)).clickable(onClick = onDone))
+        if (mode == MapsKeyMode.Settings) Icon(VoltaIcons.Back, "Back", tint = VoltaColors.Text, modifier = Modifier.size(24.dp).clip(RoundedCornerShape(8.dp)).clickable(onClick = onDone))
 
-        Text(if (state.passed) "Key works" else "Add your Google Maps key", style = MaterialTheme.typography.headlineSmall, color = Wt.Text)
+        Text(if (state.passed) "Key works" else "Add your Google Maps key", style = MaterialTheme.typography.headlineSmall, color = VoltaColors.Text)
         if (!state.passed) {
             Text(
                 "Trip plans, charger search and food stops use Google's Routes and Places APIs. Volta has no server and no key of its own, so you bring yours. Google's monthly free usage normally covers one person.",
-                style = MaterialTheme.typography.bodyMedium, color = Wt.TextSoft,
+                style = MaterialTheme.typography.bodyMedium, color = VoltaColors.TextSoft,
             )
         }
 
         if (mode == MapsKeyMode.Settings && state.savedKey != null && report == null) {
-            WtNote(NoteTone.Success, "Saved on this phone: ${maskKey(state.savedKey)}. Paste a new key below to replace it.", icon = WtIcons.Key)
+            VoltaNote(NoteTone.Success, "Saved on this phone: ${maskKey(state.savedKey)}. Paste a new key below to replace it.", icon = VoltaIcons.Key)
         }
 
         if (!state.passed) {
@@ -124,8 +124,8 @@ fun MapsKeyScreen(
                 Modifier.clip(RoundedCornerShape(8.dp)).clickable { uri.openUri(MAPS_KEY_GUIDE_URL) }.padding(vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("How to create a key and set a budget", style = MaterialTheme.typography.bodyMedium.copy(textDecoration = TextDecoration.Underline), color = Wt.Gold)
-                Icon(WtIcons.ExternalLink, null, tint = Wt.Gold, modifier = Modifier.size(14.dp))
+                Text("How to create a key and set a budget", style = MaterialTheme.typography.bodyMedium.copy(textDecoration = TextDecoration.Underline), color = VoltaColors.Gold)
+                Icon(VoltaIcons.ExternalLink, null, tint = VoltaColors.Gold, modifier = Modifier.size(14.dp))
             }
         }
 
@@ -134,12 +134,12 @@ fun MapsKeyScreen(
             report != null -> {
                 ApiList(report)
                 if (report.passed) {
-                    WtNote(NoteTone.Success, "Saved on this phone. Change or remove it any time in Settings → Google Maps key.", icon = WtIcons.Check)
+                    VoltaNote(NoteTone.Success, "Saved on this phone. Change or remove it any time in Settings → Google Maps key.", icon = VoltaIcons.Check)
                 } else report.firstFailure?.let { (api, failure) ->
                     val (title, fix) = failure.problem.explain(api, identity.packageName, identity.sha1Colons)
-                    WtNote(NoteTone.Error, title = title, body = fix)
+                    VoltaNote(NoteTone.Error, title = title, body = fix)
                     if (failure.problem == KeyProblem.Other) {
-                        Text(failure.googleMessage, style = MaterialTheme.typography.bodySmall, color = Wt.Muted)
+                        Text(failure.googleMessage, style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
                     }
                 }
             }
@@ -147,20 +147,20 @@ fun MapsKeyScreen(
 
         Spacer(Modifier.height(12.dp))
         when {
-            state.passed -> WtButton(if (mode == MapsKeyMode.FirstRun) "Open Volta" else "Done", onDone, Modifier.fillMaxWidth())
-            else -> WtButton(
+            state.passed -> VoltaButton(if (mode == MapsKeyMode.FirstRun) "Open Volta" else "Done", onDone, Modifier.fillMaxWidth())
+            else -> VoltaButton(
                 text = when { state.phase == KeyPhase.Checking -> "Checking with Google…"; report != null -> "Check again"; else -> "Check key" },
                 onClick = onCheck, modifier = Modifier.fillMaxWidth(),
                 enabled = state.canCheck || state.phase == KeyPhase.Checking, busy = state.phase == KeyPhase.Checking,
             )
         }
-        if (!state.passed && mode == MapsKeyMode.FirstRun) WtTextButton("Skip for now", onSkip, Modifier.align(Alignment.CenterHorizontally))
+        if (!state.passed && mode == MapsKeyMode.FirstRun) VoltaTextButton("Skip for now", onSkip, Modifier.align(Alignment.CenterHorizontally))
         if (mode == MapsKeyMode.Settings && state.savedKey != null && !state.passed) {
-            WtButton("Remove key", onRemove, Modifier.fillMaxWidth(), style = WtButtonStyle.Secondary)
+            VoltaButton("Remove key", onRemove, Modifier.fillMaxWidth(), style = VoltaButtonStyle.Secondary)
         }
         Text(
             "Stored encrypted on this phone. Sent only to Google.",
-            style = MaterialTheme.typography.bodySmall, color = Wt.Muted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
+            style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
         )
     }
 }
@@ -172,12 +172,12 @@ private fun ApiList(report: KeyCheckReport?) {
         MapsApi.entries.forEachIndexed { i, api ->
             val check = report?.results?.get(api)
             val (label, color) = when (check) {
-                ApiCheck.Passed -> "OK" to Wt.Green
-                is ApiCheck.Failed -> check.problem.shortLabel() to Wt.Red
-                null -> (if (i == 0) "checking…" else "waiting") to Wt.Muted
+                ApiCheck.Passed -> "OK" to VoltaColors.Green
+                is ApiCheck.Failed -> check.problem.shortLabel() to VoltaColors.Red
+                null -> (if (i == 0) "checking…" else "waiting") to VoltaColors.Muted
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(api.label, style = MaterialTheme.typography.bodyMedium, color = Wt.TextSoft)
+                Text(api.label, style = MaterialTheme.typography.bodyMedium, color = VoltaColors.TextSoft)
                 Text(label, style = MaterialTheme.typography.labelMedium, color = color)
             }
         }

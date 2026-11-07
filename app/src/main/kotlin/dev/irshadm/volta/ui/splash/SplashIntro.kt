@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.irshadm.volta.R
 import dev.irshadm.volta.core.designsystem.LocalReducedMotion
-import dev.irshadm.volta.core.designsystem.Wt
+import dev.irshadm.volta.core.designsystem.VoltaColors
 import kotlinx.coroutines.flow.first
 import kotlin.math.cos
 import kotlin.math.exp
@@ -180,7 +180,7 @@ fun SplashIntro(link: LinkState, onFinished: () -> Unit) {
                         clipRect(right = size.width * trace) { this@drawWithContent.drawContent() }
                         if (trace in 0.01f..0.99f) {
                             val x = size.width * trace
-                            drawRect(Brush.horizontalGradient(listOf(Color.Transparent, Wt.Champagne.copy(alpha = 0.45f), Color.Transparent), startX = x - 18f, endX = x + 18f),
+                            drawRect(Brush.horizontalGradient(listOf(Color.Transparent, VoltaColors.Champagne.copy(alpha = 0.45f), Color.Transparent), startX = x - 18f, endX = x + 18f),
                                 topLeft = androidx.compose.ui.geometry.Offset(x - 18f, size.height * 0.08f),
                                 size = androidx.compose.ui.geometry.Size(36f, size.height * 0.84f))
                         }
@@ -200,7 +200,7 @@ fun SplashIntro(link: LinkState, onFinished: () -> Unit) {
                 )
             }
             Text(
-                "VOLTA", style = MaterialTheme.typography.headlineMedium.copy(letterSpacing = 10.sp), color = Wt.Champagne,
+                "VOLTA", style = MaterialTheme.typography.headlineMedium.copy(letterSpacing = 10.sp), color = VoltaColors.Champagne,
                 modifier = Modifier.padding(top = 28.dp).graphicsLayer { alpha = word * labels; translationY = 12.dp.toPx() * (1 - word) },
             )
         }
@@ -240,7 +240,7 @@ fun SplashIntro(link: LinkState, onFinished: () -> Unit) {
                         if (sh > 0f && sh < 1f) {
                             val x = size.width * (sh * 1.6f - 0.3f)
                             drawRect(
-                                Brush.linearGradient(listOf(Color.Transparent, Wt.Champagne.copy(alpha = 0.38f), Color.Transparent),
+                                Brush.linearGradient(listOf(Color.Transparent, VoltaColors.Champagne.copy(alpha = 0.38f), Color.Transparent),
                                     start = androidx.compose.ui.geometry.Offset(x - size.width * 0.18f, size.height), end = androidx.compose.ui.geometry.Offset(x + size.width * 0.18f, 0f)),
                                 blendMode = androidx.compose.ui.graphics.BlendMode.SrcAtop,
                             )
@@ -254,12 +254,12 @@ fun SplashIntro(link: LinkState, onFinished: () -> Unit) {
             Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 30.dp).size(120.dp, 2.dp)
                 .graphicsLayer { alpha = waitIn * labels }
                 .drawWithContent {
-                    drawRect(Wt.Border)
+                    drawRect(VoltaColors.Border)
                     val w = size.width * 0.35f
-                    drawRect(Wt.Champagne, topLeft = androidx.compose.ui.geometry.Offset((size.width - w) * slide, 0f), size = androidx.compose.ui.geometry.Size(w, size.height))
+                    drawRect(VoltaColors.Champagne, topLeft = androidx.compose.ui.geometry.Offset((size.width - w) * slide, 0f), size = androidx.compose.ui.geometry.Size(w, size.height))
                 },
         )
-        Text(status, style = MaterialTheme.typography.bodySmall, color = Wt.Muted,
+        Text(status, style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted,
             modifier = Modifier.align(Alignment.BottomCenter).graphicsLayer { alpha = labels }.navigationBarsPadding().padding(bottom = 40.dp))
     }
 }

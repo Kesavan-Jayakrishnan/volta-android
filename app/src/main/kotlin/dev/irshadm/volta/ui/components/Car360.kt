@@ -39,7 +39,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import dev.irshadm.volta.core.designsystem.LocalReducedMotion
-import dev.irshadm.volta.core.designsystem.Wt
+import dev.irshadm.volta.core.designsystem.VoltaColors
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -140,7 +140,7 @@ fun Car360Viewer(frames: Car360Frames, shot: CarShot, modifier: Modifier = Modif
         }
         Row(Modifier.align(Alignment.BottomCenter).padding(bottom = 2.dp).graphicsLayer { alpha = dotsAlpha }, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             repeat(n) { i ->
-                Box(Modifier.size(if (i == index.mod(n)) 7.dp else 5.dp).clip(CircleShape).background(if (i == index.mod(n)) Wt.Gold else Wt.tint(Wt.Muted, 0.35f)))
+                Box(Modifier.size(if (i == index.mod(n)) 7.dp else 5.dp).clip(CircleShape).background(if (i == index.mod(n)) VoltaColors.Gold else VoltaColors.tint(VoltaColors.Muted, 0.35f)))
             }
         }
     }

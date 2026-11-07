@@ -41,19 +41,19 @@ import androidx.compose.ui.unit.em
 /** Every pressable shrinks to 0.97 while held: instant feedback on touch-down. */
 fun Modifier.pressScale(interaction: MutableInteractionSource): Modifier = composed {
     val pressed by interaction.collectIsPressedAsState()
-    val scale by animateFloatAsState(if (pressed) 0.97f else 1f, tween(WtMotion.PRESS_MS, easing = WtMotion.EaseOut), label = "press")
+    val scale by animateFloatAsState(if (pressed) 0.97f else 1f, tween(VoltaMotion.PRESS_MS, easing = VoltaMotion.EaseOut), label = "press")
     graphicsLayer { scaleX = scale; scaleY = scale }
 }
 
-enum class WtButtonStyle { Primary, Secondary }
+enum class VoltaButtonStyle { Primary, Secondary }
 
 /** The app's button. [busy] swaps the icon for a spinner and blocks taps, so callers never double-submit. */
 @Composable
-fun WtButton(
+fun VoltaButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    style: WtButtonStyle = WtButtonStyle.Primary,
+    style: VoltaButtonStyle = VoltaButtonStyle.Primary,
     icon: ImageVector? = null,
     enabled: Boolean = true,
     busy: Boolean = false,
@@ -63,8 +63,8 @@ fun WtButton(
     val active = enabled && !busy
     val base = modifier.heightIn(min = 54.dp).pressScale(interaction).clip(shape)
     val styled = when (style) {
-        WtButtonStyle.Primary -> base.background(if (enabled) Wt.Gold else Wt.Border)
-        WtButtonStyle.Secondary -> base.border(1.dp, Wt.BorderStrong, shape)
+        VoltaButtonStyle.Primary -> base.background(if (enabled) VoltaColors.Gold else VoltaColors.Border)
+        VoltaButtonStyle.Secondary -> base.border(1.dp, VoltaColors.BorderStrong, shape)
     }
     Row(
         styled.clickable(interaction, indication = null, enabled = active, role = Role.Button, onClick = onClick)
@@ -72,7 +72,7 @@ fun WtButton(
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val fg = if (style == WtButtonStyle.Primary) Wt.GoldInk else Wt.Text
+        val fg = if (style == VoltaButtonStyle.Primary) VoltaColors.GoldInk else VoltaColors.Text
         when {
             busy -> CircularProgressIndicator(color = fg, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
             icon != null -> Icon(icon, null, tint = fg, modifier = Modifier.size(18.dp))
@@ -83,31 +83,31 @@ fun WtButton(
 
 /** A quiet text button in the accent colour ("Skip for now", "Not now"). */
 @Composable
-fun WtTextButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun VoltaTextButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Text(
-        text, style = MaterialTheme.typography.labelLarge, color = Wt.Gold, textAlign = TextAlign.Center,
+        text, style = MaterialTheme.typography.labelLarge, color = VoltaColors.Gold, textAlign = TextAlign.Center,
         modifier = modifier.clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button, onClick = onClick).padding(12.dp),
     )
 }
 
-/** Tone of a [WtNote]: what the note asks of the reader. */
+/** Tone of a [VoltaNote]: what the note asks of the reader. */
 enum class NoteTone(internal val accent: Color, internal val fill: Color, internal val text: Color) {
-    Caution(Wt.Amber, Wt.GoldInk, Wt.AmberText),
-    Error(Wt.Red, Wt.RedInk, Wt.TextSoft),
-    Success(Wt.Green, Wt.tint(Wt.Green, 0.08f), Wt.TextSoft),
+    Caution(VoltaColors.Amber, VoltaColors.GoldInk, VoltaColors.AmberText),
+    Error(VoltaColors.Red, VoltaColors.RedInk, VoltaColors.TextSoft),
+    Success(VoltaColors.Green, VoltaColors.tint(VoltaColors.Green, 0.08f), VoltaColors.TextSoft),
 }
 
 /** A tinted note card with an icon, an optional bold [title] and a [body]. */
 @Composable
-fun WtNote(tone: NoteTone, body: String, modifier: Modifier = Modifier, title: String? = null, icon: ImageVector = WtIcons.Warning) {
+fun VoltaNote(tone: NoteTone, body: String, modifier: Modifier = Modifier, title: String? = null, icon: ImageVector = VoltaIcons.Warning) {
     val shape = RoundedCornerShape(14.dp)
     Row(
-        modifier.fillMaxWidth().clip(shape).background(tone.fill).border(1.dp, Wt.tint(tone.accent, 0.35f), shape).padding(14.dp, 12.dp),
+        modifier.fillMaxWidth().clip(shape).background(tone.fill).border(1.dp, VoltaColors.tint(tone.accent, 0.35f), shape).padding(14.dp, 12.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Icon(icon, null, tint = tone.accent, modifier = Modifier.size(18.dp).padding(top = 1.dp))
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            title?.let { Text(it, style = MaterialTheme.typography.titleSmall, color = Wt.Text) }
+            title?.let { Text(it, style = MaterialTheme.typography.titleSmall, color = VoltaColors.Text) }
             Text(body, style = MaterialTheme.typography.bodySmall, color = tone.text)
         }
     }
@@ -117,10 +117,10 @@ fun WtNote(tone: NoteTone, body: String, modifier: Modifier = Modifier, title: S
 @Composable
 private fun ComponentsPreview() = VoltaTheme {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        WtNote(NoteTone.Caution, "Signing in here signs the official MG app out.")
-        WtNote(NoteTone.Error, "Routes API isn't enabled for this key's project.", title = "Google said no")
-        WtButton("Continue", onClick = {}, modifier = Modifier.fillMaxWidth())
-        WtButton("Checking with Google…", onClick = {}, modifier = Modifier.fillMaxWidth(), busy = true)
-        WtTextButton("Skip for now", onClick = {})
+        VoltaNote(NoteTone.Caution, "Signing in here signs the official MG app out.")
+        VoltaNote(NoteTone.Error, "Routes API isn't enabled for this key's project.", title = "Google said no")
+        VoltaButton("Continue", onClick = {}, modifier = Modifier.fillMaxWidth())
+        VoltaButton("Checking with Google…", onClick = {}, modifier = Modifier.fillMaxWidth(), busy = true)
+        VoltaTextButton("Skip for now", onClick = {})
     }
 }

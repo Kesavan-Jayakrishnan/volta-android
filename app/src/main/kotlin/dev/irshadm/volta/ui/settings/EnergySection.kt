@@ -26,9 +26,9 @@ import dev.irshadm.volta.data.SettingsRepository
 import dev.irshadm.volta.data.db.TripDao
 import dev.irshadm.volta.data.ismart.IsmartRepository
 import dev.irshadm.volta.data.trip.LocationProvider
-import dev.irshadm.volta.ui.components.WtButton
-import dev.irshadm.volta.ui.components.WtButtonStyle
-import dev.irshadm.volta.core.designsystem.Wt
+import dev.irshadm.volta.ui.components.VoltaButton
+import dev.irshadm.volta.ui.components.VoltaButtonStyle
+import dev.irshadm.volta.core.designsystem.VoltaColors
 import dev.irshadm.volta.core.model.EnergySettings
 import dev.irshadm.volta.core.model.Tariff
 import dev.irshadm.volta.core.model.VehicleProfile
@@ -107,12 +107,12 @@ fun EnergySettingsSection(vm: EnergySettingsViewModel = hiltViewModel()) {
     LaunchedEffect(Unit) { learned = vm.learned() }
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(if (e.hasHome) "Home is set (charging within ${e.homeRadiusM.toInt()} m counts as home)." else "Home not set yet.", style = MaterialTheme.typography.bodyMedium, color = if (e.hasHome) Wt.Green else Wt.AmberText)
+        Text(if (e.hasHome) "Home is set (charging within ${e.homeRadiusM.toInt()} m counts as home)." else "Home not set yet.", style = MaterialTheme.typography.bodyMedium, color = if (e.hasHome) VoltaColors.Green else VoltaColors.AmberText)
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            WtButton("Car's location", { scope.launch { message = vm.setHomeFromCar() } }, Modifier.weight(1f), style = WtButtonStyle.Secondary)
-            WtButton("My location", { scope.launch { message = vm.setHomeFromPhone() } }, Modifier.weight(1f), style = WtButtonStyle.Secondary)
+            VoltaButton("Car's location", { scope.launch { message = vm.setHomeFromCar() } }, Modifier.weight(1f), style = VoltaButtonStyle.Secondary)
+            VoltaButton("My location", { scope.launch { message = vm.setHomeFromPhone() } }, Modifier.weight(1f), style = VoltaButtonStyle.Secondary)
         }
-        message?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Wt.TextSoft) }
+        message?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = VoltaColors.TextSoft) }
 
         OutlinedTextField(household, { household = it.filter(Char::isDigit) }, label = { Text("Household units per bill (without EV)") }, suffix = { Text("units") },
             singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth())
@@ -122,14 +122,14 @@ fun EnergySettingsSection(vm: EnergySettingsViewModel = hiltViewModel()) {
             OutlinedTextField(dcRate, { dcRate = it }, label = { Text("DC fast") }, suffix = { Text("₹/kWh") }, singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.weight(1f))
         }
-        Text("KSEB LT-1A tariff (per month: units@₹). Copy the rates from your latest bill.", style = MaterialTheme.typography.bodySmall, color = Wt.Muted)
+        Text("KSEB LT-1A tariff (per month: units@₹). Copy the rates from your latest bill.", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
         OutlinedTextField(tele, { tele = it }, label = { Text("Telescopic slabs (up to 250/month)") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(flat, { flat = it }, label = { Text("Above 250 — all units at band rate (up to@₹)") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(duty, { duty = it }, label = { Text("Electricity duty") }, suffix = { Text("%") }, singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.fillMaxWidth())
         Text(t.verifiedOn?.let { "Rates last checked $it" } ?: "Sample rates — not yet checked against your bill", style = MaterialTheme.typography.bodySmall,
-            color = if (t.verifiedOn == null) Wt.Amber else Wt.Muted)
-        WtButton("Save & mark rates checked today", {
+            color = if (t.verifiedOn == null) VoltaColors.Amber else VoltaColors.Muted)
+        VoltaButton("Save & mark rates checked today", {
             fun pairs(s: String) = s.split(Regex("\\s+")).mapNotNull { p ->
                 val (a, b) = p.split("@").takeIf { it.size == 2 } ?: return@mapNotNull null
                 val n = if (a == "∞") Int.MAX_VALUE else a.toIntOrNull() ?: return@mapNotNull null
@@ -148,10 +148,10 @@ fun EnergySettingsSection(vm: EnergySettingsViewModel = hiltViewModel()) {
         Text("Learned efficiency", style = MaterialTheme.typography.titleSmall)
         val l = learned
         if (l == null) {
-            Text("Appears after your first logged trip (or once the car reports driving since the last charge).", style = MaterialTheme.typography.bodySmall, color = Wt.Muted)
+            Text("Appears after your first logged trip (or once the car reports driving since the last charge).", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
         } else {
-            Text("%.1f km/kWh %s".format(l.kmPerKwh, l.source), style = MaterialTheme.typography.bodyMedium, color = Wt.TextSoft)
-            WtButton("Use for planning", { vm.applyLearned(l); message = "Planner efficiency updated." }, style = WtButtonStyle.Secondary)
+            Text("%.1f km/kWh %s".format(l.kmPerKwh, l.source), style = MaterialTheme.typography.bodyMedium, color = VoltaColors.TextSoft)
+            VoltaButton("Use for planning", { vm.applyLearned(l); message = "Planner efficiency updated." }, style = VoltaButtonStyle.Secondary)
         }
     }
 }

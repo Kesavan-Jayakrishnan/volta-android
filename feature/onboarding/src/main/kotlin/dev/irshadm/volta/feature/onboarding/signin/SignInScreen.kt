@@ -39,10 +39,10 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.irshadm.volta.core.designsystem.NoteTone
 import dev.irshadm.volta.core.designsystem.VoltaTheme
-import dev.irshadm.volta.core.designsystem.Wt
-import dev.irshadm.volta.core.designsystem.WtButton
+import dev.irshadm.volta.core.designsystem.VoltaColors
+import dev.irshadm.volta.core.designsystem.VoltaButton
 import dev.irshadm.volta.core.designsystem.VoltaCarArt
-import dev.irshadm.volta.core.designsystem.WtNote
+import dev.irshadm.volta.core.designsystem.VoltaNote
 import dev.irshadm.volta.core.domain.SignInError
 import java.text.DateFormat
 import java.util.Date
@@ -71,17 +71,17 @@ fun SignInScreen(
 ) {
     val rejected = state.error is SignInError.Rejected
     Column(
-        Modifier.fillMaxSize().background(Wt.Bg).statusBarsPadding().navigationBarsPadding().imePadding()
+        Modifier.fillMaxSize().background(VoltaColors.Bg).statusBarsPadding().navigationBarsPadding().imePadding()
             .verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         // Same order as the splash: the car with its bolt, then the name under it.
         if (state.error == null) CarHero() else Spacer(Modifier.height(28.dp))
-        Text("VOLTA", style = MaterialTheme.typography.headlineSmall.copy(letterSpacing = 0.32.em), color = Wt.Gold)
-        Text("Your MG EV, live on your phone", style = MaterialTheme.typography.bodyMedium, color = Wt.Muted, modifier = Modifier.padding(top = 4.dp))
+        Text("VOLTA", style = MaterialTheme.typography.headlineSmall.copy(letterSpacing = 0.32.em), color = VoltaColors.Gold)
+        Text("Your MG EV, live on your phone", style = MaterialTheme.typography.bodyMedium, color = VoltaColors.Muted, modifier = Modifier.padding(top = 4.dp))
 
         state.error?.let { error ->
-            WtNote(NoteTone.Error, body = errorBody(error), title = errorTitle(error), modifier = Modifier.padding(top = 28.dp))
+            VoltaNote(NoteTone.Error, body = errorBody(error), title = errorTitle(error), modifier = Modifier.padding(top = 28.dp))
         }
 
         Column(Modifier.padding(top = 26.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -99,26 +99,26 @@ fun SignInScreen(
                 keyboardActions = KeyboardActions(onDone = { onSubmit() }),
                 modifier = Modifier.fillMaxWidth(),
                 trailingIcon = {
-                    Text(if (state.passwordVisible) "Hide" else "Show", style = MaterialTheme.typography.labelMedium, color = Wt.Muted,
+                    Text(if (state.passwordVisible) "Hide" else "Show", style = MaterialTheme.typography.labelMedium, color = VoltaColors.Muted,
                         modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(onClick = onTogglePassword).padding(10.dp))
                 },
             )
             if (rejected) {
                 Text("Forgot it? Reset it in the MG i-SMART app, then sign in here. Volta never retries a rejected password.",
-                    style = MaterialTheme.typography.bodySmall, color = Wt.Muted)
+                    style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
             } else {
-                WtNote(NoteTone.Caution, "Signing in here signs the official MG app out. Only one can be signed in at a time, and wrong passwords count against MG's daily limit.")
+                VoltaNote(NoteTone.Caution, "Signing in here signs the official MG app out. Only one can be signed in at a time, and wrong passwords count against MG's daily limit.")
             }
         }
 
         Spacer(Modifier.height(28.dp))
-        WtButton(
+        VoltaButton(
             text = when { state.busy -> "Signing in…"; rejected -> "Try again"; else -> "Continue" },
             onClick = onSubmit, modifier = Modifier.fillMaxWidth(), enabled = state.canSubmit || state.busy, busy = state.busy,
         )
         Text(
             "Your password goes to MG only and is kept encrypted on this phone.",
-            style = MaterialTheme.typography.bodySmall, color = Wt.Muted, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 12.dp),
+            style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 12.dp),
         )
     }
 }
@@ -127,7 +127,7 @@ fun SignInScreen(
 @Composable
 private fun CarHero() {
     Box(Modifier.padding(top = 10.dp).fillMaxWidth(), contentAlignment = Alignment.Center) {
-        VoltaCarArt(Modifier.fillMaxWidth(0.96f), animate = true, bolt = false, lines = false, background = Wt.Bg, blendEdges = true)
+        VoltaCarArt(Modifier.fillMaxWidth(0.96f), animate = true, bolt = false, lines = false, background = VoltaColors.Bg, blendEdges = true)
     }
 }
 

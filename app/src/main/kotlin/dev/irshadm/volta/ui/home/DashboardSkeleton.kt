@@ -41,18 +41,18 @@ import dev.irshadm.volta.data.ismart.CarModel
 import dev.irshadm.volta.ui.components.CarPictures
 import dev.irshadm.volta.ui.components.CarShot
 import dev.irshadm.volta.core.designsystem.LocalReducedMotion
-import dev.irshadm.volta.core.designsystem.Wt
+import dev.irshadm.volta.core.designsystem.VoltaColors
 
 private val Sheen = Color(0xFF30343B)
 
 /** One light sweep shared by every placeholder, so they read as a single surface. Still under reduced motion. */
 @Composable
 internal fun skeletonBrush(): Brush {
-    if (LocalReducedMotion.current) return Brush.linearGradient(listOf(Wt.PanelTrack, Wt.PanelTrack))
+    if (LocalReducedMotion.current) return Brush.linearGradient(listOf(VoltaColors.PanelTrack, VoltaColors.PanelTrack))
     val x by rememberInfiniteTransition(label = "skeleton").animateFloat(
         -400f, 1400f, infiniteRepeatable(tween(1500, easing = LinearEasing)), label = "sheen",
     )
-    return Brush.linearGradient(listOf(Wt.PanelTrack, Sheen, Wt.PanelTrack), start = Offset(x, 0f), end = Offset(x + 400f, 120f))
+    return Brush.linearGradient(listOf(VoltaColors.PanelTrack, Sheen, VoltaColors.PanelTrack), start = Offset(x, 0f), end = Offset(x + 400f, 120f))
 }
 
 @Composable
@@ -78,7 +78,7 @@ internal fun SkeletonCar(model: CarModel, modifier: Modifier = Modifier) {
 @Composable
 internal fun PanelSkeleton(brush: Brush, modifier: Modifier = Modifier) {
     Column(
-        modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp)).background(Wt.Panel)
+        modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp)).background(VoltaColors.Panel)
             .padding(start = 18.dp, end = 18.dp, top = 20.dp, bottom = 14.dp)
             .semantics { contentDescription = "Loading your car's data" },
     ) {

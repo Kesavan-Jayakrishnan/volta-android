@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.dp
 import dev.irshadm.volta.core.designsystem.LocalReducedMotion
-import dev.irshadm.volta.core.designsystem.Wt
+import dev.irshadm.volta.core.designsystem.VoltaColors
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.floor
@@ -136,7 +136,7 @@ private fun DrawScope.drawDrive(stage: LoaderStage, since: Double, t: Double, of
         drawPath(line, Road, style = Stroke(5f * sy))
         var w = floor((off) / 20f) * 20f - off
         while (w < end) {
-            if (w + 10f > 0f) drawLine(Wt.Gold, p(w.coerceAtLeast(0f), ground(w.coerceAtLeast(0f), amp) - 0.5f), p((w + 10f).coerceAtMost(end), ground((w + 10f).coerceAtMost(end), amp) - 0.5f), 1.5f * sy)
+            if (w + 10f > 0f) drawLine(VoltaColors.Gold, p(w.coerceAtLeast(0f), ground(w.coerceAtLeast(0f), amp) - 0.5f), p((w + 10f).coerceAtMost(end), ground((w + 10f).coerceAtMost(end), amp) - 0.5f), 1.5f * sy)
             w += 20f
         }
     }
@@ -160,7 +160,7 @@ private fun DrawScope.drawDrive(stage: LoaderStage, since: Double, t: Double, of
     // Locating: a ping where the car waits.
     if (s == 0) {
         val ph = ((1 + sin(t * 5)) / 2).toFloat()
-        drawCircle(Wt.Gold.copy(alpha = 0.6f - ph * 0.5f), (10f + ph * 26f) * sx, p(CAR_X, ground(CAR_X, 0f) - 14f), style = Stroke(2f * sx))
+        drawCircle(VoltaColors.Gold.copy(alpha = 0.6f - ph * 0.5f), (10f + ph * 26f) * sx, p(CAR_X, ground(CAR_X, 0f) - 14f), style = Stroke(2f * sx))
     }
 
     // The car: fixed on screen, tilted with the slope, wheels turning with the scroll, a little bounce while moving.
@@ -172,7 +172,7 @@ private fun DrawScope.drawDrive(stage: LoaderStage, since: Double, t: Double, of
         val f = smooth((since - 2.6) / 1.2).toFloat() * (0.6f + 0.4f * ((t % 3.0) / 3.0).toFloat())   // keeps topping up while you wait
         val box = p(CAR_X - 22f, cy - 62f)
         drawRoundRect(Post, box, Size(44f * sx, 14f * sx), CornerRadius(4f * sx))
-        drawRoundRect(Wt.Green, box + Offset(3f * sx, 3f * sx), Size(38f * sx * (0.14f + 0.86f * f).coerceAtMost(1f), 8f * sx), CornerRadius(2f * sx))
+        drawRoundRect(VoltaColors.Green, box + Offset(3f * sx, 3f * sx), Size(38f * sx * (0.14f + 0.86f * f).coerceAtMost(1f), 8f * sx), CornerRadius(2f * sx))
     }
 }
 
@@ -201,16 +201,16 @@ private fun DrawScope.charger(base: Offset, k: Float, alpha: Float, charging: Bo
     if (alpha <= 0f) return
     val top = base - Offset(11f * k, 40f * k)
     drawRoundRect(Post.copy(alpha = alpha), top, Size(22f * k, 40f * k), CornerRadius(4f * k))
-    drawRoundRect(Wt.Green.copy(alpha = alpha), top, Size(22f * k, 40f * k), CornerRadius(4f * k), style = Stroke(2f * k))
+    drawRoundRect(VoltaColors.Green.copy(alpha = alpha), top, Size(22f * k, 40f * k), CornerRadius(4f * k), style = Stroke(2f * k))
     val c = base - Offset(0f, 24f * k)
     val bolt = Path().apply {
         val b = 0.8f * k
         moveTo(c.x + 2 * b, c.y - 12 * b); lineTo(c.x - 7 * b, c.y + 2 * b); lineTo(c.x - 1 * b, c.y + 2 * b)
         lineTo(c.x - 3 * b, c.y + 12 * b); lineTo(c.x + 7 * b, c.y - 2 * b); lineTo(c.x + 1 * b, c.y - 2 * b); close()
     }
-    drawPath(bolt, Wt.Green.copy(alpha = alpha))
+    drawPath(bolt, VoltaColors.Green.copy(alpha = alpha))
     if (charging) for (i in 0 until 3) {
         val ph = ((t * 0.9 + i / 3.0) % 1.0).toFloat()
-        drawCircle(Wt.Green.copy(alpha = (1 - ph) * 0.7f), (14f + ph * 30f) * k, base - Offset(0f, 22f * k), style = Stroke(2f * k))
+        drawCircle(VoltaColors.Green.copy(alpha = (1 - ph) * 0.7f), (14f + ph * 30f) * k, base - Offset(0f, 22f * k), style = Stroke(2f * k))
     }
 }

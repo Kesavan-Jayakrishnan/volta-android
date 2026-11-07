@@ -24,7 +24,7 @@ val AppFont = FontFamily(dmSans(400), dmSans(500), dmSans(600), dmSans(700))
 /** Tabular figures so live numbers don't jitter while counting/updating. */
 const val TabularNums = "tnum"
 
-val WtTypography = Typography(
+val VoltaTypography = Typography(
     displayLarge = TextStyle(fontFamily = AppFont, fontWeight = FontWeight.Bold, fontSize = 64.sp, lineHeight = 64.sp, letterSpacing = (-0.04).em, fontFeatureSettings = TabularNums),
     headlineLarge = TextStyle(fontFamily = AppFont, fontWeight = FontWeight.Bold, fontSize = 26.sp, lineHeight = 32.sp, letterSpacing = (-0.02).em),
     headlineSmall = TextStyle(fontFamily = AppFont, fontWeight = FontWeight.Bold, fontSize = 22.sp, lineHeight = 28.sp, letterSpacing = (-0.01).em),

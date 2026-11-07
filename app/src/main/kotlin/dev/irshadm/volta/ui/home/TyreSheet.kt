@@ -51,9 +51,9 @@ import dev.irshadm.volta.ui.components.WHEEL_L
 import dev.irshadm.volta.ui.components.WHEEL_R
 import dev.irshadm.volta.ui.components.WHEEL_REAR
 import dev.irshadm.volta.ui.components.Wheel
-import dev.irshadm.volta.ui.components.WtButton
-import dev.irshadm.volta.ui.components.WtButtonStyle
-import dev.irshadm.volta.core.designsystem.Wt
+import dev.irshadm.volta.ui.components.VoltaButton
+import dev.irshadm.volta.ui.components.VoltaButtonStyle
+import dev.irshadm.volta.core.designsystem.VoltaColors
 import dev.irshadm.volta.core.designsystem.tabular
 import dev.irshadm.volta.core.model.VehicleStatus
 import java.text.SimpleDateFormat
@@ -82,7 +82,7 @@ fun TyreSheet(v: VehicleStatus, onDismiss: () -> Unit) {
 
     // Open fully straight away: the car and the actions are the point, not a half-sheet peek.
     val sheet = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheet, containerColor = Wt.Surface, contentColor = Wt.Text) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheet, containerColor = VoltaColors.Surface, contentColor = VoltaColors.Text) {
         Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 20.dp, end = 20.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Column {
                 Text("Tyres", style = MaterialTheme.typography.titleLarge)
@@ -94,12 +94,12 @@ fun TyreSheet(v: VehicleStatus, onDismiss: () -> Unit) {
                         worst != null -> "The car flags ${worst.wheel.label.lowercase()} · ${worst.psi.roundToInt()} psi"
                         else -> "All four within ${TyreCare.GAP.toInt()} psi of target"
                     },
-                    style = MaterialTheme.typography.bodyLarge, color = if (worst != null) Wt.AmberText else Wt.Green, modifier = Modifier.padding(top = 2.dp),
+                    style = MaterialTheme.typography.bodyLarge, color = if (worst != null) VoltaColors.AmberText else VoltaColors.Green, modifier = Modifier.padding(top = 2.dp),
                 )
                 reading?.let { r ->
                     val cold = v.parked() && (v.ignitionChangedAtMillis?.let { System.currentTimeMillis() - it > 60 * 60_000L } ?: false)
                     Text("Read at ${clock(r.atMillis)}${if (cold) ", cold" else ""} · target ${target.roundToInt()} psi from the door placard",
-                        style = MaterialTheme.typography.bodySmall, color = Wt.Muted, modifier = Modifier.padding(top = 2.dp))
+                        style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted, modifier = Modifier.padding(top = 2.dp))
                 }
             }
 
@@ -117,13 +117,13 @@ fun TyreSheet(v: VehicleStatus, onDismiss: () -> Unit) {
                         val x = if (left) w * fx - 18.dp - chipW else w * fx + 18.dp
                         Column(
                             Modifier.offset(x, h * fy - 24.dp).width(chipW).clip(RoundedCornerShape(14.dp))
-                                .background(if (low) Wt.tint(Wt.Amber, 0.16f) else Wt.SurfaceHigh)
-                                .border(1.dp, if (low) Wt.Amber else Wt.Border, RoundedCornerShape(14.dp)).padding(vertical = 7.dp),
+                                .background(if (low) VoltaColors.tint(VoltaColors.Amber, 0.16f) else VoltaColors.SurfaceHigh)
+                                .border(1.dp, if (low) VoltaColors.Amber else VoltaColors.Border, RoundedCornerShape(14.dp)).padding(vertical = 7.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            Text("${psi.roundToInt()}", style = MaterialTheme.typography.titleMedium.tabular(), color = if (low) Wt.Amber else Wt.Text)
+                            Text("${psi.roundToInt()}", style = MaterialTheme.typography.titleMedium.tabular(), color = if (low) VoltaColors.Amber else VoltaColors.Text)
                             Text(wheel.label.lowercase() + if (gap >= 1) " · −${gap.roundToInt()}" else "", style = MaterialTheme.typography.labelSmall,
-                                color = if (low) Wt.AmberText else Wt.Muted, maxLines = 1)
+                                color = if (low) VoltaColors.AmberText else VoltaColors.Muted, maxLines = 1)
                         }
                     }
                     chip(Wheel.FrontLeft, WHEEL_L, WHEEL_FRONT, left = true)
@@ -135,7 +135,7 @@ fun TyreSheet(v: VehicleStatus, onDismiss: () -> Unit) {
 
             val trend = trends.firstOrNull { it.wheel == worst?.wheel } ?: trends.maxByOrNull { it.dropPsi }
             Row(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Wt.SurfaceHigh).padding(horizontal = 14.dp, vertical = 12.dp),
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(VoltaColors.SurfaceHigh).padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 if (trend != null) Sparkline(trend.series, Modifier.width(88.dp).height(30.dp), falling = trend.dropPsi >= 1)
@@ -156,16 +156,16 @@ fun TyreSheet(v: VehicleStatus, onDismiss: () -> Unit) {
                             trend.dropPsi >= 1 -> "Slow loss, not a puncture. Top up and watch it."
                             else -> "Normal drift with the weather."
                         },
-                        style = MaterialTheme.typography.bodySmall, color = Wt.Muted,
+                        style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted,
                     )
                 }
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                WtButton("Checked it", { t?.let { TyreCare.acknowledge(context, it) }; onDismiss() }, Modifier.weight(1f))
-                WtButton("Set target", { editing = true }, style = WtButtonStyle.Secondary)
+                VoltaButton("Checked it", { t?.let { TyreCare.acknowledge(context, it) }; onDismiss() }, Modifier.weight(1f))
+                VoltaButton("Set target", { editing = true }, style = VoltaButtonStyle.Secondary)
             }
-            Text("Checked it keeps this quiet until the pressure changes", style = MaterialTheme.typography.labelSmall, color = Wt.Dim,
+            Text("Checked it keeps this quiet until the pressure changes", style = MaterialTheme.typography.labelSmall, color = VoltaColors.Dim,
                 textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         }
     }
@@ -175,7 +175,7 @@ fun TyreSheet(v: VehicleStatus, onDismiss: () -> Unit) {
 
 @Composable
 private fun Sparkline(series: List<Double>, modifier: Modifier, falling: Boolean) {
-    val color = if (falling) Wt.Amber else Wt.Green
+    val color = if (falling) VoltaColors.Amber else VoltaColors.Green
     Canvas(modifier) {
         if (series.size < 2) return@Canvas
         val lo = series.min() - 0.5
@@ -192,21 +192,21 @@ private fun TargetDialog(current: Double, onDismiss: () -> Unit, onSave: (Double
     var psi by remember { mutableStateOf(current.roundToInt()) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = Wt.Surface,
+        containerColor = VoltaColors.Surface,
         title = { Text("Tyre target", style = MaterialTheme.typography.titleMedium) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("The cold pressure on the sticker inside the driver's door. Volta flags a tyre ${TyreCare.GAP.toInt()} psi or more under it.",
-                    style = MaterialTheme.typography.bodySmall, color = Wt.Muted)
+                    style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                    TextButton({ if (psi > 24) psi-- }) { Text("−", style = MaterialTheme.typography.titleLarge, color = Wt.Text) }
+                    TextButton({ if (psi > 24) psi-- }) { Text("−", style = MaterialTheme.typography.titleLarge, color = VoltaColors.Text) }
                     Text("$psi psi", style = MaterialTheme.typography.headlineMedium.tabular(), modifier = Modifier.padding(horizontal = 18.dp))
-                    TextButton({ if (psi < 45) psi++ }) { Text("+", style = MaterialTheme.typography.titleLarge, color = Wt.Text) }
+                    TextButton({ if (psi < 45) psi++ }) { Text("+", style = MaterialTheme.typography.titleLarge, color = VoltaColors.Text) }
                 }
             }
         },
-        confirmButton = { TextButton({ onSave(psi.toDouble()) }) { Text("Save", color = Wt.Gold) } },
-        dismissButton = { TextButton(onDismiss) { Text("Cancel", color = Wt.Muted) } },
+        confirmButton = { TextButton({ onSave(psi.toDouble()) }) { Text("Save", color = VoltaColors.Gold) } },
+        dismissButton = { TextButton(onDismiss) { Text("Cancel", color = VoltaColors.Muted) } },
     )
 }
 

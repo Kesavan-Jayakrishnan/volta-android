@@ -34,7 +34,7 @@ SOFTWARE.
 
 ## Lucide icons
 
-The app's icons in `core/designsystem/.../WtIcons.kt` are from Lucide, https://lucide.dev, used under the
+The app's icons in `core/designsystem/.../VoltaIcons.kt` are from Lucide, https://lucide.dev, used under the
 ISC licence:
 
 ISC License

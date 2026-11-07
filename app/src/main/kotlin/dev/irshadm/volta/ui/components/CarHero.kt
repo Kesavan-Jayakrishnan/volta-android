@@ -68,8 +68,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.irshadm.volta.R
 import dev.irshadm.volta.core.designsystem.AppFont
-import dev.irshadm.volta.core.designsystem.Wt
-import dev.irshadm.volta.core.designsystem.WtMotion
+import dev.irshadm.volta.core.designsystem.VoltaColors
+import dev.irshadm.volta.core.designsystem.VoltaMotion
 import dev.irshadm.volta.core.model.BodyStatus
 import dev.irshadm.volta.core.model.TyrePressures
 
@@ -170,7 +170,7 @@ fun CarHero(
         AnimatedContent(
             targetState = diagram,
             transitionSpec = {
-                (fadeIn(tween(320)) + scaleIn(tween(420, easing = WtMotion.EaseOut), initialScale = 0.96f)) togetherWith
+                (fadeIn(tween(320)) + scaleIn(tween(420, easing = VoltaMotion.EaseOut), initialScale = 0.96f)) togetherWith
                     (fadeOut(tween(220)) + scaleOut(tween(320), targetScale = 1.03f))
             },
             label = "heroView",
@@ -250,8 +250,8 @@ private fun TyreDots(index: Int, wheels: Set<Wheel>, onTap: () -> Unit, modifier
                         .clickable(remember { MutableInteractionSource() }, indication = null, onClickLabel = "${wheel.label} tyre, open tyre detail", onClick = onTap),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Box(Modifier.size(32.dp).clip(androidx.compose.foundation.shape.CircleShape).background(Wt.Amber.copy(alpha = pulse)))
-                    Box(Modifier.size(14.dp).clip(androidx.compose.foundation.shape.CircleShape).background(Wt.Amber).border(2.dp, Wt.Bg, androidx.compose.foundation.shape.CircleShape))
+                    Box(Modifier.size(32.dp).clip(androidx.compose.foundation.shape.CircleShape).background(VoltaColors.Amber.copy(alpha = pulse)))
+                    Box(Modifier.size(14.dp).clip(androidx.compose.foundation.shape.CircleShape).background(VoltaColors.Amber).border(2.dp, VoltaColors.Bg, androidx.compose.foundation.shape.CircleShape))
                 }
             }
         }
@@ -268,9 +268,9 @@ fun DuskBackdrop(modifier: Modifier, heroTop: Float = 0f, heroHeight: Float? = n
     Canvas(modifier) {
         val hh = heroHeight ?: size.height
         fun f(heroFraction: Float) = ((heroTop + heroFraction * hh) / size.height).coerceIn(0f, 1f)
-        drawRect(Brush.verticalGradient(0f to Wt.Bg, f(0.0f) to Wt.Bg, f(0.42f) to Color(0xFF2A241A), f(0.6f) to Color(0xFF5C4A30), f(1f) to Color(0xFF0F0D0B), 1f to Wt.Bg))
+        drawRect(Brush.verticalGradient(0f to VoltaColors.Bg, f(0.0f) to VoltaColors.Bg, f(0.42f) to Color(0xFF2A241A), f(0.6f) to Color(0xFF5C4A30), f(1f) to Color(0xFF0F0D0B), 1f to VoltaColors.Bg))
         // Champagne glow behind the car, low and wide like the last light on the horizon.
-        drawRect(Brush.radialGradient(listOf(Wt.Champagne.copy(alpha = 0.34f), Color.Transparent),
+        drawRect(Brush.radialGradient(listOf(VoltaColors.Champagne.copy(alpha = 0.34f), Color.Transparent),
             center = androidx.compose.ui.geometry.Offset(size.width * 0.58f, heroTop + hh * 0.62f), radius = size.width * 0.62f))
         val sx = size.width / 390f
         val sy = hh / 250f
@@ -286,7 +286,7 @@ fun DuskBackdrop(modifier: Modifier, heroTop: Float = 0f, heroHeight: Float? = n
         ridge(listOf(0f to 190f, 80f to 160f, 150f to 178f, 220f to 150f, 300f to 172f, 390f to 155f), Color(0xFF0F0D0B))
         // Melt into the page below the car.
         val fadeFrom = (heroTop + hh * 0.86f).coerceAtMost(size.height)
-        drawRect(Brush.verticalGradient(listOf(Color.Transparent, Wt.Bg), startY = fadeFrom, endY = size.height),
+        drawRect(Brush.verticalGradient(listOf(Color.Transparent, VoltaColors.Bg), startY = fadeFrom, endY = size.height),
             topLeft = androidx.compose.ui.geometry.Offset(0f, fadeFrom), size = androidx.compose.ui.geometry.Size(size.width, size.height - fadeFrom))
     }
 }
@@ -323,7 +323,7 @@ fun TopDownCar(state: CarHeroState, modifier: Modifier = Modifier, compact: Bool
                         Image(painterResource(res), null, layer, contentScale = ContentScale.Fit)
                         // The same part again, tinted amber and breathing: "this one".
                         Image(painterResource(res), null, layer.graphicsLayer { alpha = pulse }, contentScale = ContentScale.Fit,
-                            colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Wt.Amber, androidx.compose.ui.graphics.BlendMode.SrcAtop))
+                            colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(VoltaColors.Amber, androidx.compose.ui.graphics.BlendMode.SrcAtop))
                     }
                 }
             }
@@ -331,10 +331,10 @@ fun TopDownCar(state: CarHeroState, modifier: Modifier = Modifier, compact: Bool
                 fun psi(v: Double, fx: Float, fy: Float, rightSide: Boolean) {
                     val low = v < TyrePressures.LOW_PSI
                     val c = Offset(size.width * fx, size.height * fy)
-                    if (low) drawRoundRect(Wt.Amber.copy(alpha = pulse + 0.2f), c - Offset(size.width * 0.035f, size.height * 0.055f),
+                    if (low) drawRoundRect(VoltaColors.Amber.copy(alpha = pulse + 0.2f), c - Offset(size.width * 0.035f, size.height * 0.055f),
                         Size(size.width * 0.07f, size.height * 0.11f), CornerRadius(size.width * 0.03f))
                     val layout = measurer.measure(if (compact) "${Math.round(v)}" else "${Math.round(v)} psi",
-                        TextStyle(fontFamily = AppFont, fontSize = if (compact) 10.sp else 12.sp, color = if (low) Wt.Amber else Wt.TextSoft))
+                        TextStyle(fontFamily = AppFont, fontSize = if (compact) 10.sp else 12.sp, color = if (low) VoltaColors.Amber else VoltaColors.TextSoft))
                     val gap = size.width * 0.06f
                     drawText(layout, topLeft = Offset(if (rightSide) c.x + gap else c.x - gap - layout.size.width, c.y - layout.size.height / 2f))
                 }

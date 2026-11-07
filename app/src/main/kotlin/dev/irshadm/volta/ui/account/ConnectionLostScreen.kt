@@ -40,10 +40,10 @@ import javax.inject.Inject
 import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.irshadm.volta.data.ismart.LinkState
-import dev.irshadm.volta.ui.components.WtButton
-import dev.irshadm.volta.ui.components.WtButtonStyle
-import dev.irshadm.volta.core.designsystem.WtIcons
-import dev.irshadm.volta.core.designsystem.Wt
+import dev.irshadm.volta.ui.components.VoltaButton
+import dev.irshadm.volta.ui.components.VoltaButtonStyle
+import dev.irshadm.volta.core.designsystem.VoltaIcons
+import dev.irshadm.volta.core.designsystem.VoltaColors
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -82,51 +82,51 @@ fun ConnectionLostScreen(vm: AccountGateViewModel = hiltViewModel()) {
     ).joinToString(" · ")
 
     Column(
-        Modifier.fillMaxSize().background(Wt.Bg).statusBarsPadding().navigationBarsPadding()
+        Modifier.fillMaxSize().background(VoltaColors.Bg).statusBarsPadding().navigationBarsPadding()
             .verticalScroll(rememberScrollState()).padding(horizontal = 24.dp, vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.height(56.dp))
-        Box(Modifier.size(84.dp).clip(CircleShape).background(Wt.GoldInk).border(1.dp, Wt.tint(Wt.Amber, 0.35f), CircleShape), contentAlignment = Alignment.Center) {
-            Icon(if (retryAt != null) WtIcons.Clock else WtIcons.Warning, null, tint = Wt.Amber, modifier = Modifier.size(40.dp))
+        Box(Modifier.size(84.dp).clip(CircleShape).background(VoltaColors.GoldInk).border(1.dp, VoltaColors.tint(VoltaColors.Amber, 0.35f), CircleShape), contentAlignment = Alignment.Center) {
+            Icon(if (retryAt != null) VoltaIcons.Clock else VoltaIcons.Warning, null, tint = VoltaColors.Amber, modifier = Modifier.size(40.dp))
         }
         Text(
             if (retryAt != null) "Signed in too often this hour" else "Car connection lost",
-            style = MaterialTheme.typography.headlineSmall, color = Wt.Text, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 18.dp),
+            style = MaterialTheme.typography.headlineSmall, color = VoltaColors.Text, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 18.dp),
         )
         Text(
             if (retryAt != null) "Volta and the MG app have been taking the session from each other. To stay within MG's limits, Volta waits before signing in again."
             else "The MG i-SMART app signed in, or the session expired. Your login is saved, so one tap brings live data back.",
-            style = MaterialTheme.typography.bodyLarge, color = Wt.TextSoft, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 14.dp, start = 8.dp, end = 8.dp),
+            style = MaterialTheme.typography.bodyLarge, color = VoltaColors.TextSoft, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 14.dp, start = 8.dp, end = 8.dp),
         )
 
         Column(
-            Modifier.padding(top = 32.dp).fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Wt.Surface).border(1.dp, Wt.Border, RoundedCornerShape(18.dp)).padding(horizontal = 16.dp, vertical = 4.dp),
+            Modifier.padding(top = 32.dp).fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(VoltaColors.Surface).border(1.dp, VoltaColors.Border, RoundedCornerShape(18.dp)).padding(horizontal = 16.dp, vertical = 4.dp),
         ) {
             if (retryAt != null) {
                 Row(Modifier.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("Next attempt at ${clock(retryAt)}", style = MaterialTheme.typography.titleSmall, color = Wt.Text)
-                        Text("3 sign-ins in the last hour · the limit is 3", style = MaterialTheme.typography.bodySmall, color = Wt.Muted)
+                        Text("Next attempt at ${clock(retryAt)}", style = MaterialTheme.typography.titleSmall, color = VoltaColors.Text)
+                        Text("3 sign-ins in the last hour · the limit is 3", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
                     }
-                    Text("in ${((retryAt - now) / 60_000).coerceAtLeast(1)} min", style = MaterialTheme.typography.labelMedium, color = Wt.AmberText)
+                    Text("in ${((retryAt - now) / 60_000).coerceAtLeast(1)} min", style = MaterialTheme.typography.labelMedium, color = VoltaColors.AmberText)
                 }
-                HorizontalDivider(color = Wt.Border)
+                HorizontalDivider(color = VoltaColors.Border)
                 Text("Close the MG i-SMART app on every phone first, or the two will keep signing each other out.",
-                    style = MaterialTheme.typography.bodySmall, color = Wt.TextSoft, modifier = Modifier.padding(vertical = 12.dp))
+                    style = MaterialTheme.typography.bodySmall, color = VoltaColors.TextSoft, modifier = Modifier.padding(vertical = 12.dp))
             } else {
                 Row(Modifier.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Icon(WtIcons.Clock, null, tint = Wt.Muted, modifier = Modifier.size(20.dp))
+                    Icon(VoltaIcons.Clock, null, tint = VoltaColors.Muted, modifier = Modifier.size(20.dp))
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(ageMin?.let { "Last reading ${if (it >= 60) "${it / 60} h ${it % 60} min" else "$it min"} ago" } ?: "No saved reading", style = MaterialTheme.typography.titleSmall, color = Wt.Text)
-                        if (carLine.isNotEmpty()) Text(carLine, style = MaterialTheme.typography.bodySmall, color = Wt.Muted)
+                        Text(ageMin?.let { "Last reading ${if (it >= 60) "${it / 60} h ${it % 60} min" else "$it min"} ago" } ?: "No saved reading", style = MaterialTheme.typography.titleSmall, color = VoltaColors.Text)
+                        if (carLine.isNotEmpty()) Text(carLine, style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
                     }
                 }
-                HorizontalDivider(color = Wt.Border)
+                HorizontalDivider(color = VoltaColors.Border)
                 Row(Modifier.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Icon(WtIcons.Info, null, tint = Wt.Muted, modifier = Modifier.size(20.dp))
+                    Icon(VoltaIcons.Info, null, tint = VoltaColors.Muted, modifier = Modifier.size(20.dp))
                     Text(lostError ?: "Reconnecting signs the MG app out again. Live trip re-planning and alerts stay paused until then.",
-                        style = MaterialTheme.typography.bodySmall, color = if (lostError != null) Wt.AmberText else Wt.TextSoft, modifier = Modifier.weight(1f))
+                        style = MaterialTheme.typography.bodySmall, color = if (lostError != null) VoltaColors.AmberText else VoltaColors.TextSoft, modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -134,13 +134,13 @@ fun ConnectionLostScreen(vm: AccountGateViewModel = hiltViewModel()) {
         Spacer(Modifier.height(28.dp))
 
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            WtButton(
+            VoltaButton(
                 when { reconnecting -> "Reconnecting…"; retryAt != null -> "Reconnect at ${clock(retryAt)}"; else -> "Reconnect" },
                 { vm.reconnect() }, Modifier.fillMaxWidth(), enabled = !reconnecting && retryAt == null,
             )
-            WtButton("Keep showing saved readings", { vm.dismissReconnect() }, Modifier.fillMaxWidth(), style = WtButtonStyle.Secondary)
+            VoltaButton("Keep showing saved readings", { vm.dismissReconnect() }, Modifier.fillMaxWidth(), style = VoltaButtonStyle.Secondary)
             Text(
-                "Sign in with a different account", style = MaterialTheme.typography.labelLarge, color = Wt.Gold, textAlign = TextAlign.Center,
+                "Sign in with a different account", style = MaterialTheme.typography.labelLarge, color = VoltaColors.Gold, textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { vm.differentAccount() }.padding(12.dp),
             )
         }

@@ -62,7 +62,7 @@ class MgIsmartClient(
     private val http: OkHttpClient,
     private val credentials: () -> Credentials?,
     private val sessions: SessionStore,
-    deviceIdPrefix: String = "windsortrip-android-",
+    deviceIdPrefix: String = "volta-android-",
     private val clock: () -> Long = System::currentTimeMillis,
     private val tapLoginUrl: String = "https://iov-tap.mgindia.co.in/TAP.Web/ota.mp",
     private val tapStatusUrl: String = "https://iov-tap.mgindia.co.in/TAP.Web/ota.mpv21",

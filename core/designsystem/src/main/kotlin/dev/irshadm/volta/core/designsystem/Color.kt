@@ -3,7 +3,7 @@ package dev.irshadm.volta.core.designsystem
 import androidx.compose.ui.graphics.Color
 
 /** Colour tokens. Dark only: Volta has no light theme. */
-object Wt {
+object VoltaColors {
     val Bg = Color(0xFF0B0D10)
     val Surface = Color(0xFF12161B)
     val SurfaceHigh = Color(0xFF1A1F26)

@@ -5,7 +5,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 
 /** Motion tokens: strong ease-out for entering, drawer curve for sheets. */
-object WtMotion {
+object VoltaMotion {
     val EaseOut = CubicBezierEasing(0.23f, 1f, 0.32f, 1f)
     val EaseInOut = CubicBezierEasing(0.77f, 0f, 0.175f, 1f)
     val Drawer = CubicBezierEasing(0.32f, 0.72f, 0f, 1f)
