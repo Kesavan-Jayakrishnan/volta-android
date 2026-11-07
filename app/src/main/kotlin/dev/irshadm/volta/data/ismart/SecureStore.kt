@@ -37,7 +37,10 @@ class SecureStore(context: Context) : SessionStore {
 
     @Synchronized
     fun put(name: String, value: String?) {
-        if (value == null) { prefs.edit().remove(name).apply(); return }
+        if (value == null) {
+            prefs.edit().remove(name).apply()
+            return
+        }
         val c = Cipher.getInstance(TRANSFORM).apply { init(Cipher.ENCRYPT_MODE, key()) }
         val blob = c.iv + c.doFinal(value.toByteArray())
         prefs.edit().putString(name, Base64.encodeToString(blob, Base64.NO_WRAP)).apply()
@@ -59,7 +62,10 @@ class SecureStore(context: Context) : SessionStore {
             val pass = get(PASSWORD) ?: return null
             return Credentials(phone, pass)
         }
-        set(value) { put(PHONE, value?.phone); put(PASSWORD, value?.password) }
+        set(value) {
+            put(PHONE, value?.phone)
+            put(PASSWORD, value?.password)
+        }
 
     var pinHash: String?
         get() = get(PIN_HASH)

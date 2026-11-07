@@ -1,15 +1,15 @@
 package dev.irshadm.volta.ui.plan
 
-import dev.irshadm.volta.data.maps.PlannedTrip
 import dev.irshadm.volta.core.model.VehicleProfile
 import dev.irshadm.volta.core.planner.Charger
+import dev.irshadm.volta.core.planner.MealRules
 import dev.irshadm.volta.core.planner.PlanOutcome
 import dev.irshadm.volta.core.planner.Stop
+import dev.irshadm.volta.data.maps.PlannedTrip
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-import dev.irshadm.volta.core.planner.MealRules
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -33,17 +33,18 @@ object RouteAdvisor {
     private fun time(ms: Long) = clock.format(Date(ms)).lowercase()
     private fun minuteOfDay(ms: Long) = Calendar.getInstance().apply { timeInMillis = ms }.let { it.get(Calendar.HOUR_OF_DAY) * 60 + it.get(Calendar.MINUTE) }
 
-    fun advise(trip: PlannedTrip, startSoc: Double, vehicle: VehicleProfile): List<Advice> =
-        all(trip, startSoc, vehicle).filter { it.stop == null }.take(MAX)
+    fun advise(trip: PlannedTrip, startSoc: Double, vehicle: VehicleProfile): List<Advice> = all(trip, startSoc, vehicle).filter { it.stop == null }.take(MAX)
 
     /** Stop index → the tips to show on that stop's card. */
-    fun perStop(trip: PlannedTrip, startSoc: Double, vehicle: VehicleProfile): Map<Int, List<Advice>> =
-        all(trip, startSoc, vehicle).filter { it.stop != null }.groupBy { it.stop!! }.mapValues { it.value.take(2) }
+    fun perStop(trip: PlannedTrip, startSoc: Double, vehicle: VehicleProfile): Map<Int, List<Advice>> = all(trip, startSoc, vehicle).filter { it.stop != null }.groupBy { it.stop!! }.mapValues { it.value.take(2) }
 
     private fun all(trip: PlannedTrip, startSoc: Double, vehicle: VehicleProfile): List<Advice> {
         val out = ArrayList<Advice>()
         val plan = trip.plan
-        val stops: List<Stop> = when (val o = plan.outcome) { is PlanOutcome.Ok -> o.stops; is PlanOutcome.Unreachable -> o.stops }
+        val stops: List<Stop> = when (val o = plan.outcome) {
+            is PlanOutcome.Ok -> o.stops
+            is PlanOutcome.Unreachable -> o.stops
+        }
         val total = trip.route.distanceM
         val names = listOf("the start") + stops.map { it.charger.name.take(28) } + listOf(trip.destination.name)
         val bounds = listOf(0.0) + stops.map { it.charger.alongRouteM } + listOf(total)
@@ -76,8 +77,9 @@ object RouteAdvisor {
 
         // Stops reached at night that aren't known to be 24-hour.
         stops.forEachIndexed { i, s ->
-            if (rules.isNight(minuteOfDay(arriveAt[i])) && s.charger.open24h != true)
+            if (rules.isNight(minuteOfDay(arriveAt[i])) && s.charger.open24h != true) {
                 out += Advice(Advice.Kind.Night, "You get here at ${time(arriveAt[i])} and it isn't listed as 24-hour — check it's open.", i)
+            }
         }
 
         // Real climbs into the hills (net rise, not the ups and downs of rolling roads): on the first leg it's
@@ -90,15 +92,21 @@ object RouteAdvisor {
             if (rise < 300) continue
             val climbPct = (vehicle.massKg * 9.81 * rise / 3.6e6 / vehicle.driveEfficiency / vehicle.usableCapacityKwh * 100).roundToInt()
             val to = "%,d".format(top.roundToInt())
-            out += if (i == 0) Advice(Advice.Kind.Climb, "The road climbs to $to m on the first leg — about $climbPct % of the battery for the climb alone.")
-            else Advice(Advice.Kind.Climb, "Don't skip this one — the road climbs to $to m next (+${"%,d".format(rise.roundToInt())} m, about $climbPct % of the battery).", i - 1)
+            out += if (i == 0) {
+                Advice(Advice.Kind.Climb, "The road climbs to $to m on the first leg — about $climbPct % of the battery for the climb alone.")
+            } else {
+                Advice(Advice.Kind.Climb, "Don't skip this one — the road climbs to $to m next (+${"%,d".format(rise.roundToInt())} m, about $climbPct % of the battery).", i - 1)
+            }
         }
 
         // Long legs with no stop: before the first stop it's trip-wide, otherwise on the stop that starts the leg.
         legMinutes.forEachIndexed { i, m ->
             if (m < 150) return@forEachIndexed
-            out += if (i == 0) Advice(Advice.Kind.Break, "${duration(m)} of driving to ${names[1]} without a stop — take a short break on the way.")
-            else Advice(Advice.Kind.Break, "${duration(m)} to ${names[i + 1]} after this — take a short break on the way.", i - 1)
+            out += if (i == 0) {
+                Advice(Advice.Kind.Break, "${duration(m)} of driving to ${names[1]} without a stop — take a short break on the way.")
+            } else {
+                Advice(Advice.Kind.Break, "${duration(m)} to ${names[i + 1]} after this — take a short break on the way.", i - 1)
+            }
         }
 
         // Arriving on hill roads after dark.

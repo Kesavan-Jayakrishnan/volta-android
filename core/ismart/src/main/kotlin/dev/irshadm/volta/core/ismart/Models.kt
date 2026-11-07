@@ -61,8 +61,13 @@ data class VehicleSnapshot(
             val b = f.basic
             var driverWindow = b.driverWindow == true
             // MG India sometimes reports a stale driver-window bit on a fully closed, locked car.
-            if (driverWindow && b.locked && !(b.driverDoor || b.passengerDoor || b.rearLeftDoor || b.rearRightDoor || b.boot || b.bonnet ||
-                    b.passengerWindow == true || b.rearLeftWindow == true || b.rearRightWindow == true)) driverWindow = false
+            if (driverWindow && b.locked && !(
+                    b.driverDoor || b.passengerDoor || b.rearLeftDoor || b.rearRightDoor || b.boot || b.bonnet ||
+                        b.passengerWindow == true || b.rearLeftWindow == true || b.rearRightWindow == true
+                    )
+            ) {
+                driverWindow = false
+            }
             val tyres = listOf(psi(b.tyreFrontLeft), psi(b.tyreFrontRight), psi(b.tyreRearLeft), psi(b.tyreRearRight))
             val hasFix = f.position.gpsStatus >= 2
             return VehicleSnapshot(
@@ -163,6 +168,7 @@ enum class RemoteCommand(val label: String, val type: Int, val params: List<Pair
     ClimateOff("AC off", 6, listOf(19 to 0, 20 to 0, 255 to 0)),
     FindMyCar("Find my car", 0, listOf(1 to 1, 2 to 1, 3 to 1, 255 to 0)),
     OpenBoot("Open boot", 2, listOf(4 to 0, 5 to 0, 6 to 0, 7 to 2, 255 to 0)),
+
     // Windows: params 9–12 pick the windows (this car's WINDOW mask is 1100 = the two front ones), 13 = 3 open / 0 close.
     WindowsOpen("Open windows", 3, listOf(8 to 0, 9 to 1, 10 to 1, 11 to 0, 12 to 0, 13 to 3)),
     WindowsClose("Close windows", 3, listOf(8 to 0, 9 to 1, 10 to 1, 11 to 0, 12 to 0, 13 to 0)),

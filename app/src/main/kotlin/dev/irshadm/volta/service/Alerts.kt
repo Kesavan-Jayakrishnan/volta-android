@@ -33,7 +33,7 @@ object Alerts {
         val off = prefs(context).getStringSet("off", emptySet()).orEmpty().toMutableSet()
         if (on) off -= key else off += key
         prefs(context).edit().putStringSet("off", off).apply()
-        if (key == "moved") CarCheckWorker.schedule(context)   // 15 min while it's on, else 30
+        if (key == "moved") CarCheckWorker.schedule(context) // 15 min while it's on, else 30
     }
 
     fun onCount(context: Context) = kinds.count { isOn(context, it.key) }

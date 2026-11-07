@@ -81,7 +81,10 @@ class BitReader(private val data: ByteArray, private var pos: Int = 0) {
     fun ia5(minLen: Int, maxLen: Int): String = ia5Fixed(int(minLen.toLong(), maxLen.toLong()).toInt())
 
     fun numericFixed(size: Int): String = buildString {
-        repeat(size) { val v = bits(4).toInt(); append(if (v == 0) ' ' else '0' + (v - 1)) }
+        repeat(size) {
+            val v = bits(4).toInt()
+            append(if (v == 0) ' ' else '0' + (v - 1))
+        }
     }
 
     fun octetsFixed(size: Int): ByteArray = ByteArray(size) { bits(8).toByte() }
@@ -97,8 +100,11 @@ internal object FixedBits {
         for (i in 0 until count) {
             val abs = offset + i
             val mask = 0x80 ushr (abs % 8)
-            buf[abs / 8] = if ((value ushr (count - 1 - i)) and 1L == 1L) (buf[abs / 8].toInt() or mask).toByte()
-            else (buf[abs / 8].toInt() and mask.inv()).toByte()
+            buf[abs / 8] = if ((value ushr (count - 1 - i)) and 1L == 1L) {
+                (buf[abs / 8].toInt() or mask).toByte()
+            } else {
+                (buf[abs / 8].toInt() and mask.inv()).toByte()
+            }
         }
     }
 

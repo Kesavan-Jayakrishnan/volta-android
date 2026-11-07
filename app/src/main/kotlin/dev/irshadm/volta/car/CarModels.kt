@@ -1,9 +1,5 @@
 package dev.irshadm.volta.car
 
-import dev.irshadm.volta.data.maps.ChargeVerdict
-import dev.irshadm.volta.data.maps.ChargerDto
-import dev.irshadm.volta.data.maps.ChargerFeedback
-import dev.irshadm.volta.data.maps.Confidence
 import dev.irshadm.volta.core.model.VehicleProfile
 import dev.irshadm.volta.core.planner.ChargeTime
 import dev.irshadm.volta.core.planner.Charger
@@ -12,6 +8,10 @@ import dev.irshadm.volta.core.planner.Geo
 import dev.irshadm.volta.core.planner.LatLng
 import dev.irshadm.volta.core.planner.ProfilePoint
 import dev.irshadm.volta.core.planner.Stop
+import dev.irshadm.volta.data.maps.ChargeVerdict
+import dev.irshadm.volta.data.maps.ChargerDto
+import dev.irshadm.volta.data.maps.ChargerFeedback
+import dev.irshadm.volta.data.maps.Confidence
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -40,8 +40,12 @@ sealed interface CarAction {
     data class Navigate(override val label: String, val name: String, val to: LatLng) : CarAction
     data class StopDetails(val chargerId: String, override val label: String = "Stop details") : CarAction
     data class ChargerProblem(val chargerId: String, override val label: String = "Charger problem") : CarAction
-    data object AllStops : CarAction { override val label = "All stops" }
-    data object Chargers : CarAction { override val label = "Chargers nearby" }
+    data object AllStops : CarAction {
+        override val label = "All stops"
+    }
+    data object Chargers : CarAction {
+        override val label = "Chargers nearby"
+    }
 }
 
 /** A PaneTemplate: title, status chip, up to 4 rows, the ring, up to 2 buttons and header actions. */
@@ -61,8 +65,13 @@ data class StopRowUi(val chargerId: String?, val number: Int?, val badge: Badge,
 
 /** One row of "Fast chargers nearby". */
 data class ChargerRowUi(
-    val id: String, val name: String, val distanceKm: Double, val text: String, val position: LatLng,
-    val history: String? = null, val historyTone: Tone = Tone.Neutral,
+    val id: String,
+    val name: String,
+    val distanceKm: Double,
+    val text: String,
+    val position: LatLng,
+    val history: String? = null,
+    val historyTone: Tone = Tone.Neutral,
 )
 
 /** Everything the live-trip screens need, lifted off ActiveTrip so it can be built by hand in tests. */
@@ -90,9 +99,11 @@ data class TripFacts(
     val now: Long = System.currentTimeMillis(),
 ) {
     val deviation: Double get() = soc - expectedSoc
+
     /** Same rule as TripRepository: a stop stays "next" until the car is 300 m past it. */
     val nextStop: Stop? get() = stops.firstOrNull { it.charger.alongRouteM > alongM - CarModels.PAST_STOP_M }
     val stopsAhead: List<Stop> get() = stops.filter { it.charger.alongRouteM > alongM - CarModels.PAST_STOP_M }
+
     /** The next stop once the car has been within 400 m of it. */
     val atStop: Stop? get() = nextStop?.takeIf { it.charger.id in visited }
 }
@@ -116,6 +127,7 @@ data class HomeFacts(
 
 object CarModels {
     const val PAST_STOP_M = 300.0
+
     /** Early warnings come at 3, 6, 9 … % below plan (TripRepository.GUARD_STEP). */
     const val GUARD = 3.0
     const val MEAL_MIN = 35.0
@@ -147,8 +159,11 @@ object CarModels {
                 rows = listOf(
                     CarRow("Last leg · ${f.destination}", "${km.roundToInt()} km · arrive ${clock(times.destination)}"),
                     CarRow("Arrive with ${arrive.roundToInt()} %", f.plannedArrivalSoc?.let { "Plan said ${it.roundToInt()} %" } ?: "No more charging stops", arriveTone),
-                    CarRow("No more charging stops", if (arriveTone == Tone.Bad) "Ease off and watch the battery" else "Enough battery to the end with your buffer",
-                        if (arriveTone == Tone.Bad) Tone.Bad else Tone.Good),
+                    CarRow(
+                        "No more charging stops",
+                        if (arriveTone == Tone.Bad) "Ease off and watch the battery" else "Enough battery to the end with your buffer",
+                        if (arriveTone == Tone.Bad) Tone.Bad else Tone.Good,
+                    ),
                 ),
                 ring = ring,
                 actions = listOf(CarAction.Navigate("Navigate to ${short(f.destination)}", f.destination, f.destinationPosition)),
@@ -268,9 +283,14 @@ object CarModels {
             ).joinToString(" · ").ifEmpty { null }
             StopRowUi(id, i + 1, badge, s.charger.name, text, text2)
         }
-        val dest = StopRowUi(null, null, Badge.Destination, f.destination,
+        val dest = StopRowUi(
+            null,
+            null,
+            Badge.Destination,
+            f.destination,
             "Arrive ${clock(times.destination)}" + (f.plannedArrivalSoc?.let { " with ${it.roundToInt()} %" } ?: ""),
-            "${(f.totalM / 1000).roundToInt()} km in total")
+            "${(f.totalM / 1000).roundToInt()} km in total",
+        )
         return rows + dest
     }
 
@@ -285,10 +305,15 @@ object CarModels {
         return PaneUi(
             title = "Stop $idx · ${s.charger.name}",
             rows = listOf(
-                if (past) CarRow("Done", "${(-km).roundToInt()} km back · ${s.charger.maxKw.roundToInt()} kW")
-                else CarRow("Reach ${clock(times.at(s))} with ${s.arriveSoc.roundToInt()} %", "${km.coerceAtLeast(0.0).roundToInt()} km · ${s.charger.maxKw.roundToInt()} kW"),
-                CarRow("Charge to ${s.departSoc.roundToInt()} % · about ${s.chargeMinutes.roundToInt()} min",
-                    s.meal?.let { m -> "${m.label}${s.mealPlace?.let { " · $it" } ?: " here"}" } ?: "No meal planned here"),
+                if (past) {
+                    CarRow("Done", "${(-km).roundToInt()} km back · ${s.charger.maxKw.roundToInt()} kW")
+                } else {
+                    CarRow("Reach ${clock(times.at(s))} with ${s.arriveSoc.roundToInt()} %", "${km.coerceAtLeast(0.0).roundToInt()} km · ${s.charger.maxKw.roundToInt()} kW")
+                },
+                CarRow(
+                    "Charge to ${s.departSoc.roundToInt()} % · about ${s.chargeMinutes.roundToInt()} min",
+                    s.meal?.let { m -> "${m.label}${s.mealPlace?.let { " · $it" } ?: " here"}" } ?: "No meal planned here",
+                ),
                 CarRow("Confidence · ${conf.label}", conf.reasons.joinToString(" · ").ifEmpty { plugs(s.charger, conf) }, dots = conf.dots),
                 backup?.let { b ->
                     val d = conf.backupKm ?: 0.0
@@ -323,8 +348,10 @@ object CarModels {
                 rows = listOf(
                     CarRow("Car connection lost", "The MG app signed in, or the session expired", Tone.Warn),
                     CarRow("Open Volta on your phone to reconnect", "One tap, when you're parked"),
-                    CarRow(age?.let { "Last reading ${duration(it)} ago" } ?: "Last reading saved on the phone",
-                        listOfNotNull(soc?.let { "${it.roundToInt()} %" }, range?.let { "about ${it.roundToInt()} km" }).joinToString(" · ").ifEmpty { null }),
+                    CarRow(
+                        age?.let { "Last reading ${duration(it)} ago" } ?: "Last reading saved on the phone",
+                        listOfNotNull(soc?.let { "${it.roundToInt()} %" }, range?.let { "about ${it.roundToInt()} km" }).joinToString(" · ").ifEmpty { null },
+                    ),
                     CarRow("Trip alerts are paused", "Navigation and chargers nearby still work"),
                 ),
                 ring = soc?.let { CarRing(it.roundToInt(), age?.let { a -> "${duration(a)} ago" } ?: "saved", Tone.Warn) },
@@ -340,12 +367,19 @@ object CarModels {
         return PaneUi(
             title = "Volta",
             rows = listOf(
-                if (soc == null) CarRow("Waiting for the car", "Last reading not available yet")
-                else CarRow(range?.let { "About ${it.roundToInt()} km of range" } ?: "Battery ${soc.roundToInt()} %",
-                    listOfNotNull(range?.let { "Battery ${soc.roundToInt()} %" }).joinToString(" · ").ifEmpty { null }),
+                if (soc == null) {
+                    CarRow("Waiting for the car", "Last reading not available yet")
+                } else {
+                    CarRow(
+                        range?.let { "About ${it.roundToInt()} km of range" } ?: "Battery ${soc.roundToInt()} %",
+                        listOfNotNull(range?.let { "Battery ${soc.roundToInt()} %" }).joinToString(" · ").ifEmpty { null },
+                    )
+                },
                 state,
-                CarRow(if (h.rangeWatchOn) "Range watch is on" else "Range watch is off",
-                    if (h.rangeWatchOn) "Tells you to charge before heading home" else "Turn it on in Settings → Alerts on your phone"),
+                CarRow(
+                    if (h.rangeWatchOn) "Range watch is on" else "Range watch is off",
+                    if (h.rangeWatchOn) "Tells you to charge before heading home" else "Turn it on in Settings → Alerts on your phone",
+                ),
                 CarRow("Plan a trip on your phone", "Volta follows along here once it starts"),
             ),
             ring = soc?.let { CarRing(it.roundToInt(), range?.let { r -> "${r.roundToInt()} km" } ?: "battery", if (h.charging) Tone.Good else Tone.Neutral) },
@@ -354,21 +388,20 @@ object CarModels {
     }
 
     /** Nearby DC chargers with your own history at each one, nearest first. */
-    fun chargerRows(at: LatLng, found: List<ChargerDto>, history: (String) -> List<ChargerFeedback.Entry>, now: Long = System.currentTimeMillis()): List<ChargerRowUi> =
-        found.map { c ->
-            val km = Geo.distanceM(at, c.position) / 1000
-            val plugs = c.availableCount?.let { free -> c.connectorCount?.let { "$free of $it free" } ?: "$free free" } ?: "free plugs unknown"
-            val h = history(c.id)
-            val worked = h.count { it.verdict == ChargeVerdict.Worked }
-            val last = h.lastOrNull()
-            val (line, tone) = when {
-                last?.verdict == ChargeVerdict.Broken && now - last.at < 30 * ChargerFeedback.DAY -> "Broken when you tried, ${daysAgo(now - last.at)}" to Tone.Bad
-                last?.verdict == ChargeVerdict.Waited && now - last.at < 60 * ChargerFeedback.DAY -> "You had to wait here ${daysAgo(now - last.at)}" to Tone.Warn
-                worked > 0 -> "Worked for you ${times(worked)}" to Tone.Good
-                else -> null to Tone.Neutral
-            }
-            ChargerRowUi(c.id, c.name, km, "${c.maxKw.roundToInt()} kW · $plugs", c.position, line, tone)
-        }.sortedBy { it.distanceKm }
+    fun chargerRows(at: LatLng, found: List<ChargerDto>, history: (String) -> List<ChargerFeedback.Entry>, now: Long = System.currentTimeMillis()): List<ChargerRowUi> = found.map { c ->
+        val km = Geo.distanceM(at, c.position) / 1000
+        val plugs = c.availableCount?.let { free -> c.connectorCount?.let { "$free of $it free" } ?: "$free free" } ?: "free plugs unknown"
+        val h = history(c.id)
+        val worked = h.count { it.verdict == ChargeVerdict.Worked }
+        val last = h.lastOrNull()
+        val (line, tone) = when {
+            last?.verdict == ChargeVerdict.Broken && now - last.at < 30 * ChargerFeedback.DAY -> "Broken when you tried, ${daysAgo(now - last.at)}" to Tone.Bad
+            last?.verdict == ChargeVerdict.Waited && now - last.at < 60 * ChargerFeedback.DAY -> "You had to wait here ${daysAgo(now - last.at)}" to Tone.Warn
+            worked > 0 -> "Worked for you ${times(worked)}" to Tone.Good
+            else -> null to Tone.Neutral
+        }
+        ChargerRowUi(c.id, c.name, km, "${c.maxKw.roundToInt()} kW · $plugs", c.position, line, tone)
+    }.sortedBy { it.distanceKm }
 
     // ---------------------------------------------------------------- timing and words
 
@@ -388,8 +421,11 @@ object CarModels {
         for (s in f.stopsAhead) {
             t += (minutesBetween(f.profile, fromM, s.charger.alongRouteM) * 60_000).toLong()
             out[s.charger.id] = t
-            val dwell = if (s == at) ChargeTime.minutes(f.vehicle, f.soc, s.departSoc, s.charger.maxKw)
-            else maxOf(s.chargeMinutes, if (s.meal != null) MEAL_MIN else 0.0)
+            val dwell = if (s == at) {
+                ChargeTime.minutes(f.vehicle, f.soc, s.departSoc, s.charger.maxKw)
+            } else {
+                maxOf(s.chargeMinutes, if (s.meal != null) MEAL_MIN else 0.0)
+            }
             t += (dwell * 60_000).toLong()
             fromM = maxOf(fromM, s.charger.alongRouteM)
         }
@@ -415,8 +451,11 @@ object CarModels {
     }
 
     private fun chargeTitle(s: Stop) = s.meal?.let { "${it.label} here · charge to ${s.departSoc.roundToInt()} %" } ?: "Charge to ${s.departSoc.roundToInt()} %"
-    private fun chargeText(s: Stop) = if (s.meal != null) "About ${maxOf(s.chargeMinutes, MEAL_MIN).roundToInt()} min" + (s.mealPlace?.let { " · $it" } ?: "")
-    else "About ${s.chargeMinutes.roundToInt()} min · ${s.charger.maxKw.roundToInt()} kW"
+    private fun chargeText(s: Stop) = if (s.meal != null) {
+        "About ${maxOf(s.chargeMinutes, MEAL_MIN).roundToInt()} min" + (s.mealPlace?.let { " · $it" } ?: "")
+    } else {
+        "About ${s.chargeMinutes.roundToInt()} min · ${s.charger.maxKw.roundToInt()} kW"
+    }
 
     private fun plugs(c: Charger, conf: Confidence): String {
         val live = c.availableCount?.let { free -> c.connectorCount?.let { "$free of $it plugs free" } ?: "$free plugs free" }
@@ -434,5 +473,13 @@ object CarModels {
 
     fun duration(min: Int): String = if (min >= 60) "${min / 60} h ${min % 60} min" else "$min min"
     private fun times(n: Int) = if (n == 1) "once" else "$n times"
-    private fun daysAgo(ms: Long) = (ms / ChargerFeedback.DAY).let { if (it == 0L) "today" else if (it == 1L) "yesterday" else "$it days ago" }
+    private fun daysAgo(ms: Long) = (ms / ChargerFeedback.DAY).let {
+        if (it == 0L) {
+            "today"
+        } else if (it == 1L) {
+            "yesterday"
+        } else {
+            "$it days ago"
+        }
+    }
 }

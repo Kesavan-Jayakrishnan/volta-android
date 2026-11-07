@@ -22,6 +22,7 @@ class ClientFlowTest {
     private val server = MockWebServer()
 
     @Before fun start() = server.start()
+
     @After fun stop() = server.close()
 
     private fun client(store: SessionStore, creds: Credentials? = Credentials("9876543210", "secret-pass")) = MgIsmartClient(
@@ -49,7 +50,7 @@ class ClientFlowTest {
     @Test
     fun readPollsUntilStatusThenFetchesCharge() = runTest {
         server.enqueue(vinList())
-        server.enqueue(text(s("pendingResponse")))     // car waking up
+        server.enqueue(text(s("pendingResponse"))) // car waking up
         server.enqueue(text(s("statusResponse")))
         server.enqueue(text(s("chargeResponse")))
         val c = client(InMemorySessionStore(session))
@@ -58,10 +59,10 @@ class ClientFlowTest {
         assertNotNull(reading.charge)
         assertEquals(59.0, reading.charge!!.socPercent!!, 1e-9)
         assertTrue(reading.snapshot.locked)
-        server.takeRequest()                            // vin list
-        server.takeRequest()                            // first status poll
+        server.takeRequest() // vin list
+        server.takeRequest() // first status poll
         val second = server.takeRequest()
-        assertTrue(second.body!!.utf8().contains("0000000000"))   // still a v2.1 frame
+        assertTrue(second.body!!.utf8().contains("0000000000")) // still a v2.1 frame
         assertTrue(second.headers["APP-SIGNATURE"]!!.isNotBlank())
     }
 
@@ -69,7 +70,7 @@ class ClientFlowTest {
     fun lockCommandVerifiesPinThenWaitsForCompletion() = runTest {
         server.enqueue(vinList())
         server.enqueue(text(s("pinOkResponse")))
-        server.enqueue(text(s("pendingResponse").replaceFirst("1", "1")))  // pending (app id 511 is ignored for commands)
+        server.enqueue(text(s("pendingResponse").replaceFirst("1", "1"))) // pending (app id 511 is ignored for commands)
         server.enqueue(text(s("controlDoneResponse")))
         client(InMemorySessionStore(session)).command(RemoteCommand.Lock, s("pinHash"))
         assertEquals(4, server.requestCount)

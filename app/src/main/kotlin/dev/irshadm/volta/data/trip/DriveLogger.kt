@@ -1,13 +1,13 @@
 package dev.irshadm.volta.data.trip
 
 import android.content.Context
-import dev.irshadm.volta.data.SettingsRepository
-import dev.irshadm.volta.data.db.TripDao
-import dev.irshadm.volta.data.db.TripEntity
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.irshadm.volta.core.model.VehicleStatus
 import dev.irshadm.volta.core.planner.Geo
 import dev.irshadm.volta.core.planner.LatLng
-import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.irshadm.volta.data.SettingsRepository
+import dev.irshadm.volta.data.db.TripDao
+import dev.irshadm.volta.data.db.TripEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -47,21 +47,27 @@ class DriveLogger @Inject constructor(
             ?.takeIf { t -> t.endedAt != null && prevSoc.measuredAtMillis - t.endedAt <= GAP_MS }
         if (existing != null) {
             val start = existing.destination?.substringBefore(" → ")
-            dao.update(existing.copy(
-                endedAt = nowSoc.measuredAtMillis, endSoc = nowSoc.socPercent, endOdometerKm = odo,
-                usedKwh = used(existing.startSoc, nowSoc.socPercent, capacity),
-                destination = listOfNotNull(start, endName).distinct().joinToString(" → ").ifEmpty { null },
-                journeyId = journey ?: existing.journeyId,
-            ))
+            dao.update(
+                existing.copy(
+                    endedAt = nowSoc.measuredAtMillis,
+                    endSoc = nowSoc.socPercent,
+                    endOdometerKm = odo,
+                    usedKwh = used(existing.startSoc, nowSoc.socPercent, capacity),
+                    destination = listOfNotNull(start, endName).distinct().joinToString(" → ").ifEmpty { null },
+                    journeyId = journey ?: existing.journeyId,
+                ),
+            )
         } else {
             val startName = placeName(prev)
-            dao.insert(TripEntity(
-                startedAt = startOf(prevSoc.measuredAtMillis, nowSoc.measuredAtMillis, odo - prevOdo, now.ignitionChangedAtMillis), endedAt = nowSoc.measuredAtMillis,
-                destination = listOfNotNull(startName, endName).distinct().joinToString(" → ").ifEmpty { null },
-                plannedDistanceM = null, startSoc = prevSoc.socPercent, endSoc = nowSoc.socPercent,
-                startOdometerKm = prevOdo, endOdometerKm = odo, usedKwh = used(prevSoc.socPercent, nowSoc.socPercent, capacity),
-                source = "CAR", journeyId = journey,
-            ))
+            dao.insert(
+                TripEntity(
+                    startedAt = startOf(prevSoc.measuredAtMillis, nowSoc.measuredAtMillis, odo - prevOdo, now.ignitionChangedAtMillis), endedAt = nowSoc.measuredAtMillis,
+                    destination = listOfNotNull(startName, endName).distinct().joinToString(" → ").ifEmpty { null },
+                    plannedDistanceM = null, startSoc = prevSoc.socPercent, endSoc = nowSoc.socPercent,
+                    startOdometerKm = prevOdo, endOdometerKm = odo, usedKwh = used(prevSoc.socPercent, nowSoc.socPercent, capacity),
+                    source = "CAR", journeyId = journey,
+                ),
+            )
         }
     }
 
@@ -81,13 +87,19 @@ class DriveLogger @Inject constructor(
             var start: dev.irshadm.volta.data.db.SocReadingEntity? = null
             var end: dev.irshadm.volta.data.db.SocReadingEntity? = null
             suspend fun flush() {
-                val s = start; val e = end
-                if (s != null && e != null && e.odometerKm!! - s.odometerKm!! >= MIN_KM) dao.insert(TripEntity(
-                    startedAt = s.measuredAtMillis, endedAt = e.measuredAtMillis, destination = null, plannedDistanceM = null,
-                    startSoc = s.socPercent, endSoc = e.socPercent, startOdometerKm = s.odometerKm, endOdometerKm = e.odometerKm,
-                    usedKwh = used(s.socPercent, e.socPercent, capacity), source = "CAR",
-                ))
-                start = null; end = null
+                val s = start
+                val e = end
+                if (s != null && e != null && e.odometerKm!! - s.odometerKm!! >= MIN_KM) {
+                    dao.insert(
+                        TripEntity(
+                            startedAt = s.measuredAtMillis, endedAt = e.measuredAtMillis, destination = null, plannedDistanceM = null,
+                            startSoc = s.socPercent, endSoc = e.socPercent, startOdometerKm = s.odometerKm, endOdometerKm = e.odometerKm,
+                            usedKwh = used(s.socPercent, e.socPercent, capacity), source = "CAR",
+                        ),
+                    )
+                }
+                start = null
+                end = null
             }
             list.zipWithNext { a, b -> a to b }.forEach { (a, b) ->
                 val moved = b.odometerKm!! - a.odometerKm!! >= 0.1
@@ -117,7 +129,10 @@ class DriveLogger @Inject constructor(
             var last: dev.irshadm.volta.data.db.SocReadingEntity? = null
             list.zipWithNext().forEach { (a, b) ->
                 if (b.odometerKm!! - a.odometerKm!! < 0.1) return@forEach
-                if (last != null && a.measuredAtMillis - last!!.measuredAtMillis > GAP_MS) { groups += first!! to last!!; first = null }
+                if (last != null && a.measuredAtMillis - last!!.measuredAtMillis > GAP_MS) {
+                    groups += first!! to last!!
+                    first = null
+                }
                 if (first == null) first = a
                 last = b
             }
@@ -128,12 +143,18 @@ class DriveLogger @Inject constructor(
             val to = t.destination?.substringAfter(" → ", "")?.ifEmpty { null }
             dao.delete(t.id)
             drives.forEachIndexed { i, (a, b) ->
-                dao.insert(TripEntity(
-                    startedAt = startOf(a.measuredAtMillis, b.measuredAtMillis, b.odometerKm!! - a.odometerKm!!, null), endedAt = b.measuredAtMillis,
-                    destination = when (i) { 0 -> from; drives.lastIndex -> to; else -> null },   // only the ends are known
-                    plannedDistanceM = null, startSoc = a.socPercent, endSoc = b.socPercent,
-                    startOdometerKm = a.odometerKm, endOdometerKm = b.odometerKm, usedKwh = used(a.socPercent, b.socPercent, capacity), source = "CAR",
-                ))
+                dao.insert(
+                    TripEntity(
+                        startedAt = startOf(a.measuredAtMillis, b.measuredAtMillis, b.odometerKm!! - a.odometerKm!!, null), endedAt = b.measuredAtMillis,
+                        destination = when (i) {
+                            0 -> from
+                            drives.lastIndex -> to
+                            else -> null
+                        }, // only the ends are known
+                        plannedDistanceM = null, startSoc = a.socPercent, endSoc = b.socPercent,
+                        startOdometerKm = a.odometerKm, endOdometerKm = b.odometerKm, usedKwh = used(a.socPercent, b.socPercent, capacity), source = "CAR",
+                    ),
+                )
             }
         }
         prefs.edit().putBoolean("resplit_v1", true).apply()
@@ -150,8 +171,7 @@ class DriveLogger @Inject constructor(
     }
 
     /** kWh used from the SoC drop; null if the battery went up (charged in between). */
-    private fun used(startSoc: Double?, endSoc: Double, capacity: Double): Double? =
-        startSoc?.let { (it - endSoc) }?.takeIf { it >= 0 }?.let { it * capacity / 100 }
+    private fun used(startSoc: Double?, endSoc: Double, capacity: Double): Double? = startSoc?.let { (it - endSoc) }?.takeIf { it >= 0 }?.let { it * capacity / 100 }
 
     /** Saved place name, "Home", or the area from the phone's geocoder. */
     private suspend fun placeName(v: VehicleStatus): String? {
@@ -170,6 +190,7 @@ class DriveLogger @Inject constructor(
 
     private companion object {
         const val MIN_KM = 0.5
+
         /** Standing still longer than this between readings means the drive ended. */
         const val GAP_MS = 20 * 60_000L
     }

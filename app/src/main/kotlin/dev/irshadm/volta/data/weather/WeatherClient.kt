@@ -1,11 +1,11 @@
 package dev.irshadm.volta.data.weather
 
-import dev.irshadm.volta.data.SettingsRepository
 import dev.irshadm.volta.core.model.VehicleStatus
 import dev.irshadm.volta.core.planner.Geo
 import dev.irshadm.volta.core.planner.LatLng
-import kotlinx.coroutines.flow.first
+import dev.irshadm.volta.data.SettingsRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -57,13 +57,16 @@ class WeatherClient @Inject constructor(private val http: OkHttpClient, private 
     }
 
     @Serializable private data class Reply(val current: Current)
+
     @Serializable private data class Current(
         @SerialName("temperature_2m") val temp: Double,
         @SerialName("shortwave_radiation") val sun: Double? = null,
         @SerialName("is_day") val isDay: Int = 1,
     )
 
-    private companion object { const val CACHE_MS = 15 * 60_000L }
+    private companion object {
+        const val CACHE_MS = 15 * 60_000L
+    }
 }
 
 /** Outside and cabin temperatures to show and to decide on pre-cooling; [cabinEstimated] when the cabin is worked out, not measured. */
@@ -75,6 +78,7 @@ object CabinModel {
      * car is under a roof, a tree or in morning sun, and an over-warm guess makes the AC look needed when it isn't.
      */
     private const val FULL_SUN_GAIN_C = 10.0
+
     /** Minutes for the cabin to get most of the way to its new temperature. */
     private const val SETTLE_MIN = 60.0
 

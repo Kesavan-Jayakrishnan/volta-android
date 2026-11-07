@@ -21,8 +21,7 @@ class GoogleApi(
     private val jsonType = "application/json".toMediaType()
 
     /** POSTs [body] with the key from [MapsKeyProvider]; throws [MissingMapsKeyException] when none is set. */
-    suspend fun post(url: String, body: String, fieldMask: String): String =
-        post(url, body, fieldMask, key = keys.currentKey()?.takeIf { it.isNotBlank() } ?: throw MissingMapsKeyException())
+    suspend fun post(url: String, body: String, fieldMask: String): String = post(url, body, fieldMask, key = keys.currentKey()?.takeIf { it.isNotBlank() } ?: throw MissingMapsKeyException())
 
     /** POSTs with an explicit [key]; used to try a key before it is saved. */
     suspend fun post(url: String, body: String, fieldMask: String, key: String): String = withContext(Dispatchers.IO) {

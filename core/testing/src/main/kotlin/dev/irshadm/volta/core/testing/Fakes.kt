@@ -21,23 +21,34 @@ class FakeAccountRepository(initial: Account = Account.SignedOut) : AccountRepos
         return nextResult.onSuccess { account.value = Account.SignedIn(phone) }
     }
 
-    override fun signOut() { account.value = Account.SignedOut }
+    override fun signOut() {
+        account.value = Account.SignedOut
+    }
 }
 
 class FakeMapsKeyRepository(initial: String? = null) : MapsKeyRepository {
     override val key: StateFlow<String?> get() = _key
     private val _key = MutableStateFlow(initial)
-    override fun save(key: String) { _key.value = key }
-    override fun remove() { _key.value = null }
+    override fun save(key: String) {
+        _key.value = key
+    }
+    override fun remove() {
+        _key.value = null
+    }
 }
 
 class FakeSetupRepository(done: Boolean = false) : SetupRepository {
     override val mapsKeyStepDone = MutableStateFlow(done)
-    override suspend fun setMapsKeyStepDone(done: Boolean) { mapsKeyStepDone.value = done }
+    override suspend fun setMapsKeyStepDone(done: Boolean) {
+        mapsKeyStepDone.value = done
+    }
 }
 
 /** Answers every check with [report]; records the keys it was asked about. */
 class FakeMapsKeyChecker(var report: KeyCheckReport) : MapsKeyChecker {
     val checked = mutableListOf<String>()
-    override suspend fun check(key: String): KeyCheckReport { checked += key; return report }
+    override suspend fun check(key: String): KeyCheckReport {
+        checked += key
+        return report
+    }
 }

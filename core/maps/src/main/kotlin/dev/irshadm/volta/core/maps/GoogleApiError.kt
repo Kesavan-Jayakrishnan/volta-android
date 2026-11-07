@@ -11,18 +11,25 @@ import kotlinx.serialization.json.jsonPrimitive
 enum class KeyProblem {
     /** The key doesn't exist, was deleted, or was mistyped. */
     InvalidKey,
+
     /** The API isn't enabled in the key's Google Cloud project. */
     ApiNotEnabled,
+
     /** The key's "API restrictions" leave this API out. */
     ApiNotAllowedForKey,
+
     /** The key is restricted to Android apps, and this app's package or SHA-1 isn't on the list. */
     AppNotAllowed,
+
     /** The project has no billing account, which Google Maps Platform requires. */
     BillingDisabled,
+
     /** Daily or per-minute quota used up. */
     QuotaExceeded,
+
     /** No answer from Google (offline, DNS, timeout). */
     Network,
+
     /** Anything else; [GoogleApiException.message] carries Google's own words. */
     Other,
 }

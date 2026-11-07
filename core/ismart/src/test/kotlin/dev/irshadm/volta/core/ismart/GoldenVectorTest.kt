@@ -23,7 +23,9 @@ class GoldenVectorTest {
     private val vin = s("vin")
 
     @Test fun statusRequest() = assertEquals(s("statusRequest"), Tap.statusRequest(uid, token, vin, 7, t))
+
     @Test fun chargeRequest() = assertEquals(s("chargeRequest"), Tap.chargeRequest(uid, token, vin, 0, t))
+
     @Test fun lockRequest() = assertEquals(s("lockRequest"), Tap.controlRequest(uid, token, vin, 0, 1, emptyList(), t))
 
     @Test fun unlockRequest() = assertEquals(
@@ -113,8 +115,16 @@ class GoldenVectorTest {
     @Test fun loginRejectionIsReported() {
         // A V1.1 dispatcher with result 3 and an error message, framed like the login response.
         val d = Tap.encodeDispatcherV11(
-            Tap.DispatcherV11(applicationId = "001", eventCreationTime = t, messageId = 2, iccId = "12345678901234567890",
-                appDataLength = 0, appProtocolVersion = 513, result = 3, errorMessage = "Incorrect password".toByteArray()),
+            Tap.DispatcherV11(
+                applicationId = "001",
+                eventCreationTime = t,
+                messageId = 2,
+                iccId = "12345678901234567890",
+                appDataLength = 0,
+                appProtocolVersion = 513,
+                result = 3,
+                errorMessage = "Incorrect password".toByteArray(),
+            ),
         )
         val payload = byteArrayOf(17, 0, (d.size + 4).toByte(), 0) + d
         val raw = "%04X".format(payload.size * 2 + 5) + "1" + payload.hexUpper()

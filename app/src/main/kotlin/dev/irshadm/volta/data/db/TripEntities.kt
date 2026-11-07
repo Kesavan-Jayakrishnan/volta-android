@@ -24,9 +24,9 @@ data class TripEntity(
     val plannedKwh: Double? = null,
     val usedKwh: Double? = null,
     val climbM: Double? = null,
-    val source: String = "APP",            // APP = tracked by Volta, CAR = detected from journey id
+    val source: String = "APP", // APP = tracked by Volta, CAR = detected from journey id
     val journeyId: Long? = null,
-    val demo: Boolean = false,             // unused: kept so existing databases need no migration
+    val demo: Boolean = false, // unused: kept so existing databases need no migration
 )
 
 @Entity(tableName = "trip_samples", indices = [Index("tripId")])
@@ -58,35 +58,64 @@ data class ChargeSessionEntity(
     val peakKw: Double = 0.0,
     val category: String,
     val placeName: String? = null,
-    val gridUnits: Double? = null,         // user-entered actual units (smart plug / meter)
-    val costRs: Double? = null,            // user-entered actual cost (receipt)
+    val gridUnits: Double? = null, // user-entered actual units (smart plug / meter)
+    val costRs: Double? = null, // user-entered actual cost (receipt)
     val inferred: Boolean = false,
     val userEdited: Boolean = false,
-    val demo: Boolean = false,             // unused: kept so existing databases need no migration
+    val demo: Boolean = false, // unused: kept so existing databases need no migration
 )
 
 @Dao
 interface TripDao {
     @Insert suspend fun insert(trip: TripEntity): Long
+
     @Update suspend fun update(trip: TripEntity)
+
     @Insert suspend fun insertSample(sample: TripSampleEntity)
-    @Query("SELECT * FROM trips WHERE id = :id") suspend fun get(id: Long): TripEntity?
-    @Query("SELECT * FROM trips ORDER BY startedAt DESC LIMIT :limit") fun recent(limit: Int): Flow<List<TripEntity>>
-    @Query("SELECT * FROM trips WHERE endedAt IS NOT NULL AND usedKwh IS NOT NULL ORDER BY startedAt DESC LIMIT :limit") suspend fun finished(limit: Int): List<TripEntity>
-    @Query("SELECT * FROM trip_samples WHERE tripId = :tripId ORDER BY at") suspend fun samples(tripId: Long): List<TripSampleEntity>
-    @Query("SELECT * FROM trips WHERE source = 'CAR' AND journeyId = :journeyId LIMIT 1") suspend fun byJourney(journeyId: Long): TripEntity?
-    @Query("SELECT * FROM trips WHERE source = 'CAR' ORDER BY startedAt DESC LIMIT 1") suspend fun lastCarTrip(): TripEntity?
-    @Query("SELECT * FROM trips WHERE source = 'CAR' ORDER BY startedAt") suspend fun carTrips(): List<TripEntity>
-    @Query("DELETE FROM trips WHERE id = :id") suspend fun delete(id: Long)
-    @Query("SELECT COUNT(*) FROM trips WHERE source = 'APP' AND endedAt IS NULL AND startedAt > :since") suspend fun openAppTrips(since: Long): Int
-    @Query("SELECT * FROM trips WHERE source = 'APP' AND endedAt IS NULL") suspend fun openAppTripRows(): List<TripEntity>
+
+    @Query("SELECT * FROM trips WHERE id = :id")
+    suspend fun get(id: Long): TripEntity?
+
+    @Query("SELECT * FROM trips ORDER BY startedAt DESC LIMIT :limit")
+    fun recent(limit: Int): Flow<List<TripEntity>>
+
+    @Query("SELECT * FROM trips WHERE endedAt IS NOT NULL AND usedKwh IS NOT NULL ORDER BY startedAt DESC LIMIT :limit")
+    suspend fun finished(limit: Int): List<TripEntity>
+
+    @Query("SELECT * FROM trip_samples WHERE tripId = :tripId ORDER BY at")
+    suspend fun samples(tripId: Long): List<TripSampleEntity>
+
+    @Query("SELECT * FROM trips WHERE source = 'CAR' AND journeyId = :journeyId LIMIT 1")
+    suspend fun byJourney(journeyId: Long): TripEntity?
+
+    @Query("SELECT * FROM trips WHERE source = 'CAR' ORDER BY startedAt DESC LIMIT 1")
+    suspend fun lastCarTrip(): TripEntity?
+
+    @Query("SELECT * FROM trips WHERE source = 'CAR' ORDER BY startedAt")
+    suspend fun carTrips(): List<TripEntity>
+
+    @Query("DELETE FROM trips WHERE id = :id")
+    suspend fun delete(id: Long)
+
+    @Query("SELECT COUNT(*) FROM trips WHERE source = 'APP' AND endedAt IS NULL AND startedAt > :since")
+    suspend fun openAppTrips(since: Long): Int
+
+    @Query("SELECT * FROM trips WHERE source = 'APP' AND endedAt IS NULL")
+    suspend fun openAppTripRows(): List<TripEntity>
 }
 
 @Dao
 interface ChargeDao {
     @Insert suspend fun insert(s: ChargeSessionEntity): Long
+
     @Update suspend fun update(s: ChargeSessionEntity)
-    @Query("SELECT * FROM charge_sessions WHERE endedAt IS NULL ORDER BY startedAt DESC LIMIT 1") suspend fun open(): ChargeSessionEntity?
-    @Query("SELECT * FROM charge_sessions WHERE startedAt BETWEEN :from AND :to ORDER BY startedAt DESC") fun between(from: Long, to: Long): Flow<List<ChargeSessionEntity>>
-    @Query("SELECT * FROM charge_sessions ORDER BY startedAt DESC LIMIT :limit") fun recent(limit: Int): Flow<List<ChargeSessionEntity>>
+
+    @Query("SELECT * FROM charge_sessions WHERE endedAt IS NULL ORDER BY startedAt DESC LIMIT 1")
+    suspend fun open(): ChargeSessionEntity?
+
+    @Query("SELECT * FROM charge_sessions WHERE startedAt BETWEEN :from AND :to ORDER BY startedAt DESC")
+    fun between(from: Long, to: Long): Flow<List<ChargeSessionEntity>>
+
+    @Query("SELECT * FROM charge_sessions ORDER BY startedAt DESC LIMIT :limit")
+    fun recent(limit: Int): Flow<List<ChargeSessionEntity>>
 }

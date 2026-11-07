@@ -42,7 +42,10 @@ import androidx.compose.ui.unit.em
 fun Modifier.pressScale(interaction: MutableInteractionSource): Modifier = composed {
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(if (pressed) 0.97f else 1f, tween(VoltaMotion.PRESS_MS, easing = VoltaMotion.EaseOut), label = "press")
-    graphicsLayer { scaleX = scale; scaleY = scale }
+    graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+    }
 }
 
 enum class VoltaButtonStyle { Primary, Secondary }
@@ -85,7 +88,10 @@ fun VoltaButton(
 @Composable
 fun VoltaTextButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Text(
-        text, style = MaterialTheme.typography.labelLarge, color = VoltaColors.Gold, textAlign = TextAlign.Center,
+        text,
+        style = MaterialTheme.typography.labelLarge,
+        color = VoltaColors.Gold,
+        textAlign = TextAlign.Center,
         modifier = modifier.clip(RoundedCornerShape(12.dp)).clickable(role = Role.Button, onClick = onClick).padding(12.dp),
     )
 }

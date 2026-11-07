@@ -39,13 +39,13 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.irshadm.volta.core.designsystem.NoteTone
-import dev.irshadm.volta.core.designsystem.VoltaTheme
-import dev.irshadm.volta.core.designsystem.VoltaColors
 import dev.irshadm.volta.core.designsystem.VoltaButton
 import dev.irshadm.volta.core.designsystem.VoltaButtonStyle
+import dev.irshadm.volta.core.designsystem.VoltaColors
 import dev.irshadm.volta.core.designsystem.VoltaIcons
 import dev.irshadm.volta.core.designsystem.VoltaNote
 import dev.irshadm.volta.core.designsystem.VoltaTextButton
+import dev.irshadm.volta.core.designsystem.VoltaTheme
 import dev.irshadm.volta.core.maps.ApiCheck
 import dev.irshadm.volta.core.maps.AppIdentity
 import dev.irshadm.volta.core.maps.KeyCheckReport
@@ -99,7 +99,8 @@ fun MapsKeyScreen(
         if (!state.passed) {
             Text(
                 "Trip plans, charger search and food stops use Google's Routes and Places APIs. Volta has no server and no key of its own, so you bring yours. Google's monthly free usage normally covers one person.",
-                style = MaterialTheme.typography.bodyMedium, color = VoltaColors.TextSoft,
+                style = MaterialTheme.typography.bodyMedium,
+                color = VoltaColors.TextSoft,
             )
         }
 
@@ -115,14 +116,17 @@ fun MapsKeyScreen(
                 textStyle = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
                 supportingText = if (state.phase == KeyPhase.BadFormat) {
                     { Text("Google keys start with AIza and are 39 characters long.") }
-                } else null,
+                } else {
+                    null
+                },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done, autoCorrectEnabled = false),
                 keyboardActions = KeyboardActions(onDone = { onCheck() }),
                 modifier = Modifier.fillMaxWidth(),
             )
             Row(
                 Modifier.clip(RoundedCornerShape(8.dp)).clickable { uri.openUri(MAPS_KEY_GUIDE_URL) }.padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text("How to create a key and set a budget", style = MaterialTheme.typography.bodyMedium.copy(textDecoration = TextDecoration.Underline), color = VoltaColors.Gold)
                 Icon(VoltaIcons.ExternalLink, null, tint = VoltaColors.Gold, modifier = Modifier.size(14.dp))
@@ -131,15 +135,18 @@ fun MapsKeyScreen(
 
         when {
             state.phase == KeyPhase.Checking -> ApiList(report = null)
+
             report != null -> {
                 ApiList(report)
                 if (report.passed) {
                     VoltaNote(NoteTone.Success, "Saved on this phone. Change or remove it any time in Settings → Google Maps key.", icon = VoltaIcons.Check)
-                } else report.firstFailure?.let { (api, failure) ->
-                    val (title, fix) = failure.problem.explain(api, identity.packageName, identity.sha1Colons)
-                    VoltaNote(NoteTone.Error, title = title, body = fix)
-                    if (failure.problem == KeyProblem.Other) {
-                        Text(failure.googleMessage, style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
+                } else {
+                    report.firstFailure?.let { (api, failure) ->
+                        val (title, fix) = failure.problem.explain(api, identity.packageName, identity.sha1Colons)
+                        VoltaNote(NoteTone.Error, title = title, body = fix)
+                        if (failure.problem == KeyProblem.Other) {
+                            Text(failure.googleMessage, style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
+                        }
                     }
                 }
             }
@@ -148,10 +155,17 @@ fun MapsKeyScreen(
         Spacer(Modifier.height(12.dp))
         when {
             state.passed -> VoltaButton(if (mode == MapsKeyMode.FirstRun) "Open Volta" else "Done", onDone, Modifier.fillMaxWidth())
+
             else -> VoltaButton(
-                text = when { state.phase == KeyPhase.Checking -> "Checking with Google…"; report != null -> "Check again"; else -> "Check key" },
-                onClick = onCheck, modifier = Modifier.fillMaxWidth(),
-                enabled = state.canCheck || state.phase == KeyPhase.Checking, busy = state.phase == KeyPhase.Checking,
+                text = when {
+                    state.phase == KeyPhase.Checking -> "Checking with Google…"
+                    report != null -> "Check again"
+                    else -> "Check key"
+                },
+                onClick = onCheck,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = state.canCheck || state.phase == KeyPhase.Checking,
+                busy = state.phase == KeyPhase.Checking,
             )
         }
         if (!state.passed && mode == MapsKeyMode.FirstRun) VoltaTextButton("Skip for now", onSkip, Modifier.align(Alignment.CenterHorizontally))
@@ -160,7 +174,10 @@ fun MapsKeyScreen(
         }
         Text(
             "Stored encrypted on this phone. Sent only to Google.",
-            style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
+            style = MaterialTheme.typography.bodySmall,
+            color = VoltaColors.Muted,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }

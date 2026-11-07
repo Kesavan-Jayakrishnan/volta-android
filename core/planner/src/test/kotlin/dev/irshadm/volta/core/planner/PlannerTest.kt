@@ -8,23 +8,25 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class PlannerTest {
-    private val car = VehicleProfile()                // 37.1 kWh, 6 km/kWh highway, 7 city
-    private val settings = TripSettings()             // 10 % charger, 15 % destination, 80 % target
+    private val car = VehicleProfile() // 37.1 kWh, 6 km/kWh highway, 7 city
+    private val settings = TripSettings() // 10 % charger, 15 % destination, 80 % target
     private val model = EnergyModel(car)
 
     /** Straight road sampled every 200 m with a height function and constant speed. */
     private fun road(km: Double, speed: Double = 90.0, height: (Double) -> Double = { 0.0 }): List<ProfilePoint> {
         val n = (km * 5).toInt()
-        return (0..n).map { i -> val d = i * 200.0; ProfilePoint(d, height(d), speed) }
+        return (0..n).map { i ->
+            val d = i * 200.0
+            ProfilePoint(d, height(d), speed)
+        }
     }
 
-    private fun charger(id: String, km: Double, kw: Double = 50.0) =
-        Charger(id, "Charger $id", LatLng(0.0, km / 111.0), kw, alongRouteM = km * 1000)
+    private fun charger(id: String, km: Double, kw: Double = 50.0) = Charger(id, "Charger $id", LatLng(0.0, km / 111.0), kw, alongRouteM = km * 1000)
 
     @Test
     fun flatEnergyMatchesEfficiency() {
         val e = model.breakdown(road(60.0))
-        assertEquals(10.0, e.flatKwh, 0.01)                 // 60 km / 6 km/kWh
+        assertEquals(10.0, e.flatKwh, 0.01) // 60 km / 6 km/kWh
         assertEquals(0.0, e.terrainKwh, 1e-9)
     }
 
@@ -38,7 +40,7 @@ class PlannerTest {
     @Test
     fun climbCostsMoreThanSameFlatDistance() {
         val flat = model.breakdown(road(40.0)).totalKwh
-        val climb = model.breakdown(road(40.0) { it / 40_000.0 * 1_000.0 }).totalKwh  // +1000 m
+        val climb = model.breakdown(road(40.0) { it / 40_000.0 * 1_000.0 }).totalKwh // +1000 m
         // m·g·h / η = 1600·9.81·1000 / 0.88 / 3.6e6 ≈ 4.95 kWh
         assertEquals(4.95, climb - flat, 0.05)
     }
@@ -53,7 +55,7 @@ class PlannerTest {
 
     @Test
     fun smallBumpsAreTreatedAsFlat() {
-        val wobbly = road(20.0) { d -> if ((d / 200).toInt() % 2 == 0) 0.0 else 1.5 }  // ±1.5 m noise
+        val wobbly = road(20.0) { d -> if ((d / 200).toInt() % 2 == 0) 0.0 else 1.5 } // ±1.5 m noise
         assertEquals(0.0, model.breakdown(wobbly).terrainKwh, 1e-9)
     }
 
@@ -126,7 +128,7 @@ class PlannerTest {
 
     @Test
     fun polylineRoundTripAndResample() {
-        val pts = listOf(LatLng(9.9312, 76.2673), LatLng(10.0889, 77.0595))  // Kochi → Munnar (straight line)
+        val pts = listOf(LatLng(9.9312, 76.2673), LatLng(10.0889, 77.0595)) // Kochi → Munnar (straight line)
         val decoded = Geo.decodePolyline(Geo.encodePolyline(pts))
         assertEquals(pts[1].lat, decoded[1].lat, 1e-5)
         assertEquals("_p~iF~ps|U_ulLnnqC_mqNvxq`@", Geo.encodePolyline(listOf(LatLng(38.5, -120.2), LatLng(40.7, -120.95), LatLng(43.252, -126.453))))

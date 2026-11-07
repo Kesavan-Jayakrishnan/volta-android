@@ -37,11 +37,11 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import dev.irshadm.volta.core.designsystem.LocalReducedMotion
+import dev.irshadm.volta.core.designsystem.VoltaColors
 import dev.irshadm.volta.data.ismart.CarModel
 import dev.irshadm.volta.ui.components.CarPictures
 import dev.irshadm.volta.ui.components.CarShot
-import dev.irshadm.volta.core.designsystem.LocalReducedMotion
-import dev.irshadm.volta.core.designsystem.VoltaColors
 
 private val Sheen = Color(0xFF30343B)
 
@@ -50,7 +50,10 @@ private val Sheen = Color(0xFF30343B)
 internal fun skeletonBrush(): Brush {
     if (LocalReducedMotion.current) return Brush.linearGradient(listOf(VoltaColors.PanelTrack, VoltaColors.PanelTrack))
     val x by rememberInfiniteTransition(label = "skeleton").animateFloat(
-        -400f, 1400f, infiniteRepeatable(tween(1500, easing = LinearEasing)), label = "sheen",
+        -400f,
+        1400f,
+        infiniteRepeatable(tween(1500, easing = LinearEasing)),
+        label = "sheen",
     )
     return Brush.linearGradient(listOf(VoltaColors.PanelTrack, Sheen, VoltaColors.PanelTrack), start = Offset(x, 0f), end = Offset(x + 400f, 120f))
 }
@@ -66,7 +69,9 @@ internal fun SkeletonCar(model: CarModel, modifier: Modifier = Modifier) {
     val picture = CarPictures.hero(model, CarShot.Locked)
     Box(modifier.fillMaxWidth().height(250.dp)) {
         Image(
-            painterResource(picture), contentDescription = null, contentScale = ContentScale.Fit,
+            painterResource(picture),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
             // Darkened rather than faded: a faded photo lets the dusk sky show through the car.
             colorFilter = ColorFilter.colorMatrix(ColorMatrix().apply { setToScale(0.55f, 0.55f, 0.55f, 1f) }),
             modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),

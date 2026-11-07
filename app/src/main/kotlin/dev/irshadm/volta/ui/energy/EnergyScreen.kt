@@ -66,17 +66,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.irshadm.volta.data.db.ChargeSessionEntity
-import dev.irshadm.volta.ui.components.VoltaCard
-import dev.irshadm.volta.core.designsystem.VoltaIcons
-import dev.irshadm.volta.ui.components.appear
 import dev.irshadm.volta.core.designsystem.LocalReducedMotion
 import dev.irshadm.volta.core.designsystem.VoltaColors
+import dev.irshadm.volta.core.designsystem.VoltaIcons
 import dev.irshadm.volta.core.designsystem.VoltaMotion
 import dev.irshadm.volta.core.designsystem.tabular
 import dev.irshadm.volta.core.model.ChargeCategory
 import dev.irshadm.volta.core.model.EnergyReport
 import dev.irshadm.volta.core.model.EnergySettings
+import dev.irshadm.volta.data.db.ChargeSessionEntity
+import dev.irshadm.volta.ui.components.VoltaCard
+import dev.irshadm.volta.ui.components.appear
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -109,9 +109,8 @@ private val CalendarIcon: ImageVector = ImageVector.Builder("calendar", 24.dp, 2
 /** Sessions under this many kWh on one day fold into a single "tiny top-ups" row. */
 private const val TINY_KWH = 0.5
 
-private fun kwhOf(s: ChargeSessionEntity, capacity: Double): Double =
-    ((s.endKwh ?: s.startKwh ?: 0.0) - (s.startKwh ?: 0.0)).takeIf { it > 0 }
-        ?: (((s.endSoc ?: 0.0) - (s.startSoc ?: 0.0)) / 100 * capacity).coerceAtLeast(0.0)
+private fun kwhOf(s: ChargeSessionEntity, capacity: Double): Double = ((s.endKwh ?: s.startKwh ?: 0.0) - (s.startKwh ?: 0.0)).takeIf { it > 0 }
+    ?: (((s.endSoc ?: 0.0) - (s.startSoc ?: 0.0)) / 100 * capacity).coerceAtLeast(0.0)
 
 private fun costOf(s: ChargeSessionEntity, kwh: Double, r: EnergyReport, e: EnergySettings): Double = s.costRs ?: when (ChargeCategory.valueOf(s.category)) {
     ChargeCategory.HOME -> (s.gridUnits ?: (kwh / e.homeEfficiency)) * r.costPerHomeUnit
@@ -149,9 +148,13 @@ private fun fold(sessions: List<ChargeSessionEntity>, capacity: Double): List<Se
 }
 
 @Composable private fun heroStyle() = MaterialTheme.typography.displayLarge.copy(fontSize = 44.sp, lineHeight = 48.sp, fontWeight = FontWeight.SemiBold)
+
 @Composable private fun billStyle() = MaterialTheme.typography.headlineLarge.copy(fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.SemiBold).tabular()
+
 @Composable private fun statStyle() = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, lineHeight = 24.sp, fontWeight = FontWeight.SemiBold).tabular()
+
 @Composable private fun rowTitle() = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp, lineHeight = 22.sp, fontWeight = FontWeight.SemiBold)
+
 @Composable private fun rowSub() = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp)
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -184,8 +187,12 @@ fun EnergyScreen(onSettings: () -> Unit, vm: EnergyViewModel = hiltViewModel()) 
         }
         PeriodSegments(state.period, vm::select, Modifier.padding(top = 12.dp).appear(1))
         if (state.loaded && state.from > 0) {
-            Text("${dayFmt.format(Date(state.from))} – ${dayFmt.format(Date(state.to))}", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Dim,
-                modifier = Modifier.padding(start = 4.dp, top = 8.dp))
+            Text(
+                "${dayFmt.format(Date(state.from))} – ${dayFmt.format(Date(state.to))}",
+                style = MaterialTheme.typography.bodySmall,
+                color = VoltaColors.Dim,
+                modifier = Modifier.padding(start = 4.dp, top = 8.dp),
+            )
         }
         val r = state.report ?: return@Column
 
@@ -205,7 +212,12 @@ fun EnergyScreen(onSettings: () -> Unit, vm: EnergyViewModel = hiltViewModel()) 
         }
         if (state.sessions.isNotEmpty()) {
             var editing by remember { mutableStateOf<ChargeSessionEntity?>(null) }
-            editing?.let { s -> CategoryDialog(s, onDismiss = { editing = null }) { c -> vm.setCategory(s, c); editing = null } }
+            editing?.let { s ->
+                CategoryDialog(s, onDismiss = { editing = null }) { c ->
+                    vm.setCategory(s, c)
+                    editing = null
+                }
+            }
             val items = remember(state.sessions, state.capacityKwh) { fold(state.sessions.take(40), state.capacityKwh) }
             VoltaCard(Modifier.fillMaxWidth().padding(top = 10.dp).appear(5), radius = 18.dp, padding = PaddingValues(0.dp)) {
                 Column {
@@ -224,7 +236,9 @@ fun EnergyScreen(onSettings: () -> Unit, vm: EnergyViewModel = hiltViewModel()) 
             (if (state.sessions.isEmpty()) "Nothing logged in this period yet. " else "") +
                 "Sessions are recorded whenever the car reports it is plugged in." +
                 (if (onlyHome) " Public and DC sessions appear here with their own colour once you have one." else ""),
-            style = MaterialTheme.typography.bodySmall, color = VoltaColors.Dim, modifier = Modifier.padding(horizontal = 4.dp).padding(top = 14.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = VoltaColors.Dim,
+            modifier = Modifier.padding(horizontal = 4.dp).padding(top = 14.dp),
         )
     }
 }
@@ -317,10 +331,15 @@ private fun BillCard(r: EnergyReport, state: EnergyUiState, onSettings: () -> Un
     // "So far" is only meaningful when the period is the bill cycle itself: the household's share of the cycle
     // elapsed (an estimate from Settings) plus the car's actual units in the period.
     val used: Double? = if (state.period == Period.Cycle && state.from > 0) {
-        val end = Calendar.getInstance().apply { timeInMillis = state.from; add(Calendar.MONTH, t.billingMonths) }.timeInMillis
+        val end = Calendar.getInstance().apply {
+            timeInMillis = state.from
+            add(Calendar.MONTH, t.billingMonths)
+        }.timeInMillis
         val elapsed = ((state.to - state.from).toDouble() / (end - state.from).coerceAtLeast(1)).coerceIn(0.0, 1.0)
         (state.energy.householdUnitsPerCycle * elapsed + r.homeUnits).coerceAtMost(projected)
-    } else null
+    } else {
+        null
+    }
     val over = projected > limit
     val year = Calendar.getInstance().get(Calendar.YEAR).toString()
     VoltaCard(modifier.fillMaxWidth(), radius = 22.dp, padding = PaddingValues(18.dp)) {
@@ -328,21 +347,28 @@ private fun BillCard(r: EnergyReport, state: EnergyUiState, onSettings: () -> Un
             Text("KSEB bill · ${t.billingMonths}-month cycle", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted, modifier = Modifier.weight(1f).alignByBaseline())
             Text(
                 t.verifiedOn?.let { "rates ${it.removeSuffix(" $year")}" } ?: "sample rates",
-                style = MaterialTheme.typography.labelSmall, color = if (t.verifiedOn == null) VoltaColors.Amber else VoltaColors.Dim,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (t.verifiedOn == null) VoltaColors.Amber else VoltaColors.Dim,
                 modifier = Modifier.alignByBaseline().clickable(role = Role.Button, onClickLabel = "Check the rates", onClick = onSettings),
             )
         }
         Row {
             Text(rs(r.billWithEv), style = billStyle(), modifier = Modifier.alignByBaseline())
             Spacer(Modifier.width(10.dp))
-            Text("the car adds ${rs(r.billWithEv - r.billWithoutEv)}", style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp).tabular(), color = VoltaColors.AmberText,
-                modifier = Modifier.alignByBaseline())
+            Text(
+                "the car adds ${rs(r.billWithEv - r.billWithoutEv)}",
+                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp).tabular(),
+                color = VoltaColors.AmberText,
+                modifier = Modifier.alignByBaseline(),
+            )
         }
         SlabGauge(used, projected, limit, state.period, Modifier.padding(top = 6.dp))
         Row {
             Text(
                 used?.let { "${it.roundToInt()} used · ${projected.roundToInt()} projected" } ?: "${projected.roundToInt()} projected for the cycle",
-                style = MaterialTheme.typography.labelSmall.tabular(), color = VoltaColors.Muted, modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.labelSmall.tabular(),
+                color = VoltaColors.Muted,
+                modifier = Modifier.weight(1f),
             )
             Text(if (over) "past the ${limit.roundToInt()} limit" else "${limit.roundToInt()} before the slab jumps", style = MaterialTheme.typography.labelSmall.tabular(), color = VoltaColors.AmberText)
         }
@@ -353,21 +379,27 @@ private fun BillCard(r: EnergyReport, state: EnergyUiState, onSettings: () -> Un
         when {
             r.crossesLimit -> Text(
                 "The car pushes this cycle past ${limit.roundToInt()} units, so every unit is billed at the higher flat rate, about ${rs(flatRate)} each.",
-                style = MaterialTheme.typography.bodyMedium, color = VoltaColors.AmberText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = VoltaColors.AmberText,
                 modifier = Modifier.padding(top = 4.dp).fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(VoltaColors.tint(VoltaColors.Amber, 0.08f)).padding(10.dp),
             )
+
             over -> Text(
                 "This cycle is past ${limit.roundToInt()} units even without the car, so every unit is billed at the flat rate, about ${rs(flatRate)} each.",
-                style = MaterialTheme.typography.bodyMedium, color = VoltaColors.AmberText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = VoltaColors.AmberText,
                 modifier = Modifier.padding(top = 4.dp).fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(VoltaColors.tint(VoltaColors.Amber, 0.08f)).padding(10.dp),
             )
+
             headroomKm >= 1 -> Text(
                 buildAnnotatedString {
                     append("Room for about ")
                     withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = VoltaColors.Text)) { append("${(headroomKm / 10).roundToInt() * 10} km") }
                     append(" more of home charging this cycle. Past the limit, every unit is re-rated at about ${rs(flatRate)}.")
                 },
-                style = MaterialTheme.typography.bodyMedium, color = VoltaColors.TextSoft, modifier = Modifier.padding(top = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = VoltaColors.TextSoft,
+                modifier = Modifier.padding(top = 4.dp),
             )
         }
     }
@@ -394,7 +426,10 @@ private fun SlabGauge(used: Double?, projected: Double, limit: Double, key: Any,
             val step = 6.dp.toPx()
             clipRect(solidEnd, 0f, projEnd, h) {
                 var x = solidEnd
-                while (x < projEnd) { drawRect(fill.copy(alpha = 0.45f), Offset(x, 0f), Size(stripe, h)); x += step }
+                while (x < projEnd) {
+                    drawRect(fill.copy(alpha = 0.45f), Offset(x, 0f), Size(stripe, h))
+                    x += step
+                }
             }
         }
         val tick = (w * (limit / scale)).toFloat()
@@ -450,13 +485,16 @@ private fun SessionRow(s: ChargeSessionEntity, r: EnergyReport, state: EnergyUiS
         Modifier.fillMaxWidth()
             .combinedClickable(role = Role.Button, onClickLabel = "Change type", onLongClickLabel = "Change type", onLongClick = onEdit, onClick = onEdit)
             .padding(horizontal = 16.dp, vertical = 13.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(Modifier.size(10.dp).clip(CircleShape).background(color(cat)))
         Column(Modifier.weight(1f)) {
             Text(
                 "${s.placeName ?: cat.label} · ${dayFmt.format(Date(s.startedAt))}" + if (end == null) " · charging now" else "",
-                style = rowTitle(), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                style = rowTitle(),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             Text(detail, style = rowSub().tabular(), color = VoltaColors.Muted, maxLines = 1, modifier = Modifier.padding(top = 2.dp))
         }

@@ -3,10 +3,9 @@ package dev.irshadm.volta.ui.plan
 import android.graphics.Bitmap
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.border
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,6 +48,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
@@ -76,10 +76,10 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 import dev.irshadm.volta.R
-import dev.irshadm.volta.core.planner.LatLng
-import dev.irshadm.volta.data.maps.Confidence
 import dev.irshadm.volta.core.designsystem.VoltaColors
 import dev.irshadm.volta.core.designsystem.tabular
+import dev.irshadm.volta.core.planner.LatLng
+import dev.irshadm.volta.data.maps.Confidence
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -121,7 +121,7 @@ fun JourneyPreview(journey: Journey, originName: String, backups: List<Confidenc
     // The whole route first, then the selected card's leg.
     LaunchedEffect(loaded, sel, topH, bottomH) {
         if (!loaded) return@LaunchedEffect
-        val pad = with(density) { 64.dp.roundToPx() }             // room for the pin labels
+        val pad = with(density) { 64.dp.roundToPx() } // room for the pin labels
         if (!shown) {
             camera.move(CameraUpdateFactory.newLatLngBounds(bounds(route), pad))
             shown = true
@@ -160,10 +160,15 @@ fun JourneyPreview(journey: Journey, originName: String, backups: List<Confidenc
             cameraPositionState = camera,
             properties = MapProperties(mapStyleOptions = style, isBuildingEnabled = false),
             uiSettings = MapUiSettings(
-                compassEnabled = false, indoorLevelPickerEnabled = false, mapToolbarEnabled = false, myLocationButtonEnabled = false,
-                rotationGesturesEnabled = false, tiltGesturesEnabled = false, zoomControlsEnabled = false,
+                compassEnabled = false,
+                indoorLevelPickerEnabled = false,
+                mapToolbarEnabled = false,
+                myLocationButtonEnabled = false,
+                rotationGesturesEnabled = false,
+                tiltGesturesEnabled = false,
+                zoomControlsEnabled = false,
             ),
-            contentPadding = PaddingValues(start = 36.dp, top = topH, end = 36.dp, bottom = bottomH),   // sides: room for half a label
+            contentPadding = PaddingValues(start = 36.dp, top = topH, end = 36.dp, bottom = bottomH), // sides: room for half a label
             googleMapOptionsFactory = { com.google.android.gms.maps.GoogleMapOptions().backgroundColor(VoltaColors.Bg.toArgb()) },
             onMapLoaded = { loaded = true },
         ) {
@@ -173,20 +178,52 @@ fun JourneyPreview(journey: Journey, originName: String, backups: List<Confidenc
             Marker(ringState, icon = ring, anchor = Offset(0.5f, 0.5f), zIndex = 4f)
             legStates.forEachIndexed { i, st ->
                 val on = sel == i + 1 || (sel == 0 && i == 0)
-                Marker(st, icon = if (on) legIcons[i].second else legIcons[i].first, anchor = Offset(0.5f, 0.5f), zIndex = if (on) 5.5f else 3.5f,
-                    onClick = { scope.launch { pager.animateScrollToPage(i + 1) }; true })
+                Marker(
+                    st,
+                    icon = if (on) legIcons[i].second else legIcons[i].first,
+                    anchor = Offset(0.5f, 0.5f),
+                    zIndex = if (on) 5.5f else 3.5f,
+                    onClick = {
+                        scope.launch { pager.animateScrollToPage(i + 1) }
+                        true
+                    },
+                )
             }
             backupStates.forEachIndexed { i, st ->
                 if (st == null) return@forEachIndexed
                 val shown = sel == i + 1
-                if (shown) Polyline(points = listOf(spots[sel], st.position), color = VoltaColors.Amber, width = 2.5f * d, zIndex = 3f,
-                    pattern = listOf(Dash(8 * d), Gap(6 * d)))
-                Marker(st, icon = (if (shown) backupLabels[i] else null) ?: backupDot, anchor = Offset(0.5f, 0.5f), zIndex = if (shown) 7f else 4f,
-                    alpha = if (shown) 1f else 0.75f, onClick = { scope.launch { pager.animateScrollToPage(i + 1) }; true })
+                if (shown) {
+                    Polyline(
+                        points = listOf(spots[sel], st.position),
+                        color = VoltaColors.Amber,
+                        width = 2.5f * d,
+                        zIndex = 3f,
+                        pattern = listOf(Dash(8 * d), Gap(6 * d)),
+                    )
+                }
+                Marker(
+                    st,
+                    icon = (if (shown) backupLabels[i] else null) ?: backupDot,
+                    anchor = Offset(0.5f, 0.5f),
+                    zIndex = if (shown) 7f else 4f,
+                    alpha = if (shown) 1f else 0.75f,
+                    onClick = {
+                        scope.launch { pager.animateScrollToPage(i + 1) }
+                        true
+                    },
+                )
             }
             spots.indices.forEach { i ->
-                Marker(pinStates[i], icon = pins[i], anchor = Offset(0.5f, 0.28f), zIndex = if (i == sel) 6f else 5f,
-                    onClick = { scope.launch { pager.animateScrollToPage(i) }; true })
+                Marker(
+                    pinStates[i],
+                    icon = pins[i],
+                    anchor = Offset(0.5f, 0.28f),
+                    zIndex = if (i == sel) 6f else 5f,
+                    onClick = {
+                        scope.launch { pager.animateScrollToPage(i) }
+                        true
+                    },
+                )
             }
         }
 
@@ -196,15 +233,27 @@ fun JourneyPreview(journey: Journey, originName: String, backups: List<Confidenc
 
         // ---- top: the trip in a line, back to the list ----
         Box(Modifier.fillMaxWidth().height(150.dp).background(Brush.verticalGradient(listOf(VoltaColors.Bg.copy(alpha = 0.92f), Color.Transparent))))
-        Row(Modifier.onSizeChanged { topH = with(density) { it.height.toDp() } + 8.dp }.statusBarsPadding().padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            Modifier.onSizeChanged { topH = with(density) { it.height.toDp() } + 8.dp }.statusBarsPadding().padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
             Column(Modifier.weight(1f)) {
                 Text("$originName → ${journey.trip.destination.name}", style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("${(journey.totalM / 1000).roundToInt()} km · ${stopCount(journey.stops.size)} · arrive ${time(journey.arriveAt)} with ${journey.arrivalSoc.roundToInt()} %",
-                    style = MaterialTheme.typography.bodySmall.tabular(), color = VoltaColors.Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    "${(journey.totalM / 1000).roundToInt()} km · ${stopCount(journey.stops.size)} · arrive ${time(journey.arriveAt)} with ${journey.arrivalSoc.roundToInt()} %",
+                    style = MaterialTheme.typography.bodySmall.tabular(),
+                    color = VoltaColors.Muted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
-            Row(Modifier.clip(CircleShape).background(VoltaColors.Surface.copy(alpha = 0.9f)).border(1.dp, VoltaColors.Border, CircleShape).clickable(role = Role.Button, onClick = onClose)
-                .padding(start = 10.dp, end = 14.dp, top = 9.dp, bottom = 9.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(
+                Modifier.clip(CircleShape).background(VoltaColors.Surface.copy(alpha = 0.9f)).border(1.dp, VoltaColors.Border, CircleShape).clickable(role = Role.Button, onClick = onClose)
+                    .padding(start = 10.dp, end = 14.dp, top = 9.dp, bottom = 9.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
                 Icon(dev.irshadm.volta.core.designsystem.VoltaIcons.Back, null, tint = VoltaColors.Text, modifier = Modifier.size(16.dp))
                 Text("Back to list", style = MaterialTheme.typography.labelLarge)
             }
@@ -223,13 +272,19 @@ fun JourneyPreview(journey: Journey, originName: String, backups: List<Confidenc
             }
             Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                 repeat(last + 1) { i ->
-                    Box(Modifier.padding(horizontal = 3.dp).height(6.dp).width(if (sel == i) 18.dp else 6.dp).clip(CircleShape)
-                        .background(if (sel == i) VoltaColors.Gold else VoltaColors.Text.copy(alpha = 0.3f))
-                        .clickable { scope.launch { pager.animateScrollToPage(i) } })
+                    Box(
+                        Modifier.padding(horizontal = 3.dp).height(6.dp).width(if (sel == i) 18.dp else 6.dp).clip(CircleShape)
+                            .background(if (sel == i) VoltaColors.Gold else VoltaColors.Text.copy(alpha = 0.3f))
+                            .clickable { scope.launch { pager.animateScrollToPage(i) } },
+                    )
                 }
             }
-            Text("Swipe the cards or tap a stop on the map", style = MaterialTheme.typography.labelSmall, color = VoltaColors.Dim,
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 6.dp))
+            Text(
+                "Swipe the cards or tap a stop on the map",
+                style = MaterialTheme.typography.labelSmall,
+                color = VoltaColors.Dim,
+                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 6.dp),
+            )
         }
     }
 }
@@ -254,11 +309,13 @@ private fun StartCard(j: Journey, originName: String) {
         Head("START", VoltaColors.Gold, "Leave ${time(j.trip.departAt.toDouble())}")
         Text(originName, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Chips(listOf("${j.startSoc.roundToInt()} %", "$km km to ${placeName(j, next)}", drive))
-        Steps(listOf(
-            "Leave ${time(j.trip.departAt.toDouble())} with ${j.startSoc.roundToInt()} %",
-            "Drive $km km to ${placeName(j, next)} · about $drive",
-            "Arrive ${time(arrive)} with ${arriveSoc.roundToInt()} %",
-        ))
+        Steps(
+            listOf(
+                "Leave ${time(j.trip.departAt.toDouble())} with ${j.startSoc.roundToInt()} %",
+                "Drive $km km to ${placeName(j, next)} · about $drive",
+                "Arrive ${time(arrive)} with ${arriveSoc.roundToInt()} %",
+            ),
+        )
     }
 }
 
@@ -277,12 +334,14 @@ private fun StopCard(j: Journey, s: Journey.JStop, photo: suspend (String?, Stri
         }
         Chips(listOf("${s.stop.arriveSoc.roundToInt()} % → ${s.stop.departSoc.roundToInt()} %", duration(s.minutes), "Leave ${time(s.leaveAt)}"))
         val meal = s.stop.meal
-        Steps(listOfNotNull(
-            "Plug in at the ${c.maxKw.roundToInt()} kW charger",
-            "Charge to ${s.stop.departSoc.roundToInt()} % · about ${s.stop.chargeMinutes.roundToInt()} min",
-            meal?.let { m -> "${m.label} while it charges" + (s.spot?.let { " · ${it.name}" } ?: s.stop.mealPlace?.let { " · $it" } ?: "") },
-            "Then $nextKm km to ${placeName(j, next)} · arrive with ${nextSoc.roundToInt()} %",
-        ))
+        Steps(
+            listOfNotNull(
+                "Plug in at the ${c.maxKw.roundToInt()} kW charger",
+                "Charge to ${s.stop.departSoc.roundToInt()} % · about ${s.stop.chargeMinutes.roundToInt()} min",
+                meal?.let { m -> "${m.label} while it charges" + (s.spot?.let { " · ${it.name}" } ?: s.stop.mealPlace?.let { " · $it" } ?: "") },
+                "Then $nextKm km to ${placeName(j, next)} · arrive with ${nextSoc.roundToInt()} %",
+            ),
+        )
         s.spot?.let { FoodRow(s, it, photo) }
     }
 }
@@ -296,10 +355,12 @@ private fun EndCard(j: Journey, photo: suspend (String?, String?) -> Bitmap?) {
         Head("DESTINATION", VoltaColors.Gold, "Arrive ${time(j.arriveAt)}")
         Text(dest.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Chips(listOf("${j.arrivalSoc.roundToInt()} % left", "${(j.totalM / 1000).roundToInt()} km", duration((j.arriveAt - j.trip.departAt) / 60_000) + " door to door"))
-        Steps(listOf(
-            "Arrive ${time(j.arriveAt)} with ${j.arrivalSoc.roundToInt()} % left",
-            if (j.stops.isEmpty()) "No charging needed on the way" else "${stopCount(j.stops.size).replaceFirstChar { it.uppercase() }} · ${duration(charging)} charging on the way",
-        ))
+        Steps(
+            listOf(
+                "Arrive ${time(j.arriveAt)} with ${j.arrivalSoc.roundToInt()} % left",
+                if (j.stops.isEmpty()) "No charging needed on the way" else "${stopCount(j.stops.size).replaceFirstChar { it.uppercase() }} · ${duration(charging)} charging on the way",
+            ),
+        )
     }
 }
 
@@ -307,19 +368,30 @@ private fun EndCard(j: Journey, photo: suspend (String?, String?) -> Bitmap?) {
 @Composable
 private fun FoodRow(s: Journey.JStop, spot: dev.irshadm.volta.data.maps.MealSpot, photo: suspend (String?, String?) -> Bitmap?) {
     val bmp by produceState<Bitmap?>(null, spot.photo) { value = photo(null, spot.photo) }
-    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(VoltaColors.PanelTrack).padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(VoltaColors.PanelTrack).padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
         Box(Modifier.size(52.dp).clip(RoundedCornerShape(10.dp)).background(VoltaColors.SurfaceHigh), contentAlignment = Alignment.Center) {
             val b = bmp
-            if (b != null) Image(b.asImageBitmap(), null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-            else Icon(Glyphs.Fork, null, tint = VoltaColors.Dim, modifier = Modifier.size(18.dp))
+            if (b != null) {
+                Image(b.asImageBitmap(), null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            } else {
+                Icon(Glyphs.Fork, null, tint = VoltaColors.Dim, modifier = Modifier.size(18.dp))
+            }
         }
         Column(Modifier.weight(1f)) {
             val away = if (spot.distanceM <= 800) "${(spot.distanceM / 80).roundToInt().coerceAtLeast(1)} min walk" else "${"%.1f".format(spot.distanceM / 1000)} km away"
             Text("${s.stop.meal?.label ?: "Food"} · $away", style = MaterialTheme.typography.labelSmall, color = VoltaColors.Gold)
             Text(spot.name, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(listOfNotNull(spot.rating?.let { "${"%.1f".format(it)} ★" }, spot.reviews?.let { "%,d reviews".format(it) }, spot.kind).joinToString(" · "),
-                style = MaterialTheme.typography.labelSmall.tabular(), color = VoltaColors.Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                listOfNotNull(spot.rating?.let { "${"%.1f".format(it)} ★" }, spot.reviews?.let { "%,d reviews".format(it) }, spot.kind).joinToString(" · "),
+                style = MaterialTheme.typography.labelSmall.tabular(),
+                color = VoltaColors.Muted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
@@ -337,8 +409,13 @@ private fun Head(kicker: String, color: Color, right: String) {
 private fun Chips(items: List<String>) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         items.forEach {
-            Text(it, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold).tabular(), color = VoltaColors.TextSoft, maxLines = 1,
-                modifier = Modifier.clip(CircleShape).background(VoltaColors.PanelTrack).padding(horizontal = 9.dp, vertical = 4.dp))
+            Text(
+                it,
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold).tabular(),
+                color = VoltaColors.TextSoft,
+                maxLines = 1,
+                modifier = Modifier.clip(CircleShape).background(VoltaColors.PanelTrack).padding(horizontal = 9.dp, vertical = 4.dp),
+            )
         }
     }
 }
@@ -365,33 +442,51 @@ private fun PlacePhoto(placeId: String?, name: String?, photo: suspend (String?,
             val zoom = remember(b) { androidx.compose.animation.core.Animatable(1.08f) }
             LaunchedEffect(b) { zoom.animateTo(1f, tween(4000)) }
             Image(b.asImageBitmap(), null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize().scale(zoom.value))
-        } else Icon(icon, null, tint = VoltaColors.Dim, modifier = Modifier.align(Alignment.Center).size(28.dp))
-        Text(caption, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold).tabular(),
-            modifier = Modifier.align(Alignment.BottomStart).padding(10.dp).clip(CircleShape).background(VoltaColors.Bg.copy(alpha = 0.72f)).padding(horizontal = 8.dp, vertical = 3.dp))
+        } else {
+            Icon(icon, null, tint = VoltaColors.Dim, modifier = Modifier.align(Alignment.Center).size(28.dp))
+        }
+        Text(
+            caption,
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold).tabular(),
+            modifier = Modifier.align(Alignment.BottomStart).padding(10.dp).clip(CircleShape).background(VoltaColors.Bg.copy(alpha = 0.72f)).padding(horizontal = 8.dp, vertical = 3.dp),
+        )
     }
 }
 
-private fun stopCount(n: Int) = when (n) { 0 -> "no stops"; 1 -> "1 stop"; else -> "$n stops" }
+private fun stopCount(n: Int) = when (n) {
+    0 -> "no stops"
+    1 -> "1 stop"
+    else -> "$n stops"
+}
 
 // ---- map pins (bitmaps) ----
 
 private fun paint(color: Int) = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { this.color = color }
 
 private fun boltPath(cx: Float, cy: Float, s: Float) = android.graphics.Path().apply {
-    moveTo(cx + 1 * s, cy - 6 * s); lineTo(cx - 3.6f * s, cy + 1 * s); lineTo(cx - 0.4f * s, cy + 1 * s)
-    lineTo(cx - 1 * s, cy + 6 * s); lineTo(cx + 3.6f * s, cy - 1 * s); lineTo(cx + 0.4f * s, cy - 1 * s); close()
+    moveTo(cx + 1 * s, cy - 6 * s)
+    lineTo(cx - 3.6f * s, cy + 1 * s)
+    lineTo(cx - 0.4f * s, cy + 1 * s)
+    lineTo(cx - 1 * s, cy + 6 * s)
+    lineTo(cx + 3.6f * s, cy - 1 * s)
+    lineTo(cx + 0.4f * s, cy - 1 * s)
+    close()
 }
 
 /** A pin with a label pill under it: "7:53 am · Breakfast". */
 private fun labelledPin(label: String, labelBg: Int, labelInk: Int, d: Float, drawIcon: (android.graphics.Canvas, Float, Float, Float) -> Unit): Bitmap {
-    val text = paint(labelInk).apply { textSize = 11.5f * d; typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD) }
+    val text = paint(labelInk).apply {
+        textSize = 11.5f * d
+        typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
+    }
     val tw = text.measureText(label)
     val r = 12 * d
     val w = maxOf(tw + 20 * d, r * 2 + 16 * d).toInt()
     val h = (r * 2 + 6 * d + 22 * d).toInt()
     val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
     val c = android.graphics.Canvas(bmp)
-    val cx = w / 2f; val cy = r + 2 * d
+    val cx = w / 2f
+    val cy = r + 2 * d
     drawIcon(c, cx, cy, r)
     val top = cy + r + 5 * d
     c.drawRoundRect(cx - tw / 2 - 9 * d, top, cx + tw / 2 + 9 * d, top + 20 * d, 10 * d, 10 * d, paint(labelBg))
@@ -399,49 +494,81 @@ private fun labelledPin(label: String, labelBg: Int, labelInk: Int, d: Float, dr
     return bmp
 }
 
-private fun startPin(j: Journey, d: Float): Bitmap =
-    labelledPin("Start · ${time(j.trip.departAt.toDouble())}", 0xEB13171C.toInt(), 0xFFE9EBEE.toInt(), d) { c, cx, cy, r ->
-        c.drawCircle(cx, cy, r, paint(0xFF0B0D10.toInt()))
-        c.drawCircle(cx, cy, r, paint(VoltaColors.Text.toArgb()).apply { style = android.graphics.Paint.Style.STROKE; strokeWidth = 2.4f * d })
-        c.drawCircle(cx, cy, r * 0.38f, paint(VoltaColors.Text.toArgb()))
-    }
+private fun startPin(j: Journey, d: Float): Bitmap = labelledPin("Start · ${time(j.trip.departAt.toDouble())}", 0xEB13171C.toInt(), 0xFFE9EBEE.toInt(), d) { c, cx, cy, r ->
+    c.drawCircle(cx, cy, r, paint(0xFF0B0D10.toInt()))
+    c.drawCircle(
+        cx,
+        cy,
+        r,
+        paint(VoltaColors.Text.toArgb()).apply {
+            style = android.graphics.Paint.Style.STROKE
+            strokeWidth = 2.4f * d
+        },
+    )
+    c.drawCircle(cx, cy, r * 0.38f, paint(VoltaColors.Text.toArgb()))
+}
 
 private fun stopPin(s: Journey.JStop, d: Float): Bitmap {
     val label = time(s.arriveAt) + (s.stop.meal?.let { " · ${it.label}" } ?: "")
     return labelledPin(label, 0xEB13171C.toInt(), 0xFFE9EBEE.toInt(), d) { c, cx, cy, r ->
         c.drawCircle(cx, cy, r, paint(0xFF0B0D10.toInt()))
-        c.drawCircle(cx, cy, r, paint(VoltaColors.Green.toArgb()).apply { style = android.graphics.Paint.Style.STROKE; strokeWidth = 2.4f * d })
+        c.drawCircle(
+            cx,
+            cy,
+            r,
+            paint(VoltaColors.Green.toArgb()).apply {
+                style = android.graphics.Paint.Style.STROKE
+                strokeWidth = 2.4f * d
+            },
+        )
         c.drawPath(boltPath(cx, cy, 1.1f * d), paint(VoltaColors.Green.toArgb()))
         if (s.stop.meal != null) {
             c.drawCircle(cx + r * 0.85f, cy - r * 0.6f, 6.5f * d, paint(VoltaColors.Gold.toArgb()))
-            val ink = paint(VoltaColors.GoldInk.toArgb()).apply { style = android.graphics.Paint.Style.STROKE; strokeWidth = 1.2f * d; strokeCap = android.graphics.Paint.Cap.ROUND }
-            val fx = cx + r * 0.85f; val fy = cy - r * 0.6f
+            val ink = paint(VoltaColors.GoldInk.toArgb()).apply {
+                style = android.graphics.Paint.Style.STROKE
+                strokeWidth = 1.2f * d
+                strokeCap = android.graphics.Paint.Cap.ROUND
+            }
+            val fx = cx + r * 0.85f
+            val fy = cy - r * 0.6f
             c.drawLine(fx - 1.6f * d, fy - 3 * d, fx - 1.6f * d, fy + 3 * d, ink)
             c.drawLine(fx + 1.8f * d, fy - 3 * d, fx + 1.8f * d, fy + 3 * d, ink)
         }
     }
 }
 
-private fun destinationPin(j: Journey, d: Float): Bitmap =
-    labelledPin("${time(j.arriveAt)} · ${j.arrivalSoc.roundToInt()} %", VoltaColors.Gold.toArgb(), VoltaColors.GoldInk.toArgb(), d) { c, cx, cy, r ->
-        val s = r * 0.8f
-        c.drawRoundRect(cx - s, cy - s, cx + s, cy + s, 3 * d, 3 * d, paint(VoltaColors.Gold.toArgb()))
-        val ink = paint(VoltaColors.GoldInk.toArgb()); val q = s / 2
-        for (a in 0..3) for (b in 0..3) if ((a + b) % 2 == 0) c.drawRect(cx - s + a * q, cy - s + b * q, cx - s + (a + 1) * q, cy - s + (b + 1) * q, ink)
-    }
+private fun destinationPin(j: Journey, d: Float): Bitmap = labelledPin("${time(j.arriveAt)} · ${j.arrivalSoc.roundToInt()} %", VoltaColors.Gold.toArgb(), VoltaColors.GoldInk.toArgb(), d) { c, cx, cy, r ->
+    val s = r * 0.8f
+    c.drawRoundRect(cx - s, cy - s, cx + s, cy + s, 3 * d, 3 * d, paint(VoltaColors.Gold.toArgb()))
+    val ink = paint(VoltaColors.GoldInk.toArgb())
+    val q = s / 2
+    for (a in 0..3) for (b in 0..3) if ((a + b) % 2 == 0) c.drawRect(cx - s + a * q, cy - s + b * q, cx - s + (a + 1) * q, cy - s + (b + 1) * q, ink)
+}
 
 /** A backup charger: a small hollow amber dot with a bolt, and its name in a pill above it when [label] is given (stop pins have theirs below). */
 private fun backupPin(label: String?, d: Float): Bitmap {
     val r = 8 * d
-    val text = paint(0xFF1F1405.toInt()).apply { textSize = 11f * d; typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD) }
+    val text = paint(0xFF1F1405.toInt()).apply {
+        textSize = 11f * d
+        typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
+    }
     val tw = label?.let { text.measureText(it) } ?: 0f
     val w = maxOf(r * 2 + 4 * d, tw + 18 * d)
-    val h = if (label == null) r * 2 + 4 * d else (r + 2 * d) * 2 + 2 * (24 * d)   // dot in the middle, pill above, the same space below
+    val h = if (label == null) r * 2 + 4 * d else (r + 2 * d) * 2 + 2 * (24 * d) // dot in the middle, pill above, the same space below
     val bmp = Bitmap.createBitmap(w.toInt(), h.toInt(), Bitmap.Config.ARGB_8888)
     val c = android.graphics.Canvas(bmp)
-    val cx = bmp.width / 2f; val cy = bmp.height / 2f
+    val cx = bmp.width / 2f
+    val cy = bmp.height / 2f
     c.drawCircle(cx, cy, r, paint(0xFF0B0D10.toInt()))
-    c.drawCircle(cx, cy, r, paint(VoltaColors.Amber.toArgb()).apply { style = android.graphics.Paint.Style.STROKE; strokeWidth = 1.8f * d })
+    c.drawCircle(
+        cx,
+        cy,
+        r,
+        paint(VoltaColors.Amber.toArgb()).apply {
+            style = android.graphics.Paint.Style.STROKE
+            strokeWidth = 1.8f * d
+        },
+    )
     c.drawPath(boltPath(cx, cy, 0.75f * d), paint(VoltaColors.Amber.toArgb()))
     if (label != null) {
         val top = cy - r - 24 * d
@@ -453,13 +580,29 @@ private fun backupPin(label: String?, d: Float): Bitmap {
 
 /** "102 km · 2 h 28 min" in a pill: gold for the leg the card is about, dark for the rest. */
 private fun legPill(label: String, on: Boolean, d: Float): Bitmap {
-    val text = paint(if (on) VoltaColors.GoldInk.toArgb() else 0xFFC9D1DC.toInt()).apply { textSize = 11f * d; typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD) }
+    val text = paint(if (on) VoltaColors.GoldInk.toArgb() else 0xFFC9D1DC.toInt()).apply {
+        textSize = 11f * d
+        typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
+    }
     val tw = text.measureText(label)
     val bmp = Bitmap.createBitmap((tw + 20 * d).toInt(), (22 * d).toInt(), Bitmap.Config.ARGB_8888)
     val c = android.graphics.Canvas(bmp)
     val h = bmp.height.toFloat()
     c.drawRoundRect(0f, 0f, bmp.width.toFloat(), h, h / 2, h / 2, paint(if (on) VoltaColors.Gold.toArgb() else 0xEB13171C.toInt()))
-    if (!on) c.drawRoundRect(0.5f * d, 0.5f * d, bmp.width - 0.5f * d, h - 0.5f * d, h / 2, h / 2, paint(0xFF3A4655.toInt()).apply { style = android.graphics.Paint.Style.STROKE; strokeWidth = 1f * d })
+    if (!on) {
+        c.drawRoundRect(
+            0.5f * d,
+            0.5f * d,
+            bmp.width - 0.5f * d,
+            h - 0.5f * d,
+            h / 2,
+            h / 2,
+            paint(0xFF3A4655.toInt()).apply {
+                style = android.graphics.Paint.Style.STROKE
+                strokeWidth = 1f * d
+            },
+        )
+    }
     c.drawText(label, 10 * d, h / 2 + 4 * d, text)
     return bmp
 }
@@ -471,7 +614,15 @@ private fun ringBitmap(d: Float): Bitmap {
     val c = android.graphics.Canvas(bmp)
     val cx = bmp.width / 2f
     c.drawCircle(cx, cx, r, paint(VoltaColors.Gold.copy(alpha = 0.22f).toArgb()))
-    c.drawCircle(cx, cx, r, paint(VoltaColors.Gold.toArgb()).apply { style = android.graphics.Paint.Style.STROKE; strokeWidth = 2.5f * d })
+    c.drawCircle(
+        cx,
+        cx,
+        r,
+        paint(VoltaColors.Gold.toArgb()).apply {
+            style = android.graphics.Paint.Style.STROKE
+            strokeWidth = 2.5f * d
+        },
+    )
     return bmp
 }
 
@@ -480,9 +631,14 @@ private fun ringBitmap(d: Float): Bitmap {
 internal object Glyphs {
     private fun glyph(vararg d: String, fill: Boolean = false): ImageVector = ImageVector.Builder(defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f).apply {
         d.forEach { p ->
-            addPath(PathParser().parsePathString(p).toNodes(),
+            addPath(
+                PathParser().parsePathString(p).toNodes(),
                 fill = if (fill) SolidColor(Color.White) else null,
-                stroke = if (fill) null else SolidColor(Color.White), strokeLineWidth = 2.2f, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round)
+                stroke = if (fill) null else SolidColor(Color.White),
+                strokeLineWidth = 2.2f,
+                strokeLineCap = StrokeCap.Round,
+                strokeLineJoin = StrokeJoin.Round,
+            )
         }
     }.build()
 

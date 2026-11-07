@@ -52,7 +52,7 @@ fun VoltaCarArt(
     blendEdges: Boolean = false,
 ) {
     val still = !animate || LocalReducedMotion.current
-    val drop = remember { Animatable(if (still) 1f else 0f) }      // bolt: 0 = above, 1 = in place
+    val drop = remember { Animatable(if (still) 1f else 0f) } // bolt: 0 = above, 1 = in place
     val lights = remember { Animatable(if (still) 1f else 0f) }
     LaunchedEffect(still) {
         if (still) return@LaunchedEffect
@@ -67,18 +67,22 @@ fun VoltaCarArt(
         if (lines) Image(painterResource(R.drawable.volta_art_lines), null, Modifier.fillMaxSize().graphicsLayer { alpha = 0.15f }, contentScale = ContentScale.FillBounds)
         Image(painterResource(R.drawable.volta_art_car), null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds, colorFilter = recolour)
         Image(painterResource(R.drawable.volta_art_lights), null, Modifier.fillMaxSize().graphicsLayer { alpha = lights.value }, contentScale = ContentScale.FillBounds)
-        if (bolt) Image(
-            painterResource(R.drawable.volta_art_bolt), null, contentScale = ContentScale.FillBounds,
-            modifier = Modifier
-                .offset(x = w * (BOLT_X / ART_W), y = w * (BOLT_Y / ART_W))
-                .size(w * (BOLT_W / ART_W), w * (BOLT_H / ART_W))
-                .graphicsLayer {
-                    val t = drop.value
-                    alpha = (t * 2).coerceAtMost(1f)
-                    // Falls from 60dp above with a small bounce, as in the splash.
-                    translationY = -60.dp.toPx() * if (t <= 0f) 1f else exp(-6f * t) * cos(9f * t) * (1f - t)
-                },
-        )
+        if (bolt) {
+            Image(
+                painterResource(R.drawable.volta_art_bolt),
+                null,
+                contentScale = ContentScale.FillBounds,
+                modifier = Modifier
+                    .offset(x = w * (BOLT_X / ART_W), y = w * (BOLT_Y / ART_W))
+                    .size(w * (BOLT_W / ART_W), w * (BOLT_H / ART_W))
+                    .graphicsLayer {
+                        val t = drop.value
+                        alpha = (t * 2).coerceAtMost(1f)
+                        // Falls from 60dp above with a small bounce, as in the splash.
+                        translationY = -60.dp.toPx() * if (t <= 0f) 1f else exp(-6f * t) * cos(9f * t) * (1f - t)
+                    },
+            )
+        }
     }
 }
 
@@ -86,14 +90,13 @@ fun VoltaCarArt(
  * Fades content to transparent near all four edges. The car nearly fills the artwork's width, so the sides fade over
  * a narrower band than the top and bottom, where there's only backdrop.
  */
-private fun Modifier.fadeEdges(sides: Float = 0.12f, topBottom: Float = 0.2f): Modifier =
-    graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-        .drawWithContent {
-            drawContent()
-            fun fade(band: Float) = arrayOf(0f to Color.Transparent, band to Color.Black, 1f - band to Color.Black, 1f to Color.Transparent)
-            drawRect(Brush.horizontalGradient(*fade(sides)), blendMode = BlendMode.DstIn)
-            drawRect(Brush.verticalGradient(*fade(topBottom)), blendMode = BlendMode.DstIn)
-        }
+private fun Modifier.fadeEdges(sides: Float = 0.12f, topBottom: Float = 0.2f): Modifier = graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+    .drawWithContent {
+        drawContent()
+        fun fade(band: Float) = arrayOf(0f to Color.Transparent, band to Color.Black, 1f - band to Color.Black, 1f to Color.Transparent)
+        drawRect(Brush.horizontalGradient(*fade(sides)), blendMode = BlendMode.DstIn)
+        drawRect(Brush.verticalGradient(*fade(topBottom)), blendMode = BlendMode.DstIn)
+    }
 
 /**
  * A colour filter that moves the artwork's backdrop charcoal onto [target] and stretches each channel above it, so

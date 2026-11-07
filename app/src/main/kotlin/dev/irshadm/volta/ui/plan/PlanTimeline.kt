@@ -46,16 +46,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import dev.irshadm.volta.data.maps.Confidence
-import dev.irshadm.volta.data.maps.PlannedTrip
-import dev.irshadm.volta.ui.components.VoltaButton
-import dev.irshadm.volta.core.designsystem.VoltaIcons
 import dev.irshadm.volta.core.designsystem.VoltaColors
+import dev.irshadm.volta.core.designsystem.VoltaIcons
 import dev.irshadm.volta.core.designsystem.tabular
 import dev.irshadm.volta.core.planner.Charger
 import dev.irshadm.volta.core.planner.Meal
 import dev.irshadm.volta.core.planner.PlanOutcome
 import dev.irshadm.volta.core.planner.Stop
+import dev.irshadm.volta.data.maps.Confidence
+import dev.irshadm.volta.data.maps.PlannedTrip
+import dev.irshadm.volta.ui.components.VoltaButton
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -72,7 +72,10 @@ data class Leg(val km: Double, val minutes: Double, val socUsed: Double, val cli
 /** Clock times for the whole plan, from when you leave: one set of numbers for the hero, the rows and the sheet. */
 class Schedule(val legs: List<Leg>, val arriveAt: List<Double>, val leaveAt: List<Double>, val endAt: Double)
 
-internal fun stopsOf(outcome: PlanOutcome): List<Stop> = when (outcome) { is PlanOutcome.Ok -> outcome.stops; is PlanOutcome.Unreachable -> outcome.stops }
+internal fun stopsOf(outcome: PlanOutcome): List<Stop> = when (outcome) {
+    is PlanOutcome.Ok -> outcome.stops
+    is PlanOutcome.Unreachable -> outcome.stops
+}
 
 /** A meal stop lasts at least the meal, even when the battery is done sooner. */
 internal fun stopMinutes(s: Stop): Double = maxOf(s.chargeMinutes, if (s.meal != null) 35.0 else 0.0)
@@ -88,8 +91,14 @@ private fun legOf(trip: PlannedTrip, fromM: Double, toM: Double, fromSoc: Double
 fun schedule(trip: PlannedTrip, startSoc: Double): Schedule {
     val outcome = trip.plan.outcome
     val stops = stopsOf(outcome)
-    val endM = when (outcome) { is PlanOutcome.Ok -> trip.route.distanceM; is PlanOutcome.Unreachable -> outcome.strandedAtM }
-    val endSoc = when (outcome) { is PlanOutcome.Ok -> outcome.arrivalSoc; is PlanOutcome.Unreachable -> trip.plan.socTrace.lastOrNull()?.socPercent ?: 0.0 }
+    val endM = when (outcome) {
+        is PlanOutcome.Ok -> trip.route.distanceM
+        is PlanOutcome.Unreachable -> outcome.strandedAtM
+    }
+    val endSoc = when (outcome) {
+        is PlanOutcome.Ok -> outcome.arrivalSoc
+        is PlanOutcome.Unreachable -> trip.plan.socTrace.lastOrNull()?.socPercent ?: 0.0
+    }
     val legs = ArrayList<Leg>()
     val arrive = ArrayList<Double>()
     val leave = ArrayList<Double>()
@@ -117,8 +126,7 @@ fun schedule(trip: PlannedTrip, startSoc: Double): Schedule {
 private val GENERIC = setOf("ev", "charging", "charger", "chargers", "station", "stations", "dc", "fast", "hub", "point", "charge", "electric", "vehicle", "-", "–", "·", "|")
 
 /** "OnePlug EV Charging Station" → "OnePlug"; a name that starts with a generic word stays as it is. */
-internal fun brandOf(name: String): String =
-    name.trim().split(Regex("\\s+")).takeWhile { it.lowercase().trim('(', ')', ',') !in GENERIC }.joinToString(" ").ifBlank { name.trim() }
+internal fun brandOf(name: String): String = name.trim().split(Regex("\\s+")).takeWhile { it.lowercase().trim('(', ')', ',') !in GENERIC }.joinToString(" ").ifBlank { name.trim() }
 
 /** "Shop 3, NH 85, Adimali, Kerala 685561, India" → "NH 85, Adimali". */
 internal fun shortAddress(full: String?): String? {
@@ -174,7 +182,9 @@ private fun mealPhrase(trip: PlannedTrip, s: Stop): String? {
 // ---- text styles ----
 
 @Composable private fun rowTitle(): TextStyle = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold).tabular()
+
 @Composable private fun rowSub(): TextStyle = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp).tabular()
+
 @Composable private fun legText(): TextStyle = MaterialTheme.typography.bodySmall.tabular()
 
 /**
@@ -231,15 +241,25 @@ private fun StopRow(index: Int, s: Stop, arriveAt: Double, c: Confidence, meal: 
         Text(
             buildAnnotatedString {
                 append("${s.arriveSoc.roundToInt()} → ${s.departSoc.roundToInt()} % · ${stopMinutes(s).roundToInt()} min")
-                if (!c.unsure) { append(" · "); withStyle(SpanStyle(color = statusColor(c))) { append(c.label) } }
-                if (meal != null) { append(" · "); withStyle(SpanStyle(color = VoltaColors.Champagne)) { append(meal) } }
+                if (!c.unsure) {
+                    append(" · ")
+                    withStyle(SpanStyle(color = statusColor(c))) { append(c.label) }
+                }
+                if (meal != null) {
+                    append(" · ")
+                    withStyle(SpanStyle(color = VoltaColors.Champagne)) { append(meal) }
+                }
             },
-            style = rowSub(), color = VoltaColors.Muted, modifier = Modifier.padding(top = 2.dp),
+            style = rowSub(),
+            color = VoltaColors.Muted,
+            modifier = Modifier.padding(top = 2.dp),
         )
         if (c.unsure) {
             Text(
                 listOfNotNull(c.label, plugsPhrase(s.charger), c.reasons.firstOrNull { it != "24 h" }, backupPhrase(c)?.let { "backup $it" }).joinToString(" · "),
-                style = rowSub(), color = VoltaColors.AmberText, modifier = Modifier.padding(top = 4.dp),
+                style = rowSub(),
+                color = VoltaColors.AmberText,
+                modifier = Modifier.padding(top = 4.dp),
             )
             tips.firstOrNull()?.let { Text(it.text, style = rowSub(), color = VoltaColors.Muted, modifier = Modifier.padding(top = 4.dp)) }
         }
@@ -281,7 +301,9 @@ private fun LegLine(leg: Leg) {
         Text(
             "${leg.km.roundToInt()} km · ${duration(leg.minutes)} · −${leg.socUsed.roundToInt()} %" +
                 if (leg.climbM >= 300) " · climb ${"%,d".format(leg.climbM.roundToInt())} m" else "",
-            style = legText(), color = VoltaColors.Dim, modifier = Modifier.padding(vertical = 2.dp),
+            style = legText(),
+            color = VoltaColors.Dim,
+            modifier = Modifier.padding(vertical = 2.dp),
         )
     }
 }
@@ -334,8 +356,12 @@ fun StopSheet(
                     Text(c.name, style = MaterialTheme.typography.headlineSmall)
                     val fromKm = schedule.legs[index].km.roundToInt()
                     val from = if (index == 0) "from the start" else "from stop $index"
-                    Text(listOfNotNull(shortAddress(c.address), "$fromKm km $from").joinToString(" · "),
-                        style = MaterialTheme.typography.bodyMedium, color = VoltaColors.Muted, modifier = Modifier.padding(top = 2.dp))
+                    Text(
+                        listOfNotNull(shortAddress(c.address), "$fromKm km $from").joinToString(" · "),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = VoltaColors.Muted,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
                 }
             }
 
@@ -346,7 +372,11 @@ fun StopSheet(
                 Tile("Leave", time(schedule.leaveAt[index]), "$toGo km to go", VoltaColors.Muted, Modifier.weight(1f))
             }
 
-            val tone = when { confidence.unsure -> VoltaColors.Amber; confidence.dots >= 4 -> VoltaColors.Green; else -> VoltaColors.TextSoft }
+            val tone = when {
+                confidence.unsure -> VoltaColors.Amber
+                confidence.dots >= 4 -> VoltaColors.Green
+                else -> VoltaColors.TextSoft
+            }
             Column(
                 Modifier.fillMaxWidth().clip(tile)
                     .background(if (confidence.unsure) VoltaColors.tint(VoltaColors.Amber, 0.12f) else VoltaColors.SurfaceHigh)
@@ -364,10 +394,20 @@ fun StopSheet(
                 Text(facts.joinToString(" · "), style = MaterialTheme.typography.bodyMedium, color = if (confidence.unsure) VoltaColors.AmberText else VoltaColors.Muted, modifier = Modifier.padding(top = 4.dp))
                 confidence.backup?.let { b ->
                     Row(Modifier.padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Text("Backup: ${b.name}${backupPhrase(confidence)?.substringAfter(brandOf(b.name)) ?: ""}",
-                            style = MaterialTheme.typography.bodyMedium, color = VoltaColors.TextSoft, modifier = Modifier.weight(1f))
-                        if (confidence.unsure) Text("Use backup", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), color = VoltaColors.GoldInk,
-                            modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(VoltaColors.Gold).clickable(role = Role.Button, onClick = onUseBackup).padding(horizontal = 14.dp, vertical = 9.dp))
+                        Text(
+                            "Backup: ${b.name}${backupPhrase(confidence)?.substringAfter(brandOf(b.name)) ?: ""}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = VoltaColors.TextSoft,
+                            modifier = Modifier.weight(1f),
+                        )
+                        if (confidence.unsure) {
+                            Text(
+                                "Use backup",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = VoltaColors.GoldInk,
+                                modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(VoltaColors.Gold).clickable(role = Role.Button, onClick = onUseBackup).padding(horizontal = 14.dp, vertical = 9.dp),
+                            )
+                        }
                     }
                 }
             }
@@ -383,21 +423,31 @@ fun StopSheet(
             val amenities = trip.amenities[c.id]
             if (meal != null) {
                 val spot = mealSpot(trip, s)
-                Row(Modifier.fillMaxWidth().clip(tile).background(VoltaColors.SurfaceHigh).padding(horizontal = 14.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(
+                    Modifier.fillMaxWidth().clip(tile).background(VoltaColors.SurfaceHigh).padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
                     Icon(VoltaIcons.Coffee, null, tint = VoltaColors.Champagne, modifier = Modifier.size(20.dp))
                     Column(Modifier.weight(1f)) {
                         Text(
                             "${meal.label} · " + (spot?.let { it.name + (it.rating?.let { r -> " %.1f★".format(r) } ?: "") } ?: s.mealPlace ?: "no place next to this charger"),
-                            style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.labelLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                         Text(
                             spot?.let { "${(it.distanceM / 10).roundToInt() * 10} m from the charger · charge while you eat" } ?: "Eat here or at another stop",
-                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp), color = VoltaColors.Muted,
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp, lineHeight = 18.sp),
+                            color = VoltaColors.Muted,
                         )
                     }
-                    Text(if (choosingMeal) "Done" else "Change", style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold), color = VoltaColors.Gold,
-                        modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable { choosingMeal = !choosingMeal }.padding(horizontal = 6.dp, vertical = 4.dp))
+                    Text(
+                        if (choosingMeal) "Done" else "Change",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = VoltaColors.Gold,
+                        modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable { choosingMeal = !choosingMeal }.padding(horizontal = 6.dp, vertical = 4.dp),
+                    )
                 }
                 if (choosingMeal) MealChooser(trip, s, meal, meals)
             } else if (!amenities.isNullOrEmpty()) {
@@ -463,12 +513,18 @@ private fun MealChooser(trip: PlannedTrip, stop: Stop, meal: Meal, actions: Meal
         }
         others.forEach { o ->
             val best = o.spots.first()
-            Choice(false, best.name + (best.rating?.let { " · %.1f★".format(it) } ?: ""),
-                "stop at ${shortName(o.charger)} instead · ${time(clockOf(o.clock).toDouble())}") { actions.eatAt(meal, o.charger.id) }
+            Choice(
+                false,
+                best.name + (best.rating?.let { " · %.1f★".format(it) } ?: ""),
+                "stop at ${shortName(o.charger)} instead · ${time(clockOf(o.clock).toDouble())}",
+            ) { actions.eatAt(meal, o.charger.id) }
         }
-        Text(if (spots.isEmpty()) "Eat before leaving or on arrival" else "Skip $name",
-            style = MaterialTheme.typography.labelMedium, color = VoltaColors.Muted,
-            modifier = Modifier.padding(top = 4.dp).clip(RoundedCornerShape(8.dp)).clickable { actions.skip(meal) }.padding(vertical = 4.dp))
+        Text(
+            if (spots.isEmpty()) "Eat before leaving or on arrival" else "Skip $name",
+            style = MaterialTheme.typography.labelMedium,
+            color = VoltaColors.Muted,
+            modifier = Modifier.padding(top = 4.dp).clip(RoundedCornerShape(8.dp)).clickable { actions.skip(meal) }.padding(vertical = 4.dp),
+        )
     }
 }
 

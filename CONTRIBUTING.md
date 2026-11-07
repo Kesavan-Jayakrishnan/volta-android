@@ -13,6 +13,7 @@ Thanks for helping. Bug reports, "works on my car" reports and pull requests are
 ```bash
 ./gradlew :app:assembleDebug
 ./gradlew test
+./gradlew spotlessApply detekt
 ```
 
 All tests must pass. New logic comes with unit tests; ViewModels are tested against the fakes in `core/testing`.
@@ -21,7 +22,7 @@ All tests must pass. New logic comes with unit tests; ViewModels are tested agai
 
 - Follow the layering in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): UI depends on `core:domain` interfaces,
   never on `core:data` or network clients directly.
-- Kotlin official code style. Keep functions small and names plain.
+- ktlint formats the code (`spotlessApply`) and detekt checks it. Keep functions small and names plain.
 - Comments say *why*, not *what*.
 - Commit messages: imperative subject under 72 characters ("Add key check for Routes API"), body when the
   reason isn't obvious.

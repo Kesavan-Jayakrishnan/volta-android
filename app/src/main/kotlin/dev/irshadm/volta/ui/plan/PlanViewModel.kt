@@ -4,11 +4,16 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Location
 import android.location.LocationManager
+import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
 import androidx.core.os.CancellationSignal
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.irshadm.volta.core.domain.MapsKeyRepository
+import dev.irshadm.volta.core.model.TripSettings
+import dev.irshadm.volta.core.planner.LatLng
 import dev.irshadm.volta.data.SettingsRepository
 import dev.irshadm.volta.data.SocRepository
 import dev.irshadm.volta.data.maps.GoogleMapsClient
@@ -16,11 +21,6 @@ import dev.irshadm.volta.data.maps.NamedPlace
 import dev.irshadm.volta.data.maps.PlaceSuggestion
 import dev.irshadm.volta.data.maps.PlanRepository
 import dev.irshadm.volta.data.maps.PlannedTrip
-import dev.irshadm.volta.core.domain.MapsKeyRepository
-import dev.irshadm.volta.core.model.TripSettings
-import dev.irshadm.volta.core.planner.LatLng
-import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,6 +41,7 @@ enum class Field { Origin, Destination }
 sealed interface PlanPhase {
     data object Idle : PlanPhase
     data class Working(val message: String) : PlanPhase
+
     /** Google found more than one route: pick one before stops are planned. */
     data class Choosing(val origin: LatLng, val routes: List<dev.irshadm.volta.data.maps.RouteChoice>, val current: Int? = null) : PlanPhase
     data class Done(val trip: PlannedTrip) : PlanPhase
@@ -55,7 +56,7 @@ data class RecentTrip(val destination: String, val km: Int?, val at: Long)
 
 data class PlanUiState(
     val originQuery: String = "",
-    val origin: NamedPlace? = null,          // null = current location
+    val origin: NamedPlace? = null, // null = current location
     val destinationQuery: String = "",
     val destination: NamedPlace? = null,
     val active: Field? = null,
@@ -276,8 +277,15 @@ class PlanViewModel @Inject constructor(
             val s = _state.value
             val soc = s.startSoc ?: return@launch
             val trip = runCatching {
-                repository.replan(done.trip, soc, settings.vehicleProfile.first(), s.settings, settings.chargerPreferences.first(),
-                    s.departAt ?: System.currentTimeMillis(), settings.mealRules.first())
+                repository.replan(
+                    done.trip,
+                    soc,
+                    settings.vehicleProfile.first(),
+                    s.settings,
+                    settings.chargerPreferences.first(),
+                    s.departAt ?: System.currentTimeMillis(),
+                    settings.mealRules.first(),
+                )
             }.getOrNull() ?: return@launch
             _state.update { it.copy(phase = PlanPhase.Done(trip.copy(amenities = done.trip.amenities))) }
             remindBefore(trip, soc)
@@ -300,8 +308,11 @@ class PlanViewModel @Inject constructor(
             runCatching { repository.routeChoices(origin, destination) { msg -> _state.update { it.copy(phase = PlanPhase.Working(msg)) } } }
                 .onSuccess { routes ->
                     _state.update { it.copy(routeDirty = false) }
-                    if (routes.size == 1) planRoute(origin, routes, 0)
-                    else _state.update { it.copy(phase = PlanPhase.Choosing(origin, routes)) }
+                    if (routes.size == 1) {
+                        planRoute(origin, routes, 0)
+                    } else {
+                        _state.update { it.copy(phase = PlanPhase.Choosing(origin, routes)) }
+                    }
                 }
                 .onFailure { e -> _state.update { it.copy(phase = PlanPhase.Failed(e.message ?: "Planning failed")) } }
         }
@@ -328,9 +339,15 @@ class PlanViewModel @Inject constructor(
         // Skip chargers you marked broken lately, and ones swapped for their backup.
         val usable = routes.map { r -> r.copy(chargers = r.chargers.filterNot { it.id in avoided || feedback.recentlyBroken(it.id) }) }
         runCatching {
-            repository.planRoute(origin, destination, usable, index, soc, settings.vehicleProfile.first(), s.settings, settings.chargerPreferences.first(),
-                s.departAt ?: System.currentTimeMillis(), settings.mealRules.first())
-        }.onSuccess { trip -> _state.update { it.copy(phase = PlanPhase.Done(trip)) }; remindBefore(trip, soc); loadAmenities() }
+            repository.planRoute(
+                origin, destination, usable, index, soc, settings.vehicleProfile.first(), s.settings, settings.chargerPreferences.first(),
+                s.departAt ?: System.currentTimeMillis(), settings.mealRules.first(),
+            )
+        }.onSuccess { trip ->
+            _state.update { it.copy(phase = PlanPhase.Done(trip)) }
+            remindBefore(trip, soc)
+            loadAmenities()
+        }
             .onFailure { e -> _state.update { it.copy(phase = PlanPhase.Failed(e.message ?: "Planning failed")) } }
     }
 

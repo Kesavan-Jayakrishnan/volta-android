@@ -22,10 +22,10 @@ private fun dmSans(weight: Int) = Font(
 val AppFont = FontFamily(dmSans(400), dmSans(500), dmSans(600), dmSans(700))
 
 /** Tabular figures so live numbers don't jitter while counting/updating. */
-const val TabularNums = "tnum"
+const val TABULAR_NUMS = "tnum"
 
 val VoltaTypography = Typography(
-    displayLarge = TextStyle(fontFamily = AppFont, fontWeight = FontWeight.Bold, fontSize = 64.sp, lineHeight = 64.sp, letterSpacing = (-0.04).em, fontFeatureSettings = TabularNums),
+    displayLarge = TextStyle(fontFamily = AppFont, fontWeight = FontWeight.Bold, fontSize = 64.sp, lineHeight = 64.sp, letterSpacing = (-0.04).em, fontFeatureSettings = TABULAR_NUMS),
     headlineLarge = TextStyle(fontFamily = AppFont, fontWeight = FontWeight.Bold, fontSize = 26.sp, lineHeight = 32.sp, letterSpacing = (-0.02).em),
     headlineSmall = TextStyle(fontFamily = AppFont, fontWeight = FontWeight.Bold, fontSize = 22.sp, lineHeight = 28.sp, letterSpacing = (-0.01).em),
     titleLarge = TextStyle(fontFamily = AppFont, fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 24.sp),
@@ -40,4 +40,4 @@ val VoltaTypography = Typography(
 )
 
 /** Big live number style helper. */
-fun TextStyle.tabular() = copy(fontFeatureSettings = TabularNums)
+fun TextStyle.tabular() = copy(fontFeatureSettings = TABULAR_NUMS)

@@ -13,11 +13,22 @@ object Terrain {
         var rising = false
         for (e in elevations) {
             if (rising) {
-                if (e > high) high = e
-                else if (high - e >= thresholdM) { total += high - low; low = e; high = e; rising = false }
+                if (e > high) {
+                    high = e
+                } else if (high - e >= thresholdM) {
+                    total += high - low
+                    low = e
+                    high = e
+                    rising = false
+                }
             } else {
-                if (e < low) { low = e; high = e }
-                else if (e - low >= thresholdM) { high = e; rising = true }
+                if (e < low) {
+                    low = e
+                    high = e
+                } else if (e - low >= thresholdM) {
+                    high = e
+                    rising = true
+                }
             }
         }
         if (rising) total += high - low

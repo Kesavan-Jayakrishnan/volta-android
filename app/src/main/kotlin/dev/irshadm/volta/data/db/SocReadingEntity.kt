@@ -15,7 +15,7 @@ data class SocReadingEntity(
     val batteryEnergyKwh: Double?,
     val carRangeKm: Double?,
     val odometerKm: Double?,
-    val demo: Boolean = false,             // unused: kept so existing databases need no migration
+    val demo: Boolean = false, // unused: kept so existing databases need no migration
 ) {
     fun toModel() = SocReading(
         socPercent = socPercent,

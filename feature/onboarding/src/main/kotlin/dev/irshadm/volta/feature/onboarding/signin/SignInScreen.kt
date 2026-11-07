@@ -38,11 +38,11 @@ import androidx.compose.ui.unit.em
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.irshadm.volta.core.designsystem.NoteTone
-import dev.irshadm.volta.core.designsystem.VoltaTheme
-import dev.irshadm.volta.core.designsystem.VoltaColors
 import dev.irshadm.volta.core.designsystem.VoltaButton
 import dev.irshadm.volta.core.designsystem.VoltaCarArt
+import dev.irshadm.volta.core.designsystem.VoltaColors
 import dev.irshadm.volta.core.designsystem.VoltaNote
+import dev.irshadm.volta.core.designsystem.VoltaTheme
 import dev.irshadm.volta.core.domain.SignInError
 import java.text.DateFormat
 import java.util.Date
@@ -86,8 +86,11 @@ fun SignInScreen(
 
         Column(Modifier.padding(top = 26.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             OutlinedTextField(
-                value = state.phone, onValueChange = onPhoneChange,
-                label = { Text("Mobile number") }, prefix = { Text("+91 ") }, singleLine = true,
+                value = state.phone,
+                onValueChange = onPhoneChange,
+                label = { Text("Mobile number") },
+                prefix = { Text("+91 ") },
+                singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -99,13 +102,20 @@ fun SignInScreen(
                 keyboardActions = KeyboardActions(onDone = { onSubmit() }),
                 modifier = Modifier.fillMaxWidth(),
                 trailingIcon = {
-                    Text(if (state.passwordVisible) "Hide" else "Show", style = MaterialTheme.typography.labelMedium, color = VoltaColors.Muted,
-                        modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(onClick = onTogglePassword).padding(10.dp))
+                    Text(
+                        if (state.passwordVisible) "Hide" else "Show",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = VoltaColors.Muted,
+                        modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(onClick = onTogglePassword).padding(10.dp),
+                    )
                 },
             )
             if (rejected) {
-                Text("Forgot it? Reset it in the MG i-SMART app, then sign in here. Volta never retries a rejected password.",
-                    style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
+                Text(
+                    "Forgot it? Reset it in the MG i-SMART app, then sign in here. Volta never retries a rejected password.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = VoltaColors.Muted,
+                )
             } else {
                 VoltaNote(NoteTone.Caution, "Signing in here signs the official MG app out. Only one can be signed in at a time, and wrong passwords count against MG's daily limit.")
             }
@@ -113,12 +123,22 @@ fun SignInScreen(
 
         Spacer(Modifier.height(28.dp))
         VoltaButton(
-            text = when { state.busy -> "Signing in…"; rejected -> "Try again"; else -> "Continue" },
-            onClick = onSubmit, modifier = Modifier.fillMaxWidth(), enabled = state.canSubmit || state.busy, busy = state.busy,
+            text = when {
+                state.busy -> "Signing in…"
+                rejected -> "Try again"
+                else -> "Continue"
+            },
+            onClick = onSubmit,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = state.canSubmit || state.busy,
+            busy = state.busy,
         )
         Text(
             "Your password goes to MG only and is kept encrypted on this phone.",
-            style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 12.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = VoltaColors.Muted,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 12.dp),
         )
     }
 }

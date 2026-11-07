@@ -11,9 +11,13 @@ import androidx.fragment.app.FragmentActivity
 /** Confirms a remote command with fingerprint/face or the screen lock before it is sent. */
 fun confirmWithBiometrics(context: Context, title: String, subtitle: String, onConfirmed: () -> Unit) {
     val activity = context.findActivity() ?: return
-    val prompt = BiometricPrompt(activity, ContextCompat.getMainExecutor(activity), object : BiometricPrompt.AuthenticationCallback() {
-        override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) = onConfirmed()
-    })
+    val prompt = BiometricPrompt(
+        activity,
+        ContextCompat.getMainExecutor(activity),
+        object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) = onConfirmed()
+        },
+    )
     prompt.authenticate(
         BiometricPrompt.PromptInfo.Builder()
             .setTitle(title)

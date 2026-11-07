@@ -61,8 +61,10 @@ object Geo {
         for (p in points) {
             val lat = (p.lat * 1e5).roundToLong()
             val lng = (p.lng * 1e5).roundToLong()
-            enc(lat - pLat); enc(lng - pLng)
-            pLat = lat; pLng = lng
+            enc(lat - pLat)
+            enc(lng - pLng)
+            pLat = lat
+            pLng = lng
         }
         return sb.toString()
     }

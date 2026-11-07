@@ -1,6 +1,14 @@
 package dev.irshadm.volta.data.trip
 
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.irshadm.volta.core.planner.EnergyModel
+import dev.irshadm.volta.core.planner.Geo
+import dev.irshadm.volta.core.planner.PlanOutcome
+import dev.irshadm.volta.core.planner.Replanner
+import dev.irshadm.volta.core.planner.RoutePoint
+import dev.irshadm.volta.core.planner.Stop
+import dev.irshadm.volta.core.planner.TripPlan
 import dev.irshadm.volta.data.SettingsRepository
 import dev.irshadm.volta.data.db.TripDao
 import dev.irshadm.volta.data.db.TripEntity
@@ -9,14 +17,6 @@ import dev.irshadm.volta.data.ismart.IsmartRepository
 import dev.irshadm.volta.data.ismart.LinkState
 import dev.irshadm.volta.data.maps.PlannedTrip
 import dev.irshadm.volta.service.Notifications
-import dev.irshadm.volta.core.planner.EnergyModel
-import dev.irshadm.volta.core.planner.Geo
-import dev.irshadm.volta.core.planner.PlanOutcome
-import dev.irshadm.volta.core.planner.Replanner
-import dev.irshadm.volta.core.planner.RoutePoint
-import dev.irshadm.volta.core.planner.Stop
-import dev.irshadm.volta.core.planner.TripPlan
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -83,7 +83,9 @@ class TripRepository @Inject constructor(
     /** Pokes the trip service out of its wait so the next [tick] runs now. */
     private val _wake = Channel<Unit>(Channel.CONFLATED)
     val wake: ReceiveChannel<Unit> get() = _wake
-    fun wake() { _wake.trySend(Unit) }
+    fun wake() {
+        _wake.trySend(Unit)
+    }
 
     /**
      * True while the phone is in the car (Android Auto connected). Ticks then come every [PROJECTED_POLL_MS]
@@ -91,14 +93,25 @@ class TripRepository @Inject constructor(
      */
     @Volatile var projected: Boolean = false
         private set
-    fun setProjected(on: Boolean) { val was = projected; projected = on; if (on && !was) wake() }
+    fun setProjected(on: Boolean) {
+        val was = projected
+        projected = on
+        if (on && !was) wake()
+    }
 
     suspend fun start(planned: PlannedTrip, startSoc: Double) = mutex.withLock {
         val now = System.currentTimeMillis()
         val odo = ismart.status.value?.soc?.value?.odometerKm
         val id = dao.insert(
-            TripEntity(startedAt = now, destination = planned.destination.name, plannedDistanceM = planned.route.distanceM,
-                startSoc = startSoc, startOdometerKm = odo, plannedKwh = planned.plan.energy.totalKwh, source = "APP"),
+            TripEntity(
+                startedAt = now,
+                destination = planned.destination.name,
+                plannedDistanceM = planned.route.distanceM,
+                startSoc = startSoc,
+                startOdometerKm = odo,
+                plannedKwh = planned.plan.energy.totalKwh,
+                source = "APP",
+            ),
         )
         _active.value = ActiveTrip(
             tripId = id, planned = planned, plan = planned.plan, startedAt = now, startSoc = startSoc,
@@ -128,13 +141,16 @@ class TripRepository @Inject constructor(
         val t = _active.value ?: return@withLock
         val fix = location.current(5_000) ?: return@withLock
         val along = Replanner.locate(t.planned.profile, t.path, fix.position).first
-        if (along <= t.alongM + NUDGE_MIN_M || along >= t.totalM - ARRIVED_M) return@withLock   // not moved, or let tick() handle arrival
+        if (along <= t.alongM + NUDGE_MIN_M || along >= t.totalM - ARRIVED_M) return@withLock // not moved, or let tick() handle arrival
         val vehicle = settings.vehicleProfile.first()
         val seg = t.planned.profile.filter { it.distanceM in t.alongM..along }
         val soc = if (seg.size >= 2) EnergyModel(vehicle).simulate(seg, t.soc).last().socPercent else t.soc
         val used = t.energyUsedKwh + ((t.soc - soc).coerceAtLeast(0.0) * vehicle.usableCapacityKwh / 100.0)
         _active.value = t.copy(
-            alongM = along, soc = soc, expectedSoc = Replanner.expectedSoc(t.plan, along), energyUsedKwh = used,
+            alongM = along,
+            soc = soc,
+            expectedSoc = Replanner.expectedSoc(t.plan, along),
+            energyUsedKwh = used,
             socEstimated = t.socEstimated || System.currentTimeMillis() - t.lastCarReadingAt > STALE_MS,
         )
     }
@@ -161,7 +177,8 @@ class TripRepository @Inject constructor(
         val soc: Double
         val estimated: Boolean
         if (fresh) {
-            soc = carSoc!!.socPercent; estimated = false
+            soc = carSoc!!.socPercent
+            estimated = false
         } else {
             // Estimate from distance driven since the last good reading.
             val seg = t.planned.profile.filter { it.distanceM in t.alongM..along }
@@ -170,11 +187,23 @@ class TripRepository @Inject constructor(
         }
         val expected = Replanner.expectedSoc(t.plan, along)
         val used = t.energyUsedKwh + ((t.soc - soc).coerceAtLeast(0.0) * vehicle.usableCapacityKwh / 100.0)
-        dao.insertSample(TripSampleEntity(tripId = t.tripId, at = now, lat = fix?.position?.lat, lng = fix?.position?.lng,
-            altitudeM = fix?.altitudeM, alongRouteM = along, soc = soc, expectedSoc = expected, odometerKm = carSoc?.odometerKm))
+        dao.insertSample(
+            TripSampleEntity(
+                tripId = t.tripId, at = now, lat = fix?.position?.lat, lng = fix?.position?.lng,
+                altitudeM = fix?.altitudeM, alongRouteM = along, soc = soc, expectedSoc = expected, odometerKm = carSoc?.odometerKm,
+            ),
+        )
 
-        var next = t.copy(alongM = along, soc = soc, socEstimated = estimated, expectedSoc = expected, lastCheckAt = now,
-            nextCheckAt = now + interval, energyUsedKwh = used, lastCarReadingAt = if (fresh) carSoc!!.measuredAtMillis else t.lastCarReadingAt)
+        var next = t.copy(
+            alongM = along,
+            soc = soc,
+            socEstimated = estimated,
+            expectedSoc = expected,
+            lastCheckAt = now,
+            nextCheckAt = now + interval,
+            energyUsedKwh = used,
+            lastCarReadingAt = if (fresh) carSoc!!.measuredAtMillis else t.lastCarReadingAt,
+        )
 
         // 3. arrived?
         if (along >= t.totalM - ARRIVED_M) {
@@ -186,18 +215,21 @@ class TripRepository @Inject constructor(
         }
 
         // 3b. left a stop you were at → "how was it?" (one tap; feeds the charger's rating)
-        if (fix != null) t.stops.filter { it.charger.id in next.visitedStops && it.charger.id !in next.askedStops }.forEach { s ->
-            if (Geo.distanceM(fix.position, s.charger.position) > LEFT_STOP_M) {
-                dev.irshadm.volta.service.ChargerFeedbackReceiver.ask(context, s.charger.id, s.charger.name)
-                next = next.copy(askedStops = next.askedStops + s.charger.id)
+        if (fix != null) {
+            t.stops.filter { it.charger.id in next.visitedStops && it.charger.id !in next.askedStops }.forEach { s ->
+                if (Geo.distanceM(fix.position, s.charger.position) > LEFT_STOP_M) {
+                    dev.irshadm.volta.service.ChargerFeedbackReceiver.ask(context, s.charger.id, s.charger.name)
+                    next = next.copy(askedStops = next.askedStops + s.charger.id)
+                }
             }
         }
 
         // 4. at a charger: charging guidance
         val stop = next.nextStop
         val charging = status?.charging?.value == true
-        if (stop != null && fix != null && Geo.distanceM(fix.position, stop.charger.position) < AT_STOP_M && stop.charger.id !in next.visitedStops)
+        if (stop != null && fix != null && Geo.distanceM(fix.position, stop.charger.position) < AT_STOP_M && stop.charger.id !in next.visitedStops) {
             next = next.copy(visitedStops = next.visitedStops + stop.charger.id)
+        }
 
         // 4a. ~30 min before the next stop: are its plugs free right now? If not, say so and name the backup.
         if (stop != null && stop.charger.id !in next.occupancyChecked) {
@@ -211,9 +243,12 @@ class TripRepository @Inject constructor(
                         val km = (b.alongRouteM - stop.charger.alongRouteM) / 1000
                         " Backup: ${b.name} (${"%.0f".format(kotlin.math.abs(km))} km ${if (km >= 0) "further" else "earlier"})."
                     } ?: ""
-                    Notifications.alert(context, "All plugs taken at ${stop.charger.name}",
+                    Notifications.alert(
+                        context,
+                        "All plugs taken at ${stop.charger.name}",
                         "You're about ${eta.roundToInt()} min away and ${if (live.second > 0) "0 of ${live.second}" else "none"} are free right now.$alt",
-                        actions = listOfNotNull(backup?.let { Notifications.navigate(context, "Navigate to backup", it.position) }, Notifications.show(context, "Show plan")))
+                        actions = listOfNotNull(backup?.let { Notifications.navigate(context, "Navigate to backup", it.position) }, Notifications.show(context, "Show plan")),
+                    )
                     next = next.copy(log = next.log + "Plugs busy at ${stop.charger.name}")
                 }
             }
@@ -243,11 +278,18 @@ class TripRepository @Inject constructor(
                 val asIs = model.simulate(seg, soc).last().socPercent
                 val eased = model.simulate(seg.map { it.copy(speedKmh = minOf(it.speedKmh, EASE_KMH)) }, soc).last().socPercent
                 val gain = eased - asIs
-                val text = if (gain >= 1) "Ease to ${EASE_KMH.toInt()} km/h and you reach $name with ${eased.roundToInt()} % instead of ${asIs.roundToInt()} %."
-                else "You'll still reach $name with about ${asIs.roundToInt()} %. I'll keep watching."
+                val text = if (gain >= 1) {
+                    "Ease to ${EASE_KMH.toInt()} km/h and you reach $name with ${eased.roundToInt()} % instead of ${asIs.roundToInt()} %."
+                } else {
+                    "You'll still reach $name with about ${asIs.roundToInt()} %. I'll keep watching."
+                }
                 val backup = stop?.let { dev.irshadm.volta.data.maps.Confidence.of(it.charger, t.planned.chargers, feedback.history(it.charger.id)).backup }
-                Notifications.alert(context, "Running ${(-next.deviation).roundToInt()} % below plan", text,
-                    actions = listOfNotNull(backup?.let { Notifications.navigate(context, "Navigate to backup", it.position) }, Notifications.show(context, "Show plan")))
+                Notifications.alert(
+                    context,
+                    "Running ${(-next.deviation).roundToInt()} % below plan",
+                    text,
+                    actions = listOfNotNull(backup?.let { Notifications.navigate(context, "Navigate to backup", it.position) }, Notifications.show(context, "Show plan")),
+                )
                 next = next.copy(warnedBand = band, log = next.log + "Below plan by ${(-next.deviation).roundToInt()} %")
             }
         }
@@ -272,9 +314,13 @@ class TripRepository @Inject constructor(
                 }
                 val first = newStops.firstOrNull()
                 // Out of reach is an act-now (bright chime); a calmer re-plan is a normal alert.
-                Notifications.alert(context, if (unreachable && stop != null) "${stop.charger.name} is now out of reach" else "Re-planned", msg,
+                Notifications.alert(
+                    context,
+                    if (unreachable && stop != null) "${stop.charger.name} is now out of reach" else "Re-planned",
+                    msg,
                     level = if (unreachable || fresher.outcome is PlanOutcome.Unreachable) Notifications.Level.Urgent else Notifications.Level.Normal,
-                    actions = listOfNotNull(first?.let { Notifications.navigate(context, "Navigate there", it.charger.position) }, Notifications.show(context, "Show plan")))
+                    actions = listOfNotNull(first?.let { Notifications.navigate(context, "Navigate there", it.charger.position) }, Notifications.show(context, "Show plan")),
+                )
                 next = next.copy(plan = fresher, replans = next.replans + 1, log = next.log + "Re-planned: $msg")
             }
         }
@@ -332,28 +378,35 @@ class TripRepository @Inject constructor(
             first == null -> "You can still reach ${t.planned.destination.name} without another stop."
             else -> "Charge at ${first.charger.name} instead (${((first.charger.alongRouteM - t.alongM) / 1000).roundToInt()} km)."
         }
-        Notifications.alert(context, "$name marked broken", msg,
+        Notifications.alert(
+            context,
+            "$name marked broken",
+            msg,
             level = if (fresher.outcome is PlanOutcome.Unreachable) Notifications.Level.Urgent else Notifications.Level.Normal,
-            actions = listOfNotNull(first?.let { Notifications.navigate(context, "Navigate there", it.charger.position) }, Notifications.show(context, "Show plan")))
+            actions = listOfNotNull(first?.let { Notifications.navigate(context, "Navigate there", it.charger.position) }, Notifications.show(context, "Show plan")),
+        )
         _active.value = next.copy(plan = fresher, replans = next.replans + 1, log = next.log + "Re-planned: $name broken. $msg")
     }
 
     /** Minutes of driving between two points on the route, at the profile's speeds. */
-    private fun minutesAlong(profile: List<dev.irshadm.volta.core.planner.ProfilePoint>, fromM: Double, toM: Double): Double =
-        profile.filter { it.distanceM in fromM..toM }.zipWithNext { a, b -> (b.distanceM - a.distanceM) / 1000 / b.speedKmh.coerceAtLeast(5.0) * 60 }.sum()
+    private fun minutesAlong(profile: List<dev.irshadm.volta.core.planner.ProfilePoint>, fromM: Double, toM: Double): Double = profile.filter { it.distanceM in fromM..toM }.zipWithNext { a, b -> (b.distanceM - a.distanceM) / 1000 / b.speedKmh.coerceAtLeast(5.0) * 60 }.sum()
 
     private companion object {
         const val STALE_MS = 15 * 60_000L
         const val ARRIVED_M = 400.0
         const val AT_STOP_M = 400.0
         const val CHARGING_POLL_MS = 3 * 60_000L
+
         /** Tick interval while Android Auto is connected: the car is on, so reading it often costs nothing extra. */
         const val PROJECTED_POLL_MS = 2 * 60_000L
+
         /** A nudge needs at least this much progress along the route to count as movement. */
         const val NUDGE_MIN_M = 50.0
+
         /** Re-check a stop's plugs when it's this many minutes away. */
         const val OCCUPANCY_LEAD_MIN = 35.0
         const val LEFT_STOP_M = 1_000.0
+
         /** Early warnings come at 3, 6, 9 … % below plan. */
         const val GUARD_STEP = 3.0
         const val EASE_KMH = 80.0

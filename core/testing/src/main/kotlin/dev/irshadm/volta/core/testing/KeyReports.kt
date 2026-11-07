@@ -10,5 +10,4 @@ const val TEST_KEY = "AIzaTEST0000000000000000000000000000000"
 
 fun passingReport() = KeyCheckReport(MapsApi.entries.associateWith { ApiCheck.Passed })
 
-fun failingReport(api: MapsApi = MapsApi.Routes, problem: KeyProblem = KeyProblem.ApiNotEnabled) =
-    KeyCheckReport(MapsApi.entries.associateWith { if (it == api) ApiCheck.Failed(problem, "from Google") else ApiCheck.Passed })
+fun failingReport(api: MapsApi = MapsApi.Routes, problem: KeyProblem = KeyProblem.ApiNotEnabled) = KeyCheckReport(MapsApi.entries.associateWith { if (it == api) ApiCheck.Failed(problem, "from Google") else ApiCheck.Passed })

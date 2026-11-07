@@ -45,9 +45,11 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.irshadm.volta.core.designsystem.VoltaColors
 import dev.irshadm.volta.data.SavedPlace
 import dev.irshadm.volta.data.SettingsRepository
-import dev.irshadm.volta.data.SmartPrecool as PrecoolConfig
 import dev.irshadm.volta.data.db.TripDao
 import dev.irshadm.volta.data.ismart.IsmartRepository
 import dev.irshadm.volta.data.trip.LocationProvider
@@ -57,15 +59,13 @@ import dev.irshadm.volta.service.smart.Routine
 import dev.irshadm.volta.service.smart.SmartPrecool
 import dev.irshadm.volta.ui.components.VoltaButton
 import dev.irshadm.volta.ui.components.VoltaButtonStyle
-import dev.irshadm.volta.core.designsystem.VoltaColors
-import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import dev.irshadm.volta.data.SmartPrecool as PrecoolConfig
 
 @HiltViewModel
 class SmartPrecoolViewModel @Inject constructor(
@@ -83,7 +83,9 @@ class SmartPrecoolViewModel @Inject constructor(
     val note = MutableStateFlow<String?>(null)
     val message = MutableStateFlow<String?>(null)
 
-    init { reload() }
+    init {
+        reload()
+    }
 
     fun reload() = viewModelScope.launch {
         routine.value = Routine.slots(trips.finished(300))
@@ -104,21 +106,37 @@ class SmartPrecoolViewModel @Inject constructor(
         SmartPrecool.arm(context, settings.smartPrecool.first().enabled, settings.savedPlaces.first(), ismart.status.value)
     }
 
-    fun save(c: PrecoolConfig) = viewModelScope.launch { settings.saveSmartPrecool(c); rearm() }
+    fun save(c: PrecoolConfig) = viewModelScope.launch {
+        settings.saveSmartPrecool(c)
+        rearm()
+    }
 
     /** Saves where the phone is now, with the Wi-Fi it's on. */
     fun addHere(name: String) = viewModelScope.launch {
         val fix = location.current()
-        if (fix == null) { message.value = "Couldn't get your location."; return@launch }
+        if (fix == null) {
+            message.value = "Couldn't get your location."
+            return@launch
+        }
         val ssid = SmartPrecool.currentWifi(context)
         settings.savePlace(SavedPlace(name.trim(), fix.position.lat, fix.position.lng, ssid = ssid))
         message.value = if (ssid == null) "Saved $name — connect to its Wi-Fi and add it again to use leaving it as a signal." else "Saved $name with Wi-Fi “$ssid”."
         rearm()
     }
 
-    fun remove(p: SavedPlace) = viewModelScope.launch { settings.removePlace(p.name); rearm() }
-    fun unmute(place: String) { Feedback.unmute(context, place); memory.value = Feedback.all(context) }
-    fun downloadAi() = viewModelScope.launch { ai.value = Narrator.State.Downloading; Narrator.download(); ai.value = Narrator.state() }
+    fun remove(p: SavedPlace) = viewModelScope.launch {
+        settings.removePlace(p.name)
+        rearm()
+    }
+    fun unmute(place: String) {
+        Feedback.unmute(context, place)
+        memory.value = Feedback.all(context)
+    }
+    fun downloadAi() = viewModelScope.launch {
+        ai.value = Narrator.State.Downloading
+        Narrator.download()
+        ai.value = Narrator.state()
+    }
 }
 
 @Composable
@@ -157,12 +175,20 @@ fun SmartPrecoolSection(vm: SmartPrecoolViewModel = hiltViewModel()) {
             title = { Text("Add this place", style = MaterialTheme.typography.titleMedium) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(wifi?.let { "Uses where you are now and the Wi-Fi “$it”." } ?: "Not on Wi-Fi — connect to this place's Wi-Fi first for the best signal.",
-                        style = MaterialTheme.typography.bodySmall, color = if (wifi == null) VoltaColors.AmberText else VoltaColors.Muted)
+                    Text(
+                        wifi?.let { "Uses where you are now and the Wi-Fi “$it”." } ?: "Not on Wi-Fi — connect to this place's Wi-Fi first for the best signal.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (wifi == null) VoltaColors.AmberText else VoltaColors.Muted,
+                    )
                     OutlinedTextField(name, { name = it }, singleLine = true, placeholder = { Text("Office") }, modifier = Modifier.fillMaxWidth())
                 }
             },
-            confirmButton = { TextButton({ vm.addHere(name); adding = false }, enabled = name.isNotBlank()) { Text("Save", color = VoltaColors.Gold) } },
+            confirmButton = {
+                TextButton({
+                    vm.addHere(name)
+                    adding = false
+                }, enabled = name.isNotBlank()) { Text("Save", color = VoltaColors.Gold) }
+            },
             dismissButton = { TextButton({ adding = false }) { Text("Cancel", color = VoltaColors.Muted) } },
         )
     }
@@ -171,30 +197,47 @@ fun SmartPrecoolSection(vm: SmartPrecoolViewModel = hiltViewModel()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("Suggest AC when I head to the car", style = MaterialTheme.typography.bodyMedium)
-                Text("Daytime, car parked, inside and outside above ${cfg.aboveC}°. One suggestion per departure — you always confirm with your fingerprint.",
-                    style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
+                Text(
+                    "Daytime, car parked, inside and outside above ${cfg.aboveC}°. One suggestion per departure — you always confirm with your fingerprint.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = VoltaColors.Muted,
+                )
             }
             Switch(cfg.enabled, { vm.save(cfg.copy(enabled = it)) }, colors = SwitchDefaults.colors(checkedTrackColor = VoltaColors.Champagne, checkedThumbColor = VoltaColors.Bg))
         }
         if (!cfg.enabled) return@Column
 
         Text("Above ${cfg.aboveC}° (it learns per place from your answers)", style = MaterialTheme.typography.labelMedium, color = VoltaColors.TextSoft)
-        Slider(cfg.aboveC.toFloat(), { vm.save(cfg.copy(aboveC = it.toInt())) }, valueRange = 25f..35f, steps = 9,
-            colors = SliderDefaults.colors(thumbColor = VoltaColors.Gold, activeTrackColor = VoltaColors.Gold, inactiveTrackColor = VoltaColors.Border))
+        Slider(
+            cfg.aboveC.toFloat(),
+            { vm.save(cfg.copy(aboveC = it.toInt())) },
+            valueRange = 25f..35f,
+            steps = 9,
+            colors = SliderDefaults.colors(thumbColor = VoltaColors.Gold, activeTrackColor = VoltaColors.Gold, inactiveTrackColor = VoltaColors.Border),
+        )
 
         if (!allowed) {
-            Text("Needs location “Allow all the time” so Android can notice you leaving a place or walking back to the car.",
-                style = MaterialTheme.typography.bodySmall, color = VoltaColors.AmberText)
+            Text(
+                "Needs location “Allow all the time” so Android can notice you leaving a place or walking back to the car.",
+                style = MaterialTheme.typography.bodySmall,
+                color = VoltaColors.AmberText,
+            )
             VoltaButton("Allow location", {
                 val hasFine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                if (!hasFine) fine.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
-                else context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")))
+                if (!hasFine) {
+                    fine.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+                } else {
+                    context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}")))
+                }
             }, style = VoltaButtonStyle.Secondary)
         }
 
         if (allowed && !onFoot && android.os.Build.VERSION.SDK_INT >= 29) {
-            Text("Optional: let Volta notice when you're walking, so it can say \"cool it while you walk there\" and skip passing the car in a cab.",
-                style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
+            Text(
+                "Optional: let Volta notice when you're walking, so it can say \"cool it while you walk there\" and skip passing the car in a cab.",
+                style = MaterialTheme.typography.bodySmall,
+                color = VoltaColors.Muted,
+            )
             VoltaButton("Allow walking detection", { activity.launch(Manifest.permission.ACTIVITY_RECOGNITION) }, style = VoltaButtonStyle.Secondary)
         }
 
@@ -212,8 +255,13 @@ fun SmartPrecoolSection(vm: SmartPrecoolViewModel = hiltViewModel()) {
 
         // Routine learned from drives.
         Text("YOUR ROUTINE", style = MaterialTheme.typography.labelSmall, color = VoltaColors.Dim)
-        if (routine.isEmpty()) Text("Learning — needs about 1–2 weeks of drives. Until then it uses Wi-Fi + temperature only.",
-            style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
+        if (routine.isEmpty()) {
+            Text(
+                "Learning — needs about 1–2 weeks of drives. Until then it uses Wi-Fi + temperature only.",
+                style = MaterialTheme.typography.bodySmall,
+                color = VoltaColors.Muted,
+            )
+        }
         routine.forEach { Text("• ${it.label}  (${it.count}×)", style = MaterialTheme.typography.bodySmall, color = VoltaColors.TextSoft) }
 
         // On-device AI.
@@ -223,16 +271,22 @@ fun SmartPrecoolSection(vm: SmartPrecoolViewModel = hiltViewModel()) {
                 Text("Gemini Nano ready — writes suggestions and this summary on your phone, offline.", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Green)
                 note?.let { Text("✦ $it", style = MaterialTheme.typography.bodyMedium, color = VoltaColors.TextSoft) }
             }
+
             Narrator.State.Downloadable -> Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Gemini Nano can be downloaded (free, one time).", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted, modifier = Modifier.weight(1f))
                 VoltaButton("Download", { vm.downloadAi() }, style = VoltaButtonStyle.Secondary)
             }
+
             Narrator.State.Downloading -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 CircularProgressIndicator(color = VoltaColors.Gold, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
                 Text("Downloading Gemini Nano…", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
             }
-            Narrator.State.Unavailable -> Text("Gemini Nano isn't available on this phone right now — suggestions use plain text.",
-                style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
+
+            Narrator.State.Unavailable -> Text(
+                "Gemini Nano isn't available on this phone right now — suggestions use plain text.",
+                style = MaterialTheme.typography.bodySmall,
+                color = VoltaColors.Muted,
+            )
         }
     }
 }

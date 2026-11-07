@@ -50,7 +50,9 @@ interface SessionStore {
 
 class InMemorySessionStore(private var session: LoginFrame.Session? = null) : SessionStore {
     override fun load() = session
-    override fun save(session: LoginFrame.Session?) { this.session = session }
+    override fun save(session: LoginFrame.Session?) {
+        this.session = session
+    }
 }
 
 /**
@@ -117,11 +119,15 @@ class MgIsmartClient(
             val body = LoginFrame.build(creds.phone, creds.password, MgCrypto.deviceId(creds.phone, prefix), nowS())
             try {
                 when (val r = LoginFrame.decode(postTap(tapLoginUrl, body))) {
-                    is LoginFrame.Result.Ok -> { sessions.save(r.session); return r.session }
+                    is LoginFrame.Result.Ok -> {
+                        sessions.save(r.session)
+                        return r.session
+                    }
+
                     is LoginFrame.Result.Rejected -> throw LoginRejectedException(r.message)
                 }
             } catch (e: LoginRejectedException) {
-                throw e                                   // each POST counts against the daily quota
+                throw e // each POST counts against the daily quota
             } catch (e: Exception) {
                 last = e
                 if (attempt < 2) delay(1_500)
@@ -177,14 +183,21 @@ class MgIsmartClient(
         val data = gatewayGet("/vehicle/userVinList")
         fun list(e: JsonElement?): List<JsonObject> = when (e) {
             is JsonArray -> e.mapNotNull { it as? JsonObject }
+
             is JsonObject -> listOf("list", "vehicleList", "vehicles", "vinList", "result").firstNotNullOfOrNull { (e[it] as? JsonArray) }
                 ?.mapNotNull { it as? JsonObject } ?: list(e["data"])
+
             else -> emptyList()
         }
         val vehicles = list(data).mapNotNull { o ->
             val vin = listOf("vin", "VIN", "vinNo", "vehicleVin").firstNotNullOfOrNull { o[it]?.jsonPrimitive?.contentOrNull } ?: return@mapNotNull null
-            Vehicle(vin, o["series"]?.jsonPrimitive?.contentOrNull, o["modelName"]?.jsonPrimitive?.contentOrNull,
-                o["colorName"]?.jsonPrimitive?.contentOrNull, o["isSubaccount"]?.jsonPrimitive?.booleanOrNull ?: false)
+            Vehicle(
+                vin,
+                o["series"]?.jsonPrimitive?.contentOrNull,
+                o["modelName"]?.jsonPrimitive?.contentOrNull,
+                o["colorName"]?.jsonPrimitive?.contentOrNull,
+                o["isSubaccount"]?.jsonPrimitive?.booleanOrNull ?: false,
+            )
         }
         if (vin == null || vehicles.none { it.vin == vin }) vin = vehicles.firstOrNull()?.vin
         vehicles
@@ -204,7 +217,9 @@ class MgIsmartClient(
             val charge = if (includeCharge) {
                 poll("Charge", v, unavailable = setOf(5), tolerateFraming = true) { s, uidTok, ev -> Tap.chargeRequest(uidTok.uid, uidTok.token, s, ev, nowS()) }
                     ?.takeIf { it.size == Tap.CHARGE_APP_LEN }?.let { ChargeStatus.from(Tap.decodeChargeApp(it)) }
-            } else null
+            } else {
+                null
+            }
             Reading(VehicleSnapshot.fromStatus(status), charge)
         }
     }
@@ -225,14 +240,24 @@ class MgIsmartClient(
                     Tap.decodeV21(postTap(tapStatusUrl, frame(vin, s, eventId)))
                 } catch (e: TapFormatException) {
                     if (!tolerateFraming) throw IsmartException("$label response could not be read", e)
-                    delay(pollDelayMs); continue
+                    delay(pollDelayMs)
+                    continue
                 }
                 val d = res.dispatcher
                 if (d.vin != null && d.vin != vin) throw IsmartException("$label response is for a different vehicle")
                 when (val result = d.result ?: 0) {
-                    2 -> if (loginAttempt == 0) { sessions.save(null); loginLocked(); return@repeat } else throw IsmartException("$label: session invalid")
+                    2 -> if (loginAttempt == 0) {
+                        sessions.save(null)
+                        loginLocked()
+                        return@repeat
+                    } else {
+                        throw IsmartException("$label: session invalid")
+                    }
+
                     in unavailable -> return null
+
                     0, 4, 6 -> Unit
+
                     else -> throw IsmartException("$label failed: result $result")
                 }
                 res.app?.let { return it }
@@ -260,10 +285,12 @@ class MgIsmartClient(
             if (e.message?.contains("did not complete") == true) {
                 val check: ((VehicleSnapshot) -> Boolean)? = when (cmd) {
                     RemoteCommand.Lock, RemoteCommand.Unlock -> { s -> s.locked == (cmd == RemoteCommand.Lock) }
+
                     RemoteCommand.WindowsOpen, RemoteCommand.WindowsClose -> { s ->
                         val open = cmd == RemoteCommand.WindowsOpen
                         (s.driverWindowOpen ?: !open) == open && (s.passengerWindowOpen ?: !open) == open
                     }
+
                     else -> null
                 }
                 if (check != null) {
@@ -286,7 +313,14 @@ class MgIsmartClient(
             if (d.vin != null && d.vin != vin) throw IsmartException("PIN response is for a different vehicle")
             when (d.result ?: 0) {
                 0 -> return
-                2 -> if (loginAttempt == 0) { sessions.save(null); loginLocked() } else throw IsmartException("PIN check: session invalid")
+
+                2 -> if (loginAttempt == 0) {
+                    sessions.save(null)
+                    loginLocked()
+                } else {
+                    throw IsmartException("PIN check: session invalid")
+                }
+
                 else -> throw IsmartException("Wrong control PIN (result ${d.result})")
             }
         }
@@ -302,7 +336,11 @@ class MgIsmartClient(
             } catch (e: Exception) {
                 throw CommandIndeterminateException("${cmd.label}: completion is unknown (${e.message})")
             }
-            val res = try { Tap.decodeV21(raw) } catch (e: TapFormatException) { throw CommandIndeterminateException("${cmd.label}: response could not be read") }
+            val res = try {
+                Tap.decodeV21(raw)
+            } catch (e: TapFormatException) {
+                throw CommandIndeterminateException("${cmd.label}: response could not be read")
+            }
             val result = res.dispatcher.result ?: 0
             if (result !in setOf(0, 4, 6)) throw CommandIndeterminateException("${cmd.label}: completion unknown (result $result)")
             if (res.dispatcher.vin != null && res.dispatcher.vin != vin) throw CommandIndeterminateException("${cmd.label}: response for a different vehicle")
@@ -334,5 +372,5 @@ class MgIsmartClient(
  */
 internal fun sessionInvalid(message: String?): Boolean {
     val m = message?.lowercase() ?: return false
-    return ("login" in m && "invalid" in m) || "login again" in m || "token" in m && ("invalid" in m || "expired" in m)
+    return ("login" in m && "invalid" in m) || "login again" in m || ("token" in m && ("invalid" in m || "expired" in m))
 }

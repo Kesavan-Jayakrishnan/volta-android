@@ -33,26 +33,27 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.irshadm.volta.core.designsystem.VoltaColors
+import dev.irshadm.volta.core.designsystem.VoltaIcons
 import dev.irshadm.volta.data.ismart.IsmartRepository
-import javax.inject.Inject
-import kotlinx.coroutines.launch
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.irshadm.volta.data.ismart.LinkState
 import dev.irshadm.volta.ui.components.VoltaButton
 import dev.irshadm.volta.ui.components.VoltaButtonStyle
-import dev.irshadm.volta.core.designsystem.VoltaIcons
-import dev.irshadm.volta.core.designsystem.VoltaColors
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import javax.inject.Inject
 import kotlin.math.roundToInt
 
 @HiltViewModel
 class AccountGateViewModel @Inject constructor(val ismart: IsmartRepository) : ViewModel() {
     fun reconnect() = viewModelScope.launch { ismart.reconnect() }
     fun dismissReconnect() = ismart.dismissReconnect()
+
     /** Signing out sends the app back to the sign-in screen; the saved readings stay until a new account signs in. */
     fun differentAccount() = ismart.signOut(keepReadings = true)
 }
@@ -92,12 +93,21 @@ fun ConnectionLostScreen(vm: AccountGateViewModel = hiltViewModel()) {
         }
         Text(
             if (retryAt != null) "Signed in too often this hour" else "Car connection lost",
-            style = MaterialTheme.typography.headlineSmall, color = VoltaColors.Text, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 18.dp),
+            style = MaterialTheme.typography.headlineSmall,
+            color = VoltaColors.Text,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 18.dp),
         )
         Text(
-            if (retryAt != null) "Volta and the MG app have been taking the session from each other. To stay within MG's limits, Volta waits before signing in again."
-            else "The MG i-SMART app signed in, or the session expired. Your login is saved, so one tap brings live data back.",
-            style = MaterialTheme.typography.bodyLarge, color = VoltaColors.TextSoft, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 14.dp, start = 8.dp, end = 8.dp),
+            if (retryAt != null) {
+                "Volta and the MG app have been taking the session from each other. To stay within MG's limits, Volta waits before signing in again."
+            } else {
+                "The MG i-SMART app signed in, or the session expired. Your login is saved, so one tap brings live data back."
+            },
+            style = MaterialTheme.typography.bodyLarge,
+            color = VoltaColors.TextSoft,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 14.dp, start = 8.dp, end = 8.dp),
         )
 
         Column(
@@ -112,8 +122,12 @@ fun ConnectionLostScreen(vm: AccountGateViewModel = hiltViewModel()) {
                     Text("in ${((retryAt - now) / 60_000).coerceAtLeast(1)} min", style = MaterialTheme.typography.labelMedium, color = VoltaColors.AmberText)
                 }
                 HorizontalDivider(color = VoltaColors.Border)
-                Text("Close the MG i-SMART app on every phone first, or the two will keep signing each other out.",
-                    style = MaterialTheme.typography.bodySmall, color = VoltaColors.TextSoft, modifier = Modifier.padding(vertical = 12.dp))
+                Text(
+                    "Close the MG i-SMART app on every phone first, or the two will keep signing each other out.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = VoltaColors.TextSoft,
+                    modifier = Modifier.padding(vertical = 12.dp),
+                )
             } else {
                 Row(Modifier.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Icon(VoltaIcons.Clock, null, tint = VoltaColors.Muted, modifier = Modifier.size(20.dp))
@@ -125,8 +139,12 @@ fun ConnectionLostScreen(vm: AccountGateViewModel = hiltViewModel()) {
                 HorizontalDivider(color = VoltaColors.Border)
                 Row(Modifier.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Icon(VoltaIcons.Info, null, tint = VoltaColors.Muted, modifier = Modifier.size(20.dp))
-                    Text(lostError ?: "Reconnecting signs the MG app out again. Live trip re-planning and alerts stay paused until then.",
-                        style = MaterialTheme.typography.bodySmall, color = if (lostError != null) VoltaColors.AmberText else VoltaColors.TextSoft, modifier = Modifier.weight(1f))
+                    Text(
+                        lostError ?: "Reconnecting signs the MG app out again. Live trip re-planning and alerts stay paused until then.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (lostError != null) VoltaColors.AmberText else VoltaColors.TextSoft,
+                        modifier = Modifier.weight(1f),
+                    )
                 }
             }
         }
@@ -135,12 +153,21 @@ fun ConnectionLostScreen(vm: AccountGateViewModel = hiltViewModel()) {
 
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             VoltaButton(
-                when { reconnecting -> "Reconnecting…"; retryAt != null -> "Reconnect at ${clock(retryAt)}"; else -> "Reconnect" },
-                { vm.reconnect() }, Modifier.fillMaxWidth(), enabled = !reconnecting && retryAt == null,
+                when {
+                    reconnecting -> "Reconnecting…"
+                    retryAt != null -> "Reconnect at ${clock(retryAt)}"
+                    else -> "Reconnect"
+                },
+                { vm.reconnect() },
+                Modifier.fillMaxWidth(),
+                enabled = !reconnecting && retryAt == null,
             )
             VoltaButton("Keep showing saved readings", { vm.dismissReconnect() }, Modifier.fillMaxWidth(), style = VoltaButtonStyle.Secondary)
             Text(
-                "Sign in with a different account", style = MaterialTheme.typography.labelLarge, color = VoltaColors.Gold, textAlign = TextAlign.Center,
+                "Sign in with a different account",
+                style = MaterialTheme.typography.labelLarge,
+                color = VoltaColors.Gold,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { vm.differentAccount() }.padding(12.dp),
             )
         }

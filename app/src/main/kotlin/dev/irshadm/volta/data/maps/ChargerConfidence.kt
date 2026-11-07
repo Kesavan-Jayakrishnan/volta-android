@@ -1,8 +1,8 @@
 package dev.irshadm.volta.data.maps
 
 import android.content.Context
-import dev.irshadm.volta.core.planner.Charger
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.irshadm.volta.core.planner.Charger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.json.JSONArray
@@ -24,6 +24,7 @@ class ChargerFeedback @Inject constructor(@ApplicationContext private val contex
 
     private val prefs = context.getSharedPreferences("charger_feedback", Context.MODE_PRIVATE)
     private val _version = MutableStateFlow(0)
+
     /** Bumps on every change, so screens can re-read. */
     val version: StateFlow<Int> = _version
 
@@ -46,12 +47,18 @@ class ChargerFeedback @Inject constructor(@ApplicationContext private val contex
         return last.verdict == ChargeVerdict.Broken && now - last.at < 14 * DAY
     }
 
-    companion object { const val DAY = 86_400_000L }
+    companion object {
+        const val DAY = 86_400_000L
+    }
 }
 
 /** A 1–5 rating for a planned stop, why, and the stop to use if it lets you down. */
 data class Confidence(val dots: Int, val reasons: List<String>, val backup: Charger?, val backupKm: Double?) {
-    val label: String get() = when { dots >= 4 -> "Reliable"; dots == 3 -> "Good"; else -> "Unsure" }
+    val label: String get() = when {
+        dots >= 4 -> "Reliable"
+        dots == 3 -> "Good"
+        else -> "Unsure"
+    }
     val unsure: Boolean get() = dots <= 2
 
     companion object {
@@ -64,17 +71,30 @@ data class Confidence(val dots: Int, val reasons: List<String>, val backup: Char
             val why = ArrayList<String>()
             when {
                 c.availableCount == null -> Unit
-                c.availableCount == 0 -> score -= 1          // the card already shows "0 of 2 free"
+
+                c.availableCount == 0 -> score -= 1
+
+                // the card already shows "0 of 2 free"
                 else -> score += 0.5
             }
-            if (c.open24h == true) { score += 0.5; why += "24 h" }
+            if (c.open24h == true) {
+                score += 0.5
+                why += "24 h"
+            }
             val worked = history.count { it.verdict == ChargeVerdict.Worked }
             val waited = history.count { it.verdict == ChargeVerdict.Waited && now - it.at < 60 * ChargerFeedback.DAY }
             val broken = history.lastOrNull { it.verdict == ChargeVerdict.Broken }
-            if (worked > 0) { score += minOf(1.0, worked * 0.5); why += "worked for you ${times(worked)}" }
-            if (waited > 0) { score -= 0.5; why += "you waited here ${times(waited)}" }
+            if (worked > 0) {
+                score += minOf(1.0, worked * 0.5)
+                why += "worked for you ${times(worked)}"
+            }
+            if (waited > 0) {
+                score -= 0.5
+                why += "you waited here ${times(waited)}"
+            }
             if (broken != null && now - broken.at < 30 * ChargerFeedback.DAY && history.last().verdict == ChargeVerdict.Broken) {
-                score -= 2; why += "you marked it broken ${daysAgo(now - broken.at)}"
+                score -= 2
+                why += "you marked it broken ${daysAgo(now - broken.at)}"
             }
             val backup = all.filter { it.id != c.id && abs(it.alongRouteM - c.alongRouteM) < 15_000 }
                 .minByOrNull { abs(it.alongRouteM - c.alongRouteM) }
@@ -82,6 +102,14 @@ data class Confidence(val dots: Int, val reasons: List<String>, val backup: Char
         }
 
         private fun times(n: Int) = if (n == 1) "once" else "$n times"
-        private fun daysAgo(ms: Long) = (ms / ChargerFeedback.DAY).let { if (it == 0L) "today" else if (it == 1L) "yesterday" else "$it days ago" }
+        private fun daysAgo(ms: Long) = (ms / ChargerFeedback.DAY).let {
+            if (it == 0L) {
+                "today"
+            } else if (it == 1L) {
+                "yesterday"
+            } else {
+                "$it days ago"
+            }
+        }
     }
 }

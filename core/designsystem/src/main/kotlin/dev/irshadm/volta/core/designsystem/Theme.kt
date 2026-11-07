@@ -1,12 +1,12 @@
 package dev.irshadm.volta.core.designsystem
 
+import android.provider.Settings
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
-import android.provider.Settings
 
 /** Volta's dark-only Material 3 theme. */
 private val Scheme = darkColorScheme(

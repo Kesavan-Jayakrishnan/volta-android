@@ -23,7 +23,10 @@ import kotlinx.coroutines.launch
 fun Modifier.pressScale(interaction: MutableInteractionSource): Modifier = composed {
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(if (pressed) 0.97f else 1f, tween(VoltaMotion.PRESS_MS, easing = VoltaMotion.EaseOut), label = "press")
-    graphicsLayer { scaleX = scale; scaleY = scale }
+    graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+    }
 }
 
 /** Staggered entrance: fade + 12dp rise, [index] × 60 ms after first composition. Plays once. */
@@ -38,9 +41,14 @@ fun Modifier.appear(index: Int): Modifier = composed {
         if (dev.irshadm.volta.ui.splash.SplashGate.holding) {
             androidx.compose.runtime.snapshotFlow { dev.irshadm.volta.ui.splash.SplashGate.holding }.first { !it }
             delay(80L + index * 90L)
-        } else delay(index * VoltaMotion.STAGGER_MS.toLong())
+        } else {
+            delay(index * VoltaMotion.STAGGER_MS.toLong())
+        }
         launch { alpha.animateTo(1f, tween(420, easing = VoltaMotion.EaseOut)) }
         rise.animateTo(0f, tween(560, easing = VoltaMotion.EaseOut))
     }
-    graphicsLayer { this.alpha = alpha.value; translationY = rise.value * px }
+    graphicsLayer {
+        this.alpha = alpha.value
+        translationY = rise.value * px
+    }
 }

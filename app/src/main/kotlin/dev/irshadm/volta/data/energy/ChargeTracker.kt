@@ -1,15 +1,15 @@
 package dev.irshadm.volta.data.energy
 
-import dev.irshadm.volta.data.SettingsRepository
-import dev.irshadm.volta.data.db.ChargeDao
-import dev.irshadm.volta.data.db.ChargeSessionEntity
-import dev.irshadm.volta.data.db.SocReadingDao
 import dev.irshadm.volta.core.model.ChargeCategory
 import dev.irshadm.volta.core.model.EnergySettings
 import dev.irshadm.volta.core.model.SocReading
 import dev.irshadm.volta.core.model.VehicleStatus
 import dev.irshadm.volta.core.planner.Geo
 import dev.irshadm.volta.core.planner.LatLng
+import dev.irshadm.volta.data.SettingsRepository
+import dev.irshadm.volta.data.db.ChargeDao
+import dev.irshadm.volta.data.db.ChargeSessionEntity
+import dev.irshadm.volta.data.db.SocReadingDao
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -49,14 +49,21 @@ class ChargeTracker @Inject constructor(
         if (plugged == true && open != null && isStale(open, soc.socPercent, carStart)) {
             val begins = carStart ?: at
             val top = readings.highestBetween(open.startedAt, begins)
-            dao.update(open.copy(endedAt = top?.measuredAtMillis ?: open.startedAt, endSoc = top?.socPercent ?: open.endSoc,
-                endKwh = top?.let { it.batteryEnergyKwh ?: (it.socPercent / 100 * cap) } ?: open.endKwh))
+            dao.update(
+                open.copy(
+                    endedAt = top?.measuredAtMillis ?: open.startedAt,
+                    endSoc = top?.socPercent ?: open.endSoc,
+                    endKwh = top?.let { it.batteryEnergyKwh ?: (it.socPercent / 100 * cap) } ?: open.endKwh,
+                ),
+            )
             val before = readings.lastBefore(begins)
             val startSoc = startLevel(before?.socPercent, soc.socPercent)
             dao.insert(
-                ChargeSessionEntity(startedAt = begins, lat = pos?.lat, lng = pos?.lng, startSoc = startSoc,
+                ChargeSessionEntity(
+                    startedAt = begins, lat = pos?.lat, lng = pos?.lng, startSoc = startSoc,
                     startKwh = if (before != null && startSoc == before.socPercent) before.batteryEnergyKwh ?: (startSoc / 100 * cap) else kwh,
-                    endSoc = soc.socPercent, endKwh = kwh, peakKw = power, category = classify(pos, power, e).name),
+                    endSoc = soc.socPercent, endKwh = kwh, peakKw = power, category = classify(pos, power, e).name,
+                ),
             )
             return@withLock
         }
@@ -67,25 +74,32 @@ class ChargeTracker @Inject constructor(
                 val before = carStart?.takeIf { it < at }?.let { readings.lastBefore(it) }
                 val startSoc = startLevel(before?.socPercent, soc.socPercent)
                 dao.insert(
-                    ChargeSessionEntity(startedAt = carStart?.takeIf { it < at } ?: at, lat = pos?.lat, lng = pos?.lng, startSoc = startSoc,
+                    ChargeSessionEntity(
+                        startedAt = carStart?.takeIf { it < at } ?: at, lat = pos?.lat, lng = pos?.lng, startSoc = startSoc,
                         startKwh = if (before != null && startSoc == before.socPercent) before.batteryEnergyKwh ?: (startSoc / 100 * cap) else kwh,
-                        endSoc = soc.socPercent, endKwh = kwh, peakKw = power, category = classify(pos, power, e).name),
+                        endSoc = soc.socPercent, endKwh = kwh, peakKw = power, category = classify(pos, power, e).name,
+                    ),
                 )
             }
+
             plugged == true && open != null -> {
                 val peak = maxOf(open.peakKw, power)
                 val cat = if (open.userEdited) open.category else classify(open.lat?.let { LatLng(it, open.lng!!) } ?: pos, peak, e).name
                 dao.update(open.copy(endSoc = soc.socPercent, endKwh = kwh, peakKw = peak, category = cat))
             }
+
             plugged == false && open != null -> dao.update(open.copy(endedAt = at, endSoc = soc.socPercent, endKwh = kwh))
+
             open == null && previous != null && soc.socPercent - previous.socPercent >= INFER_MIN_RISE && at > previous.measuredAtMillis -> {
                 val hours = (at - previous.measuredAtMillis) / 3_600_000.0
                 val addedKwh = (soc.socPercent - previous.socPercent) / 100 * cap
                 val avgKw = if (hours > 0) addedKwh / hours else 0.0
                 dao.insert(
-                    ChargeSessionEntity(startedAt = previous.measuredAtMillis, endedAt = at, lat = pos?.lat, lng = pos?.lng,
+                    ChargeSessionEntity(
+                        startedAt = previous.measuredAtMillis, endedAt = at, lat = pos?.lat, lng = pos?.lng,
                         startSoc = previous.socPercent, endSoc = soc.socPercent, startKwh = previous.batteryEnergyKwh ?: (previous.socPercent / 100 * cap),
-                        endKwh = kwh, peakKw = avgKw, category = classify(pos, avgKw, e).name, inferred = true),
+                        endKwh = kwh, peakKw = avgKw, category = classify(pos, avgKw, e).name, inferred = true,
+                    ),
                 )
             }
         }
@@ -98,14 +112,15 @@ class ChargeTracker @Inject constructor(
 
     internal companion object {
         const val INFER_MIN_RISE = 3.0
+
         /** A charge never lowers the battery; more than this drop means the car was driven since. */
         const val DROP = 1.5
+
         /** The car's own charge start this long after the open session's start means it's a new charge. */
         const val LATER_MS = 10 * 60_000L
 
         /** Whether [open] is an earlier charge whose end the app never saw. */
-        fun isStale(open: ChargeSessionEntity, socNow: Double, carStartedAt: Long?): Boolean =
-            socNow < (open.endSoc ?: socNow) - DROP || (carStartedAt != null && carStartedAt > open.startedAt + LATER_MS)
+        fun isStale(open: ChargeSessionEntity, socNow: Double, carStartedAt: Long?): Boolean = socNow < (open.endSoc ?: socNow) - DROP || (carStartedAt != null && carStartedAt > open.startedAt + LATER_MS)
 
         /** Where a charge began: the last reading before it, unless that's above now (it was before a drive). */
         fun startLevel(lastBefore: Double?, socNow: Double): Double = lastBefore?.takeIf { it <= socNow } ?: socNow

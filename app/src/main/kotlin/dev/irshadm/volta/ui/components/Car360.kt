@@ -9,6 +9,7 @@ import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -61,6 +61,7 @@ class Car360Frames(private val ids: Map<CarShot, IntArray>) {
 
     companion object {
         const val ANGLES = 8
+
         /** Opens on the front three-quarter view, like the single photo. */
         const val DEFAULT_INDEX = 1
 
@@ -76,10 +77,11 @@ class Car360Frames(private val ids: Map<CarShot, IntArray>) {
     }
 }
 
-/**
+/*
  * Drag to turn the car. A fling keeps spinning with friction and settles on the nearest angle
  * with a soft spring; changing state (locked → unlocked …) crossfades at the current angle.
  */
+
 /**
  * [showIndex]: a frame to turn to (the car turns to show the wheel that needs a look); [onIndexChange] reports
  * the frame on screen so the caller can place markers on it.
@@ -104,9 +106,12 @@ fun Car360Viewer(frames: Car360Frames, shot: CarShot, modifier: Modifier = Modif
     var turning by remember { mutableStateOf(false) }
     val dotsAlpha by androidx.compose.animation.core.animateFloatAsState(if (turning) 1f else 0f, tween(if (turning) 120 else 400), label = "dots")
     androidx.compose.runtime.LaunchedEffect(turning, angle.isRunning) {
-        if (turning && !angle.isRunning) { kotlinx.coroutines.delay(1_200); turning = false }
+        if (turning && !angle.isRunning) {
+            kotlinx.coroutines.delay(1_200)
+            turning = false
+        }
     }
-    val pxPerDegree = 2.2f       // ~800 px drag ≈ one full turn on a phone
+    val pxPerDegree = 2.2f // ~800 px drag ≈ one full turn on a phone
 
     fun settle(velocityDegPerS: Float) = scope.launch {
         if (!reduced && abs(velocityDegPerS) > 60f) {
@@ -124,7 +129,11 @@ fun Car360Viewer(frames: Car360Frames, shot: CarShot, modifier: Modifier = Modif
             .pointerInput(n) {
                 val tracker = VelocityTracker()
                 detectHorizontalDragGestures(
-                    onDragStart = { tracker.resetTracking(); turning = true; scope.launch { angle.stop() } },
+                    onDragStart = {
+                        tracker.resetTracking()
+                        turning = true
+                        scope.launch { angle.stop() }
+                    },
                     onHorizontalDrag = { change, dx ->
                         tracker.addPosition(change.uptimeMillis, change.position)
                         change.consume()

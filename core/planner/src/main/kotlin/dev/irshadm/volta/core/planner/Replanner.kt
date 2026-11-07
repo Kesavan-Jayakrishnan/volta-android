@@ -22,8 +22,7 @@ object Replanner {
     }
 
     /** Expected SoC at [alongM] from the plan's SoC trace (the last point at or before it). */
-    fun expectedSoc(plan: TripPlan, alongM: Double): Double =
-        (plan.socTrace.lastOrNull { it.distanceM <= alongM } ?: plan.socTrace.first()).socPercent
+    fun expectedSoc(plan: TripPlan, alongM: Double): Double = (plan.socTrace.lastOrNull { it.distanceM <= alongM } ?: plan.socTrace.first()).socPercent
 
     /**
      * re-plan from the current position. The remaining profile and the chargers ahead are

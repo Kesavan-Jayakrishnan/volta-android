@@ -9,6 +9,7 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
+import android.bluetooth.BluetoothStatusCodes
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
@@ -58,14 +59,21 @@ class SpinCharger @Inject constructor(@ApplicationContext private val context: C
     private val _link = MutableStateFlow<Link>(Link.Off)
     val link: StateFlow<Link> = _link
     private val _status = MutableStateFlow<String?>(null)
+
     /** How the last connection attempt went, in words (shown under the charger in Settings). */
     val status: StateFlow<String?> = _status
 
-    private fun note(msg: String) { _status.value = msg; log(msg) }
+    private fun note(msg: String) {
+        _status.value = msg
+        log(msg)
+    }
 
     /** Steps and frames to logcat (tag VoltaSpin) for troubleshooting. */
-    private fun log(line: String) { android.util.Log.d("VoltaSpin", line) }
+    private fun log(line: String) {
+        android.util.Log.d("VoltaSpin", line)
+    }
     private val _saved = MutableStateFlow(savedCharger())
+
     /** The home charger chosen in setup: (name, address), or null. */
     val saved: StateFlow<Pair<String, String>?> = _saved
 
@@ -73,6 +81,7 @@ class SpinCharger @Inject constructor(@ApplicationContext private val context: C
     private var channel: BluetoothGattCharacteristic? = null
     private var password: String? = null
     private var reply: CompletableDeferred<String>? = null
+
     /** Reply pieces since the last command (a long reply can arrive in several notifications). */
     private val rx = StringBuilder()
     private var firstPiece: String? = null
@@ -82,9 +91,11 @@ class SpinCharger @Inject constructor(@ApplicationContext private val context: C
 
     private val manager get() = context.getSystemService(BluetoothManager::class.java)
 
-    fun hasPermission(): Boolean =
-        if (Build.VERSION.SDK_INT >= 31) listOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT).all { granted(it) }
-        else granted(Manifest.permission.ACCESS_FINE_LOCATION)
+    fun hasPermission(): Boolean = if (Build.VERSION.SDK_INT >= 31) {
+        listOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT).all { granted(it) }
+    } else {
+        granted(Manifest.permission.ACCESS_FINE_LOCATION)
+    }
 
     private fun granted(p: String) = ContextCompat.checkSelfPermission(context, p) == PackageManager.PERMISSION_GRANTED
 
@@ -138,13 +149,17 @@ class SpinCharger @Inject constructor(@ApplicationContext private val context: C
         if (!hasPermission()) return@withLock note("Volta needs the Nearby devices permission")
         note("Connecting…")
         _link.value = Link.Connecting
-        val device = runCatching { adapter.getRemoteDevice(address) }.getOrNull() ?: run { _link.value = Link.Off; return@withLock }
-        closeGatt()                                             // never two connections at once
+        val device = runCatching { adapter.getRemoteDevice(address) }.getOrNull() ?: run {
+            _link.value = Link.Off
+            return@withLock
+        }
+        closeGatt() // never two connections at once
         ready = CompletableDeferred()
         gatt = device.connectGatt(context, false, callback, BluetoothDevice.TRANSPORT_LE)
         val ok = withTimeoutOrNull(15_000) { ready!!.await() } == true
         if (!ok) {
-            closeGatt(); _link.value = Link.Off
+            closeGatt()
+            _link.value = Link.Off
             return@withLock note(if (missingService) "Connected, but this isn't a Spin charger (no serial service)" else "Charger didn't answer · out of range, or the Spin app has it")
         }
         // Session password: the charger answers the password request; the password starts at character 10.
@@ -156,7 +171,8 @@ class SpinCharger @Inject constructor(@ApplicationContext private val context: C
         val pw = answer?.takeIf { it.startsWith("10AC3200") && it.length > 10 }?.substring(10)
         log("Password ${if (pw == null) "not found" else "received (${pw.length} chars)"}")
         if (pw == null) {
-            closeGatt(); _link.value = Link.Off
+            closeGatt()
+            _link.value = Link.Off
             return@withLock note(if (answer == null) "Connected, but no password reply" else "Password reply not recognised: ${answer.take(24)}")
         }
         password = pw
@@ -175,7 +191,10 @@ class SpinCharger @Inject constructor(@ApplicationContext private val context: C
         _link.value = Link.Sending(start)
         val what = if (start) "Start" else "Stop"
         var written = write(if (start) START else STOP, prefix = true)
-        if (!written) { delay(1_000); written = write(if (start) START else STOP, prefix = true) }
+        if (!written) {
+            delay(1_000)
+            written = write(if (start) START else STOP, prefix = true)
+        }
         if (!written) {
             _link.value = Link.Failed("Couldn't send to the charger · try again")
             note("$what · the write failed twice")
@@ -185,8 +204,11 @@ class SpinCharger @Inject constructor(@ApplicationContext private val context: C
         val state = readState()
         _state.value = state
         val ok = when {
-            state == null -> true                                 // no answer: let the car's next reading confirm
+            state == null -> true
+
+            // no answer: let the car's next reading confirm
             start -> state == ChargerState.Charging || state == ChargerState.Preparing
+
             else -> state != ChargerState.Charging
         }
         _link.value = when {
@@ -209,9 +231,19 @@ class SpinCharger @Inject constructor(@ApplicationContext private val context: C
 
     /** The charger's own state, as the Spin app reads it: reply to 10AC67…, one byte at characters 14–16. */
     enum class ChargerState(val label: String) {
-        Available("Available"), PlugConnected("Plug connected"), Preparing("Preparing"), Charging("Charging"),
-        Fault("Fault"), Unavailable("Unavailable"), EvseSuspended("Paused by the charger"), EvSuspended("On · the car isn't taking power");
-        companion object { fun of(code: Int) = entries.getOrNull(code - 1) }
+        Available("Available"),
+        PlugConnected("Plug connected"),
+        Preparing("Preparing"),
+        Charging("Charging"),
+        Fault("Fault"),
+        Unavailable("Unavailable"),
+        EvseSuspended("Paused by the charger"),
+        EvSuspended("On · the car isn't taking power"),
+        ;
+
+        companion object {
+            fun of(code: Int) = entries.getOrNull(code - 1)
+        }
     }
 
     private val _state = MutableStateFlow<ChargerState?>(null)
@@ -225,7 +257,9 @@ class SpinCharger @Inject constructor(@ApplicationContext private val context: C
     }
 
     /** Back to the button after a failure. */
-    fun clearFailure() { if (_link.value is Link.Failed) _link.value = if (channel != null) Link.Ready else Link.Off }
+    fun clearFailure() {
+        if (_link.value is Link.Failed) _link.value = if (channel != null) Link.Ready else Link.Off
+    }
 
     fun disconnect() {
         closeGatt()
@@ -234,15 +268,23 @@ class SpinCharger @Inject constructor(@ApplicationContext private val context: C
 
     @SuppressLint("MissingPermission")
     private fun closeGatt() {
-        runCatching { gatt?.disconnect(); gatt?.close() }
-        gatt = null; channel = null; password = null
+        runCatching {
+            gatt?.disconnect()
+            gatt?.close()
+        }
+        gatt = null
+        channel = null
+        password = null
     }
 
     /** Writes a command (with the session password after it when [prefix]) and waits up to 5 s for the reply. */
     private suspend fun send(command: String, prefix: Boolean): String? {
         if (!write(command, prefix)) return null
         // The first piece completes the wait; give any further pieces 400 ms, then read the whole reply.
-        withTimeoutOrNull(5_000) { reply!!.await() } ?: run { log("RX nothing within 5 s"); return null }
+        withTimeoutOrNull(5_000) { reply!!.await() } ?: run {
+            log("RX nothing within 5 s")
+            return null
+        }
         delay(400)
         // Like the Spin app, read one notification as one frame: the first piece, unless it was cut short.
         val (first, all) = synchronized(rx) { firstPiece.orEmpty() to rx.toString() }
@@ -259,13 +301,27 @@ class SpinCharger @Inject constructor(@ApplicationContext private val context: C
         // The session password goes after the command (the Spin app logs "final command 10AC3C01" + the password).
         val hex = command + (if (prefix) password.orEmpty() else "")
         val bytes = hex.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
-        synchronized(rx) { rx.setLength(0); firstPiece = null }
+        synchronized(rx) {
+            rx.setLength(0)
+            firstPiece = null
+        }
         reply = CompletableDeferred()
         log("TX $hex")
-        val type = if (ch.properties and BluetoothGattCharacteristic.PROPERTY_WRITE != 0) BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-            else BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
-        val written = if (Build.VERSION.SDK_INT >= 33) g.writeCharacteristic(ch, bytes, type) == BluetoothGatt.GATT_SUCCESS
-            else @Suppress("DEPRECATION") run { ch.writeType = type; ch.value = bytes; g.writeCharacteristic(ch) }
+        val type = if (ch.properties and BluetoothGattCharacteristic.PROPERTY_WRITE != 0) {
+            BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+        } else {
+            BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+        }
+        val written = if (Build.VERSION.SDK_INT >= 33) {
+            g.writeCharacteristic(ch, bytes, type) == BluetoothStatusCodes.SUCCESS
+        } else {
+            @Suppress("DEPRECATION")
+            run {
+                ch.writeType = type
+                ch.value = bytes
+                g.writeCharacteristic(ch)
+            }
+        }
         if (!written) log("TX failed to write")
         return written
     }
@@ -288,26 +344,44 @@ class SpinCharger @Inject constructor(@ApplicationContext private val context: C
     }
 
     private fun received(g: BluetoothGatt, value: ByteArray) {
-        if (g != gatt) return                                   // a leftover connection: ignore its echoes
+        if (g != gatt) return // a leftover connection: ignore its echoes
         val piece = decode(value)
         log("RX ${value.joinToString("") { "%02X".format(it) }}  ->  $piece")
-        synchronized(rx) { rx.append(piece); if (firstPiece == null) firstPiece = piece }
+        synchronized(rx) {
+            rx.append(piece)
+            if (firstPiece == null) firstPiece = piece
+        }
         reply?.complete(piece)
     }
 
     private val callback = object : BluetoothGattCallback() {
         @SuppressLint("MissingPermission")
         override fun onConnectionStateChange(g: BluetoothGatt, status: Int, newState: Int) {
-            if (g != gatt) { if (newState == BluetoothProfile.STATE_DISCONNECTED) runCatching { g.close() } else runCatching { g.disconnect(); g.close() }; return }
+            if (g != gatt) {
+                if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                    runCatching { g.close() }
+                } else {
+                    runCatching {
+                        g.disconnect()
+                        g.close()
+                    }
+                }
+                return
+            }
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
                     log("Connected (status $status) · asking for a 512-byte MTU like the Spin app")
                     if (!g.requestMtu(512)) g.discoverServices()
                 }
+
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     log("Disconnected (status $status)")
                     ready?.complete(false)
-                    if (gatt == g) { channel = null; password = null; _link.value = Link.Off }
+                    if (gatt == g) {
+                        channel = null
+                        password = null
+                        _link.value = Link.Off
+                    }
                     runCatching { g.close() }
                 }
             }
@@ -324,13 +398,26 @@ class SpinCharger @Inject constructor(@ApplicationContext private val context: C
             log("Services: " + g.services.joinToString { s -> s.uuid.toString().take(8) + "[" + s.characteristics.joinToString { c -> c.uuid.toString().take(8) + "/p" + c.properties } + "]" })
             val ch = g.getService(SERVICE)?.getCharacteristic(CHANNEL)
             missingService = ch == null
-            if (ch == null) { ready?.complete(false); return }
+            if (ch == null) {
+                ready?.complete(false)
+                return
+            }
             channel = ch
             g.setCharacteristicNotification(ch, true)
             val cccd = ch.getDescriptor(CCCD)
-            if (cccd == null) { ready?.complete(true); return }
-            if (Build.VERSION.SDK_INT >= 33) g.writeDescriptor(cccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
-            else @Suppress("DEPRECATION") run { cccd.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE; g.writeDescriptor(cccd) }
+            if (cccd == null) {
+                ready?.complete(true)
+                return
+            }
+            if (Build.VERSION.SDK_INT >= 33) {
+                g.writeDescriptor(cccd, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+            } else {
+                @Suppress("DEPRECATION")
+                run {
+                    cccd.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                    g.writeDescriptor(cccd)
+                }
+            }
         }
 
         override fun onDescriptorWrite(g: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
@@ -352,8 +439,7 @@ class SpinCharger @Inject constructor(@ApplicationContext private val context: C
     }
 
     /** Spin / Exicom in the name, or the Spin serial pattern: 10–14 digits, underscore, 4 hex (e.g. 123456789012_ab12). */
-    private fun looksLikeCharger(name: String) =
-        Regex("spin|exicom", RegexOption.IGNORE_CASE).containsMatchIn(name) || Regex("^\\d{10,14}_[0-9a-fA-F]{4}$").matches(name.trim())
+    private fun looksLikeCharger(name: String) = Regex("spin|exicom", RegexOption.IGNORE_CASE).containsMatchIn(name) || Regex("^\\d{10,14}_[0-9a-fA-F]{4}$").matches(name.trim())
 
     private companion object {
         val SERVICE: UUID = UUID.fromString("49535343-FE7D-4AE5-8FA9-9FAFD205E455")

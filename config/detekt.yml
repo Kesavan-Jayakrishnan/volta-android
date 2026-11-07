@@ -1,0 +1,14 @@
+# Long lines are allowed on purpose, so a Compose call reads as one thought. Numbers in layout code are dp and sp values.
+style:
+  MaxLineLength:
+    active: false
+  MagicNumber:
+    active: false
+naming:
+  FunctionNaming:
+    ignoreAnnotated: ['Composable']
+complexity:
+  LongParameterList:
+    ignoreAnnotated: ['Composable']
+  LongMethod:
+    ignoreAnnotated: ['Composable']

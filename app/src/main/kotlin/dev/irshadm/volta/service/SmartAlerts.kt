@@ -1,12 +1,12 @@
 package dev.irshadm.volta.service
 
 import android.content.Context
-import dev.irshadm.volta.data.db.TripDao
-import dev.irshadm.volta.data.trip.LocationProvider
-import dev.irshadm.volta.service.smart.Routine
 import dev.irshadm.volta.core.model.VehicleStatus
 import dev.irshadm.volta.core.planner.Geo
 import dev.irshadm.volta.core.planner.LatLng
+import dev.irshadm.volta.data.db.TripDao
+import dev.irshadm.volta.data.trip.LocationProvider
+import dev.irshadm.volta.service.smart.Routine
 import org.json.JSONArray
 import org.json.JSONObject
 import java.text.SimpleDateFormat
@@ -42,7 +42,8 @@ object SmartAlerts {
             val from = prefs.getString("parked_at", null)?.split(",")?.mapNotNull { it.toDoubleOrNull() }?.takeIf { it.size == 2 }?.let { LatLng(it[0], it[1]) }
             val km = if (from != null && car != null) Geo.distanceM(from, car) / 1000 else null
             Notifications.alert(
-                context, "Your car is being driven",
+                context,
+                "Your car is being driven",
                 "It's switched on" + (km?.takeIf { it >= 0.3 }?.let { " and %.1f km from where you parked".format(it) } ?: "") +
                     ", and your phone isn't near it. Tap to see where it is.",
                 Notifications.Level.Urgent,
@@ -76,7 +77,10 @@ object SmartAlerts {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val at = prefs.getLong("trip_at", 0L).takeIf { it > 0 } ?: return
         val now = System.currentTimeMillis()
-        if (now > at) { prefs.edit().remove("trip_at").apply(); return }
+        if (now > at) {
+            prefs.edit().remove("trip_at").apply()
+            return
+        }
         if (prefs.getBoolean("trip_told", false) || at - now > 50 * 60_000 || !Alerts.isOn(context, "pretrip")) return
         val soc = v.soc?.value?.socPercent ?: return
         val need = prefs.getFloat("trip_soc", 0f).toDouble()
@@ -86,8 +90,11 @@ object SmartAlerts {
         }
         val cabin = dev.irshadm.volta.data.weather.CabinModel.temps(v, weather).cabinC
         val cool = (cabin ?: 0.0) >= 30
-        val text = if (soc + 2 < need) "Battery ${soc.roundToInt()} %, the plan assumes ${need.roundToInt()} % — plug in now, or re-plan from ${soc.roundToInt()} %."
-        else "Battery ${soc.roundToInt()} % — you're set." + if (cool) " Cabin is about ${cabin!!.roundToInt()}°; pre-cool before you go?" else ""
+        val text = if (soc + 2 < need) {
+            "Battery ${soc.roundToInt()} %, the plan assumes ${need.roundToInt()} % — plug in now, or re-plan from ${soc.roundToInt()} %."
+        } else {
+            "Battery ${soc.roundToInt()} % — you're set." + if (cool) " Cabin is about ${cabin!!.roundToInt()}°; pre-cool before you go?" else ""
+        }
         Notifications.alert(context, "Leaving for $to at ${clock(at)}", text)
         prefs.edit().putBoolean("trip_told", true).apply()
     }
@@ -104,7 +111,12 @@ object SmartAlerts {
         val volts = v.auxBatteryVolts?.value
         if (v.ignitionOn?.value != true && days.none { it.getInt("d") == day } && (t != null || volts != null)) {
             days += JSONObject().put("d", day).apply {
-                t?.let { put("fl", it.frontLeft); put("fr", it.frontRight); put("rl", it.rearLeft); put("rr", it.rearRight) }
+                t?.let {
+                    put("fl", it.frontLeft)
+                    put("fr", it.frontRight)
+                    put("rl", it.rearLeft)
+                    put("rr", it.rearRight)
+                }
                 volts?.let { put("v", it) }
             }
             while (days.size > 21) days.removeAt(0)
@@ -119,8 +131,12 @@ object SmartAlerts {
             val drop = names.keys.associateWith { weekAgo.getDouble(it) - now.getDouble(it) }
             drop.filter { (k, d) -> d >= 3 && drop.filterKeys { it != k }.values.all { it < 1.5 } }.keys.forEach { k ->
                 weekly(prefs, "trend_tyre_$k", day) {
-                    Notifications.alert(context, "${names[k]} tyre slowly losing air",
-                        "Down ${drop[k]!!.roundToInt()} psi in a week (now ${now.getDouble(k).roundToInt()} psi). Worth checking for a puncture.", Notifications.Level.Quiet)
+                    Notifications.alert(
+                        context,
+                        "${names[k]} tyre slowly losing air",
+                        "Down ${drop[k]!!.roundToInt()} psi in a week (now ${now.getDouble(k).roundToInt()} psi). Worth checking for a puncture.",
+                        Notifications.Level.Quiet,
+                    )
                 }
             }
         }
@@ -129,15 +145,24 @@ object SmartAlerts {
         if (Alerts.isOn(context, "trend") && vs.size >= 10) {
             val recent = vs.takeLast(3).average()
             val before = vs.dropLast(3).takeLast(7).average()
-            if (recent < 12.3 && before - recent >= 0.2) weekly(prefs, "trend_aux", day) {
-                Notifications.alert(context, "12 V battery getting weaker",
-                    "Resting voltage %.1f V, down from %.1f V last week. Have it checked before it leaves you stranded.".format(recent, before), Notifications.Level.Quiet)
+            if (recent < 12.3 && before - recent >= 0.2) {
+                weekly(prefs, "trend_aux", day) {
+                    Notifications.alert(
+                        context,
+                        "12 V battery getting weaker",
+                        "Resting voltage %.1f V, down from %.1f V last week. Have it checked before it leaves you stranded.".format(recent, before),
+                        Notifications.Level.Quiet,
+                    )
+                }
             }
         }
     }
 
     private inline fun weekly(prefs: android.content.SharedPreferences, key: String, day: Int, fire: () -> Unit) {
-        if (day - prefs.getInt(key, -100) >= 7) { fire(); prefs.edit().putInt(key, day).apply() }
+        if (day - prefs.getInt(key, -100) >= 7) {
+            fire()
+            prefs.edit().putInt(key, day).apply()
+        }
     }
 
     // --- Will tonight's charge be done by your usual departure?
@@ -148,20 +173,27 @@ object SmartAlerts {
         if (v.charging?.value != true || !Alerts.isOn(context, "bymorning") || prefs.getLong("bymorning_session", -1) == session) return
         val now = Calendar.getInstance()
         val hour = now.get(Calendar.HOUR_OF_DAY)
-        if (hour in 5 until 19) return                            // only overnight charging
+        if (hour in 5 until 19) return // only overnight charging
         val remaining = v.chargeMinutesRemaining?.value?.takeIf { it > 0 } ?: return
         val soc = v.soc?.value?.socPercent ?: return
         // The first usual departure of the next morning, from your drive history.
-        val morning = Calendar.getInstance().apply { if (hour >= 19) add(Calendar.DAY_OF_YEAR, 1); set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0) }
+        val morning = Calendar.getInstance().apply {
+            if (hour >= 19) add(Calendar.DAY_OF_YEAR, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+        }
         val weekend = morning.get(Calendar.DAY_OF_WEEK).let { it == Calendar.SATURDAY || it == Calendar.SUNDAY }
         val slot = Routine.slots(trips.finished(300)).filter { it.weekend == weekend && it.minuteOfDay in 300..720 }.minByOrNull { it.minuteOfDay } ?: return
         val leaveAt = morning.timeInMillis + slot.minuteOfDay * 60_000L
         val doneAt = System.currentTimeMillis() + remaining * 60_000L
         prefs.edit().putLong("bymorning_session", session).apply()
-        if (doneAt <= leaveAt) return                             // will be done in time: nothing to say
+        if (doneAt <= leaveAt) return // will be done in time: nothing to say
         val minutesAvailable = ((leaveAt - System.currentTimeMillis()) / 60_000).coerceAtLeast(0)
         val atLeave = (soc + (100 - soc) * minutesAvailable.toDouble() / remaining).coerceAtMost(100.0)
-        Notifications.alert(context, "Charge won't finish by ${clock(leaveAt)}",
-            "It needs until ${clock(doneAt)}. By your usual ${clock(leaveAt)} departure it will be about ${atLeave.roundToInt()} %.")
+        Notifications.alert(
+            context,
+            "Charge won't finish by ${clock(leaveAt)}",
+            "It needs until ${clock(doneAt)}. By your usual ${clock(leaveAt)} departure it will be about ${atLeave.roundToInt()} %.",
+        )
     }
 }

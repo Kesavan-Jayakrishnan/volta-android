@@ -59,16 +59,19 @@ fun PlanningLoader(stage: LoaderStage, modifier: Modifier = Modifier) {
     LaunchedEffect(reduced) {
         if (reduced) return@LaunchedEffect
         var last = -1L
-        while (true) withFrameNanos { now ->
-            val dt = if (last < 0) 0.0 else ((now - last) / 1e9).coerceAtMost(0.05)
-            last = now
-            t += dt
-            when (current) {
-                LoaderStage.Planning -> drive[0] = drive[2] + (drive[3] - drive[2]) * smooth((t - stageAt) / 2.6)
-                else -> {
-                    val want = if (current == LoaderStage.Locating) 0.0 else SPEED
-                    drive[1] += (want - drive[1]) * (1 - kotlin.math.exp(-dt * 1.5))
-                    drive[0] += drive[1] * dt
+        while (true) {
+            withFrameNanos { now ->
+                val dt = if (last < 0) 0.0 else ((now - last) / 1e9).coerceAtMost(0.05)
+                last = now
+                t += dt
+                when (current) {
+                    LoaderStage.Planning -> drive[0] = drive[2] + (drive[3] - drive[2]) * smooth((t - stageAt) / 2.6)
+
+                    else -> {
+                        val want = if (current == LoaderStage.Locating) 0.0 else SPEED
+                        drive[1] += (want - drive[1]) * (1 - kotlin.math.exp(-dt * 1.5))
+                        drive[0] += drive[1] * dt
+                    }
                 }
             }
         }
@@ -83,7 +86,7 @@ fun PlanningLoader(stage: LoaderStage, modifier: Modifier = Modifier) {
 private const val GW = 596f
 private const val GH = 300f
 private const val CAR_X = 210f
-private const val SPEED = 120.0                 // grid units a second
+private const val SPEED = 120.0 // grid units a second
 private const val CHARGER_EVERY = 230.0
 private const val CHARGER_PHASE = 150.0
 private val Night = Color(0xFF0F141B)
@@ -99,8 +102,7 @@ private val Beam = Color(0x2EFFECBE)
 private fun smooth(x: Double): Double = x.coerceIn(0.0, 1.0).let { it * it * (3 - 2 * it) }
 
 /** Ground height at world position [x]; [amp] raises the hills from flat (0) to full (1). */
-private fun hillY(x: Float, amp: Float): Float =
-    230f - amp * (30f * sin(x / 70f) + 18f * sin(x / 31f + 1f) + 16f * sin(x / 140f + 2f))
+private fun hillY(x: Float, amp: Float): Float = 230f - amp * (30f * sin(x / 70f) + 18f * sin(x / 31f + 1f) + 16f * sin(x / 140f + 2f))
 
 private fun DrawScope.drawDrive(stage: LoaderStage, since: Double, t: Double, off: Float, moving: Boolean) {
     val sx = size.width / GW
@@ -109,7 +111,11 @@ private fun DrawScope.drawDrive(stage: LoaderStage, since: Double, t: Double, of
     fun ground(screenX: Float, amp: Float) = hillY(screenX + off, amp)
     val s = stage.ordinal
     val u = since / 2.4
-    val amp = when { s > 2 -> 1f; s == 2 -> smooth(u * 1.6).toFloat(); else -> 0f }
+    val amp = when {
+        s > 2 -> 1f
+        s == 2 -> smooth(u * 1.6).toFloat()
+        else -> 0f
+    }
 
     drawRect(Night)
     // Stars drift slowly (far away), the hills and road at full speed.
@@ -117,21 +123,35 @@ private fun DrawScope.drawDrive(stage: LoaderStage, since: Double, t: Double, of
         val x = ((i * 97 - off * 0.08f) % GW + GW) % GW
         drawRect(Color.White.copy(alpha = 0.22f), p(x, (i * 53 % 120).toFloat()), Size(2f * sx, 2f * sy))
     }
-    drawPath(Path().apply {
-        moveTo(0f, size.height)
-        var x = 0f
-        while (x <= GW) { lineTo(x * sx, ground(x, amp) * sy); x += 6f }
-        lineTo(size.width, size.height); close()
-    }, Hills)
+    drawPath(
+        Path().apply {
+            moveTo(0f, size.height)
+            var x = 0f
+            while (x <= GW) {
+                lineTo(x * sx, ground(x, amp) * sy)
+                x += 6f
+            }
+            lineTo(size.width, size.height)
+            close()
+        },
+        Hills,
+    )
 
     // The road: drawn in ahead of the car once the route is known, with centre dashes that scroll past.
-    val road = when { s > 1 -> 1f; s == 1 -> smooth(u * 1.4).toFloat(); else -> 0f }
+    val road = when {
+        s > 1 -> 1f
+        s == 1 -> smooth(u * 1.4).toFloat()
+        else -> 0f
+    }
     if (road > 0f) {
         val end = CAR_X + (GW - CAR_X) * road
         val line = Path().apply {
             moveTo(0f, ground(0f, amp) * sy)
             var x = 6f
-            while (x <= end) { lineTo(x * sx, ground(x, amp) * sy); x += 6f }
+            while (x <= end) {
+                lineTo(x * sx, ground(x, amp) * sy)
+                x += 6f
+            }
         }
         drawPath(line, Road, style = Stroke(5f * sy))
         var w = floor((off) / 20f) * 20f - off
@@ -169,7 +189,7 @@ private fun DrawScope.drawDrive(stage: LoaderStage, since: Double, t: Double, of
     val bob = if (moving) (sin(t * 11.0) * 1.2).toFloat() else 0f
     car(p(CAR_X, cy - 8f + bob), 1.2f * sx, angle, wheel = off / 7f)
     if (docked) {
-        val f = smooth((since - 2.6) / 1.2).toFloat() * (0.6f + 0.4f * ((t % 3.0) / 3.0).toFloat())   // keeps topping up while you wait
+        val f = smooth((since - 2.6) / 1.2).toFloat() * (0.6f + 0.4f * ((t % 3.0) / 3.0).toFloat()) // keeps topping up while you wait
         val box = p(CAR_X - 22f, cy - 62f)
         drawRoundRect(Post, box, Size(44f * sx, 14f * sx), CornerRadius(4f * sx))
         drawRoundRect(VoltaColors.Green, box + Offset(3f * sx, 3f * sx), Size(38f * sx * (0.14f + 0.86f * f).coerceAtMost(1f), 8f * sx), CornerRadius(2f * sx))
@@ -179,7 +199,16 @@ private fun DrawScope.drawDrive(stage: LoaderStage, since: Double, t: Double, of
 /** The car side-on; [wheel] turns the hubs (radians), so they roll with the distance covered. */
 private fun DrawScope.car(at: Offset, k: Float, angleDeg: Float, wheel: Float) = translate(at.x, at.y) {
     rotate(angleDeg, Offset.Zero) {
-        drawPath(Path().apply { moveTo(18f * k, -6f * k); lineTo(70f * k, -18f * k); lineTo(70f * k, 8f * k); lineTo(18f * k, 0f); close() }, Beam)
+        drawPath(
+            Path().apply {
+                moveTo(18f * k, -6f * k)
+                lineTo(70f * k, -18f * k)
+                lineTo(70f * k, 8f * k)
+                lineTo(18f * k, 0f)
+                close()
+            },
+            Beam,
+        )
         drawRoundRect(Body, Offset(-22f * k, -12f * k), Size(44f * k, 12f * k), CornerRadius(5f * k))
         drawRoundRect(Body, Offset(-12f * k, -22f * k), Size(24f * k, 12f * k), CornerRadius(5f * k))
         drawRect(Glass, Offset(-8f * k, -19f * k), Size(7f * k, 7f * k))
@@ -205,12 +234,19 @@ private fun DrawScope.charger(base: Offset, k: Float, alpha: Float, charging: Bo
     val c = base - Offset(0f, 24f * k)
     val bolt = Path().apply {
         val b = 0.8f * k
-        moveTo(c.x + 2 * b, c.y - 12 * b); lineTo(c.x - 7 * b, c.y + 2 * b); lineTo(c.x - 1 * b, c.y + 2 * b)
-        lineTo(c.x - 3 * b, c.y + 12 * b); lineTo(c.x + 7 * b, c.y - 2 * b); lineTo(c.x + 1 * b, c.y - 2 * b); close()
+        moveTo(c.x + 2 * b, c.y - 12 * b)
+        lineTo(c.x - 7 * b, c.y + 2 * b)
+        lineTo(c.x - 1 * b, c.y + 2 * b)
+        lineTo(c.x - 3 * b, c.y + 12 * b)
+        lineTo(c.x + 7 * b, c.y - 2 * b)
+        lineTo(c.x + 1 * b, c.y - 2 * b)
+        close()
     }
     drawPath(bolt, VoltaColors.Green.copy(alpha = alpha))
-    if (charging) for (i in 0 until 3) {
-        val ph = ((t * 0.9 + i / 3.0) % 1.0).toFloat()
-        drawCircle(VoltaColors.Green.copy(alpha = (1 - ph) * 0.7f), (14f + ph * 30f) * k, base - Offset(0f, 22f * k), style = Stroke(2f * k))
+    if (charging) {
+        for (i in 0 until 3) {
+            val ph = ((t * 0.9 + i / 3.0) % 1.0).toFloat()
+            drawCircle(VoltaColors.Green.copy(alpha = (1 - ph) * 0.7f), (14f + ph * 30f) * k, base - Offset(0f, 22f * k), style = Stroke(2f * k))
+        }
     }
 }

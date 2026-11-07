@@ -1,8 +1,8 @@
 package dev.irshadm.volta.core.planner
 
 import dev.irshadm.volta.core.model.ChargeCurvePoint
-import dev.irshadm.volta.core.model.NetworkPreference
 import dev.irshadm.volta.core.model.ChargerPreferences
+import dev.irshadm.volta.core.model.NetworkPreference
 import dev.irshadm.volta.core.model.TripSettings
 import dev.irshadm.volta.core.model.VehicleProfile
 import kotlin.math.ceil
@@ -111,8 +111,7 @@ class TripPlanner(
     }
 
     /** The fastest option. */
-    fun plan(points: List<ProfilePoint>, startSoc: Double, chargers: List<Charger>, driveMinutes: Double): TripPlan =
-        options(points, startSoc, chargers, driveMinutes).first().plan
+    fun plan(points: List<ProfilePoint>, startSoc: Double, chargers: List<Charger>, driveMinutes: Double): TripPlan = options(points, startSoc, chargers, driveMinutes).first().plan
 
     /** Greedy "drive as far as the buffer allows" — kept to describe where an impossible trip strands you. */
     private fun greedy(points: List<ProfilePoint>, startSoc: Double, chargers: List<Charger>, driveMinutes: Double): TripPlan {
@@ -154,7 +153,11 @@ class TripPlanner(
                 trace += sim.takeWhile { it.distanceM <= limitM }
                 return TripPlan(
                     PlanOutcome.Unreachable(stops, limitM, "No reachable DC charger before the battery reaches $minCharger %"),
-                    trace, total, driveMinutes, model.breakdown(points), vehicle.usableCapacityKwh,
+                    trace,
+                    total,
+                    driveMinutes,
+                    model.breakdown(points),
+                    vehicle.usableCapacityKwh,
                 )
             }
             val arrive = arrivalAt(sim, pick)
@@ -167,7 +170,11 @@ class TripPlanner(
                 trace += sim
                 return TripPlan(
                     PlanOutcome.Unreachable(stops, limitM, "Charge target $maxTarget % is too low to continue"),
-                    trace, total, driveMinutes, model.breakdown(points), vehicle.usableCapacityKwh,
+                    trace,
+                    total,
+                    driveMinutes,
+                    model.breakdown(points),
+                    vehicle.usableCapacityKwh,
                 )
             }
             stops += Stop(pick, arrive, depart, ChargeTime.minutes(vehicle, arrive, depart, pick.maxKw))
@@ -187,8 +194,7 @@ class TripPlanner(
     }
 
     /** Arrival SoC at the destination if leaving point [idx] with [soc]. */
-    private fun arrivalFromHere(points: List<ProfilePoint>, idx: Int, soc: Double): Double =
-        model.simulate(points.subList(idx, points.size), soc, capSoc = 1_000.0).last().socPercent
+    private fun arrivalFromHere(points: List<ProfilePoint>, idx: Int, soc: Double): Double = model.simulate(points.subList(idx, points.size), soc, capSoc = 1_000.0).last().socPercent
 
     private fun preferenceScore(c: Charger): Int = when {
         chargerPrefs.networkPreference == NetworkPreference.PREFER && c.network in chargerPrefs.preferredNetworks -> 1

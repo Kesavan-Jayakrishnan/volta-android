@@ -17,7 +17,8 @@ enum class CarModel(val label: String?, private val pattern: Regex?) {
     M9("M9", Regex("\\bm9\\b", RegexOption.IGNORE_CASE)),
     Cyberster("Cyberster", Regex("cyberster", RegexOption.IGNORE_CASE)),
     Tomahawk("Hector Tomahawk EV", Regex("tomahawk", RegexOption.IGNORE_CASE)),
-    Other(null, null);
+    Other(null, null),
+    ;
 
     companion object {
         fun of(text: String): CarModel = entries.firstOrNull { it.pattern?.containsMatchIn(text) == true } ?: Other
@@ -36,8 +37,7 @@ data class CarIdentity(val name: String) {
         val Unknown = CarIdentity("Your MG")
 
         /** The car saved at sign-in, for places that run outside the app's screens: widgets and notifications. */
-        fun saved(context: Context): CarIdentity =
-            context.getSharedPreferences(CAR_PREFS, Context.MODE_PRIVATE).getString(CAR_NAME, null)?.let(::CarIdentity) ?: Unknown
+        fun saved(context: Context): CarIdentity = context.getSharedPreferences(CAR_PREFS, Context.MODE_PRIVATE).getString(CAR_NAME, null)?.let(::CarIdentity) ?: Unknown
 
         /** "COMET EV EXCLUSIVE FC" → "Comet EV". A model Volta doesn't know keeps MG's name, without the brand. */
         fun of(vehicle: Vehicle?): CarIdentity {

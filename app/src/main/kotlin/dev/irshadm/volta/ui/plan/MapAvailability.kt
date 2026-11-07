@@ -23,8 +23,8 @@ import com.google.maps.android.compose.GoogleMapComposable
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapUiSettings
 import dev.irshadm.volta.BuildConfig
-import dev.irshadm.volta.core.designsystem.VoltaIcons
 import dev.irshadm.volta.core.designsystem.VoltaColors
+import dev.irshadm.volta.core.designsystem.VoltaIcons
 
 /**
  * Whether this build can draw Google's interactive map. The Maps SDK only reads its key from the app's manifest at
@@ -43,9 +43,14 @@ fun KeyedGoogleMap(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     onMapLoaded: () -> Unit = {},
-    content: @Composable @GoogleMapComposable () -> Unit,
+    content:
+    @Composable @GoogleMapComposable
+    () -> Unit,
 ) {
-    if (!interactiveMapAvailable) { MapNeedsBuildKey(modifier.fillMaxSize()); return }
+    if (!interactiveMapAvailable) {
+        MapNeedsBuildKey(modifier.fillMaxSize())
+        return
+    }
     GoogleMap(
         modifier = modifier,
         cameraPositionState = cameraPositionState,
@@ -64,8 +69,12 @@ fun MapNeedsBuildKey(modifier: Modifier = Modifier) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Icon(VoltaIcons.Map, null, tint = VoltaColors.Dim, modifier = Modifier.size(22.dp))
             Text("Map not included in this build", style = MaterialTheme.typography.titleSmall, color = VoltaColors.TextSoft)
-            Text("The route, stops and timings are all below. Builds made with a Maps SDK key show the map here.",
-                style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted, textAlign = TextAlign.Center)
+            Text(
+                "The route, stops and timings are all below. Builds made with a Maps SDK key show the map here.",
+                style = MaterialTheme.typography.bodySmall,
+                color = VoltaColors.Muted,
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }

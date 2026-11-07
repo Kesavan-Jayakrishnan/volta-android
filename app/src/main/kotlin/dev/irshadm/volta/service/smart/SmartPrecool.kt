@@ -28,8 +28,15 @@ import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
 import dev.irshadm.volta.QuickActionActivity
 import dev.irshadm.volta.R
+import dev.irshadm.volta.core.model.VehicleStatus
+import dev.irshadm.volta.core.planner.Geo
+import dev.irshadm.volta.core.planner.LatLng
 import dev.irshadm.volta.data.SavedPlace
 import dev.irshadm.volta.data.SettingsRepository
 import dev.irshadm.volta.data.db.TripDao
@@ -37,13 +44,6 @@ import dev.irshadm.volta.data.ismart.IsmartRepository
 import dev.irshadm.volta.data.ismart.LinkState
 import dev.irshadm.volta.data.trip.LocationProvider
 import dev.irshadm.volta.service.Notifications
-import dev.irshadm.volta.core.model.VehicleStatus
-import dev.irshadm.volta.core.planner.Geo
-import dev.irshadm.volta.core.planner.LatLng
-import dagger.hilt.EntryPoint
-import dagger.hilt.InstallIn
-import dagger.hilt.android.EntryPointAccessors
-import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.flow.first
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
@@ -64,14 +64,16 @@ object SmartPrecool {
     private const val PLACE_PREFIX = "place:"
     const val COOLDOWN_MS = 2 * 60 * 60_000L
 
-    fun hasPermission(context: Context) =
-        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
+    fun hasPermission(context: Context) = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     private fun fencesIntent(context: Context) = PendingIntent.getBroadcast(
-        context, 7, Intent(context, SmartGeofenceReceiver::class.java), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+        context,
+        7,
+        Intent(context, SmartGeofenceReceiver::class.java),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
     )
 
     /** Rebuilds all zones: one per saved place with Wi-Fi (exit) + the parked car (enter, if not at a place). */
@@ -108,7 +110,8 @@ object SmartPrecool {
 
     fun departing(context: Context, reason: String, place: String?, delayS: Long = 0) {
         WorkManager.getInstance(context).enqueueUniqueWork(
-            "precool-departure", ExistingWorkPolicy.KEEP,
+            "precool-departure",
+            ExistingWorkPolicy.KEEP,
             OneTimeWorkRequestBuilder<DepartureWorker>().setInitialDelay(delayS, TimeUnit.SECONDS)
                 .setInputData(workDataOf("reason" to reason, "place" to place)).build(),
         )
@@ -120,6 +123,7 @@ object SmartPrecool {
     // ---- Wi-Fi watching (fast path while the app process is alive) -----------------------------
 
     @Volatile private var currentSsid: String? = null
+
     @Volatile private var watching = false
 
     /** Current Wi-Fi name (needs location permission + location on), without quotes. */
@@ -135,14 +139,20 @@ object SmartPrecool {
         val app = context.applicationContext
         currentSsid = currentWifi(app)
         val cm = app.getSystemService(ConnectivityManager::class.java) ?: return
-        val callback = if (Build.VERSION.SDK_INT >= 31) object : ConnectivityManager.NetworkCallback(FLAG_INCLUDE_LOCATION_INFO) {
-            override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) {
-                (caps.transportInfo as? WifiInfo)?.ssid?.removeSurrounding("\"")?.takeIf { it != "<unknown ssid>" }?.let { currentSsid = it }
+        val callback = if (Build.VERSION.SDK_INT >= 31) {
+            object : ConnectivityManager.NetworkCallback(FLAG_INCLUDE_LOCATION_INFO) {
+                override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) {
+                    (caps.transportInfo as? WifiInfo)?.ssid?.removeSurrounding("\"")?.takeIf { it != "<unknown ssid>" }?.let { currentSsid = it }
+                }
+                override fun onLost(network: Network) = lost(app, settings)
             }
-            override fun onLost(network: Network) = lost(app, settings)
-        } else object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) { currentSsid = currentWifi(app) }
-            override fun onLost(network: Network) = lost(app, settings)
+        } else {
+            object : ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: Network) {
+                    currentSsid = currentWifi(app)
+                }
+                override fun onLost(network: Network) = lost(app, settings)
+            }
         }
         runCatching { cm.registerNetworkCallback(NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build(), callback) }
     }
@@ -152,7 +162,8 @@ object SmartPrecool {
         currentSsid = null
         // Which place was that? Decided in the worker after 60 s, so a Wi-Fi blip that reconnects is ignored.
         WorkManager.getInstance(context).enqueueUniqueWork(
-            "precool-departure", ExistingWorkPolicy.KEEP,
+            "precool-departure",
+            ExistingWorkPolicy.KEEP,
             OneTimeWorkRequestBuilder<DepartureWorker>().setInitialDelay(60, TimeUnit.SECONDS)
                 .setInputData(workDataOf("reason" to "wifi", "ssid" to ssid)).build(),
         )
@@ -166,6 +177,7 @@ class SmartGeofenceReceiver : BroadcastReceiver() {
         event.triggeringGeofences?.forEach { f ->
             when {
                 f.requestId == "car" && event.geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER -> SmartPrecool.departing(context, "approach", null)
+
                 f.requestId.startsWith("place:") && event.geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT ->
                     SmartPrecool.departing(context, "left", f.requestId.removePrefix("place:"))
             }
@@ -212,12 +224,17 @@ class RearmWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
 object RoutinePrefetch {
     suspend fun scheduleNext(context: Context, trips: TripDao) {
         val next = Routine.nextToday(Routine.slots(trips.finished(300))) ?: return
-        val at = Calendar.getInstance().apply { set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0) }.timeInMillis +
+        val at = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+        }.timeInMillis +
             (next.minuteOfDay - 10) * 60_000L
         val delay = at - System.currentTimeMillis()
         if (delay <= 0) return
         WorkManager.getInstance(context).enqueueUniqueWork(
-            "precool-prefetch", ExistingWorkPolicy.REPLACE,
+            "precool-prefetch",
+            ExistingWorkPolicy.REPLACE,
             OneTimeWorkRequestBuilder<PrefetchWorker>().setInitialDelay(delay, TimeUnit.MILLISECONDS).build(),
         )
     }
@@ -235,7 +252,6 @@ class PrefetchWorker(context: Context, params: WorkerParameters) : CoroutineWork
 class DepartureWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     companion object {
         const val NOTIFICATION_ID = 4243
-
     }
 
     override suspend fun doWork(): Result {
@@ -253,7 +269,9 @@ class DepartureWorker(context: Context, params: WorkerParameters) : CoroutineWor
                 if (ssid != null && SmartPrecool.currentWifi(ctx) == ssid) return Result.success()
                 places.firstOrNull { it.ssid == ssid } ?: return Result.success()
             }
+
             "left" -> places.firstOrNull { it.name == inputData.getString("place") }
+
             else -> null
         }
         val placeKey = place?.name ?: "elsewhere"
@@ -311,7 +329,8 @@ private fun postSuggestion(ctx: Context, insideC: Double, outside: Int, place: S
     val minutes = Cooling.minutes(insideC)
     val cost = Cooling.batteryText(Cooling.batteryPercent(minutes, capacityKwh))
     val sheet = PendingIntent.getActivity(
-        ctx, 8,
+        ctx,
+        8,
         Intent(Intent.ACTION_VIEW, Uri.parse("volta://action/precool"), ctx, QuickActionActivity::class.java)
             .putExtra("suggestion_place", place).putExtra("suggestion_reason", reason)
             .putExtra("suggestion_usual", slot?.let { "%d:%02d".format(((it.minuteOfDay / 60 + 11) % 12) + 1, it.minuteOfDay % 60) })
@@ -319,7 +338,9 @@ private fun postSuggestion(ctx: Context, insideC: Double, outside: Int, place: S
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
     val notToday = PendingIntent.getBroadcast(
-        ctx, 9, Intent(ctx, PrecoolFeedbackReceiver::class.java).putExtra("place", place).putExtra("what", "mute_today"),
+        ctx,
+        9,
+        Intent(ctx, PrecoolFeedbackReceiver::class.java).putExtra("place", place).putExtra("what", "mute_today"),
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
     val placeName = place.takeIf { it != "elsewhere" }

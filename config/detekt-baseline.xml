@@ -1,0 +1,185 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:DashboardSections.kt:v.parked() &amp;&amp; v.locked?.value == false &amp;&amp; unlockedFor != null &amp;&amp; unlockedFor &gt; wait</ID>
+    <ID>ComplexCondition:EnergySection.kt:EnergySettingsViewModel$km != null &amp;&amp; kwh != null &amp;&amp; km &gt;= 5 &amp;&amp; kwh &gt;= 1</ID>
+    <ID>ComplexCondition:MgIsmartClient.kt:MgIsmartClient$code == 7 || (code != null &amp;&amp; code != 0 &amp;&amp; sessionInvalid(message))</ID>
+    <ID>ComplexCondition:Models.kt:VehicleSnapshot.Companion$driverWindow &amp;&amp; b.locked &amp;&amp; !( b.driverDoor || b.passengerDoor || b.rearLeftDoor || b.rearRightDoor || b.boot || b.bonnet || b.passengerWindow == true || b.rearLeftWindow == true || b.rearRightWindow == true )</ID>
+    <ID>ComplexCondition:RangeWatch.kt:RangeWatch$driveKm != null &amp;&amp; driveKwh != null &amp;&amp; driveKm &gt;= 10 &amp;&amp; driveKwh &gt;= 1</ID>
+    <ID>ComplexCondition:RouteAdvisor.kt:RouteAdvisor$hilly &amp;&amp; (h &gt;= 18 * 60 + 45 || h &lt; 6 * 60) &amp;&amp; minuteOfDay(trip.departAt) in 6 * 60..17 * 60</ID>
+    <ID>ComplexCondition:SmartAlerts.kt:SmartAlerts$driving &amp;&amp; ownerAway == true &amp;&amp; Alerts.isOn(context, "moved") &amp;&amp; !prefs.getBoolean("moved", false)</ID>
+    <ID>ComplexCondition:SmartAlerts.kt:SmartAlerts$speed != null &amp;&amp; speed &gt; SPEED_LIMIT_KMH &amp;&amp; ownerAway == true &amp;&amp; Alerts.isOn(context, "speed") &amp;&amp; prefs.getLong("speed_journey", -1) != journey</ID>
+    <ID>ComplexCondition:SmartAlerts.kt:SmartAlerts$v.ignitionOn?.value != true &amp;&amp; days.none { it.getInt("d") == day } &amp;&amp; (t != null || volts != null)</ID>
+    <ID>ComplexCondition:SocRepository.kt:SocRepository$last != null &amp;&amp; last.measuredAtMillis == reading.measuredAtMillis &amp;&amp; last.socPercent == reading.socPercent &amp;&amp; last.odometerKm == reading.odometerKm</ID>
+    <ID>ComplexCondition:TripRepository.kt:TripRepository$stop != null &amp;&amp; fix != null &amp;&amp; Geo.distanceM(fix.position, stop.charger.position) &lt; AT_STOP_M &amp;&amp; stop.charger.id !in next.visitedStops</ID>
+    <ID>CyclomaticComplexMethod:BatteryCare.kt:BatteryCare$fun tip: Tip?</ID>
+    <ID>CyclomaticComplexMethod:CarCheckWorker.kt:CarCheckWorker.Companion$fun evaluate</ID>
+    <ID>CyclomaticComplexMethod:CarModels.kt:CarModels$fun atStop: PaneUi</ID>
+    <ID>CyclomaticComplexMethod:CarModels.kt:CarModels$fun home: PaneUi</ID>
+    <ID>CyclomaticComplexMethod:CarModels.kt:CarModels$fun liveTrip: PaneUi</ID>
+    <ID>CyclomaticComplexMethod:CarModels.kt:CarModels$fun stopRows: List&lt;StopRowUi&gt;</ID>
+    <ID>CyclomaticComplexMethod:ChargeTracker.kt:ChargeTracker$suspend fun onReading</ID>
+    <ID>CyclomaticComplexMethod:ConnectionLostScreen.kt:@Composable fun ConnectionLostScreen</ID>
+    <ID>CyclomaticComplexMethod:DashboardSections.kt:@Composable fun HomePanel</ID>
+    <ID>CyclomaticComplexMethod:DashboardSections.kt:@Composable private fun AcButton</ID>
+    <ID>CyclomaticComplexMethod:DashboardSections.kt:@Composable private fun ChargeBar</ID>
+    <ID>CyclomaticComplexMethod:DashboardSections.kt:@Composable private fun SlideToggle</ID>
+    <ID>CyclomaticComplexMethod:DashboardSections.kt:fun carAlerts: List&lt;CarAlert&gt;</ID>
+    <ID>CyclomaticComplexMethod:DashboardSections.kt:private fun checks: List&lt;Check&gt;</ID>
+    <ID>CyclomaticComplexMethod:DriveLogger.kt:DriveLogger$suspend fun resplit</ID>
+    <ID>CyclomaticComplexMethod:EnergyScreen.kt:@Composable private fun BillCard</ID>
+    <ID>CyclomaticComplexMethod:EnergyScreen.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun EnergyScreen</ID>
+    <ID>CyclomaticComplexMethod:EnergySection.kt:@Composable fun EnergySettingsSection</ID>
+    <ID>CyclomaticComplexMethod:GoogleMapsClient.kt:GoogleMapsClient$private suspend fun mealPlaces: List&lt;MealSpot&gt;</ID>
+    <ID>CyclomaticComplexMethod:HomeScreen.kt:@Composable fun HomeScreen</ID>
+    <ID>CyclomaticComplexMethod:HomeScreen.kt:@Composable private fun StatusChip</ID>
+    <ID>CyclomaticComplexMethod:IsmartRepository.kt:IsmartRepository$private fun map: VehicleStatus</ID>
+    <ID>CyclomaticComplexMethod:IsmartRepository.kt:IsmartRepository$suspend fun refresh</ID>
+    <ID>CyclomaticComplexMethod:JourneyPreview.kt:@Composable fun JourneyPreview</ID>
+    <ID>CyclomaticComplexMethod:MapsKeyScreen.kt:@Composable fun MapsKeyScreen</ID>
+    <ID>CyclomaticComplexMethod:MealPlanner.kt:MealPlanner$fun plan: TimedPlan</ID>
+    <ID>CyclomaticComplexMethod:MgIsmartClient.kt:MgIsmartClient$private suspend fun gatewayGet: JsonObject</ID>
+    <ID>CyclomaticComplexMethod:MgIsmartClient.kt:MgIsmartClient$private suspend fun poll: ByteArray?</ID>
+    <ID>CyclomaticComplexMethod:MgIsmartClient.kt:MgIsmartClient$private suspend fun sendCommand</ID>
+    <ID>CyclomaticComplexMethod:MgIsmartClient.kt:MgIsmartClient$suspend fun command</ID>
+    <ID>CyclomaticComplexMethod:Models.kt:VehicleSnapshot.Companion$fun fromStatus: VehicleSnapshot</ID>
+    <ID>CyclomaticComplexMethod:OptimalPlanner.kt:OptimalPlanner$private fun search: TripPlan?</ID>
+    <ID>CyclomaticComplexMethod:PlanScreen.kt:@Composable fun PlanScreen</ID>
+    <ID>CyclomaticComplexMethod:PlanScreen.kt:@Composable private fun Hero</ID>
+    <ID>CyclomaticComplexMethod:PlanScreen.kt:@Composable private fun PlanningSteps</ID>
+    <ID>CyclomaticComplexMethod:PlanScreen.kt:@Composable private fun RoutePicker</ID>
+    <ID>CyclomaticComplexMethod:PlanScreen.kt:@OptIn(ExperimentalLayoutApi::class) @Composable private fun FormScreen</ID>
+    <ID>CyclomaticComplexMethod:PlanScreen.kt:@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class) @Composable private fun TripSettingsSheet</ID>
+    <ID>CyclomaticComplexMethod:PlanTimeline.kt:@Composable private fun MealChooser</ID>
+    <ID>CyclomaticComplexMethod:PlanTimeline.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun StopSheet</ID>
+    <ID>CyclomaticComplexMethod:PlanningLoader.kt:private fun DrawScope.drawDrive</ID>
+    <ID>CyclomaticComplexMethod:QuickActionActivity.kt:QuickActionActivity$@Composable private fun PrecoolHeader</ID>
+    <ID>CyclomaticComplexMethod:QuickActionActivity.kt:QuickActionActivity$@Composable private fun Sheet</ID>
+    <ID>CyclomaticComplexMethod:RangeWatch.kt:RangeWatch$suspend fun evaluate</ID>
+    <ID>CyclomaticComplexMethod:RouteAdvisor.kt:RouteAdvisor$private fun all: List&lt;Advice&gt;</ID>
+    <ID>CyclomaticComplexMethod:SettingsScreen.kt:@Composable fun SettingsScreen</ID>
+    <ID>CyclomaticComplexMethod:SettingsScreen.kt:@Composable private fun HomeChargerSection</ID>
+    <ID>CyclomaticComplexMethod:SettingsScreen.kt:@OptIn(ExperimentalLayoutApi::class) @Composable private fun ChargersPage</ID>
+    <ID>CyclomaticComplexMethod:SmartAlerts.kt:SmartAlerts$private fun health</ID>
+    <ID>CyclomaticComplexMethod:SmartAlerts.kt:SmartAlerts$private suspend fun chargeByMorning</ID>
+    <ID>CyclomaticComplexMethod:SmartAlerts.kt:SmartAlerts$suspend fun evaluate</ID>
+    <ID>CyclomaticComplexMethod:SmartPrecool.kt:DepartureWorker$override suspend fun doWork: Result</ID>
+    <ID>CyclomaticComplexMethod:SmartPrecoolSection.kt:@Composable fun SmartPrecoolSection</ID>
+    <ID>CyclomaticComplexMethod:SpinCharger.kt:SpinCharger$@SuppressLint("MissingPermission") suspend fun connect</ID>
+    <ID>CyclomaticComplexMethod:SpinCharger.kt:SpinCharger$suspend fun charge: Boolean</ID>
+    <ID>CyclomaticComplexMethod:SplashIntro.kt:@Composable fun SplashIntro</ID>
+    <ID>CyclomaticComplexMethod:Tap.kt:Tap$fun decodeDispatcher: Dispatcher</ID>
+    <ID>CyclomaticComplexMethod:Tap.kt:Tap$fun decodeDispatcherV11: DispatcherV11</ID>
+    <ID>CyclomaticComplexMethod:Tap.kt:Tap$fun decodeV21: V21Response</ID>
+    <ID>CyclomaticComplexMethod:Tap.kt:Tap$fun encodeDispatcher: ByteArray</ID>
+    <ID>CyclomaticComplexMethod:TripPlanner.kt:TripPlanner$private fun greedy: TripPlan</ID>
+    <ID>CyclomaticComplexMethod:TripRepository.kt:TripRepository$suspend fun tick: Long</ID>
+    <ID>CyclomaticComplexMethod:TripScreen.kt:@Composable private fun DriveRow</ID>
+    <ID>CyclomaticComplexMethod:TripScreen.kt:@Composable private fun Live</ID>
+    <ID>CyclomaticComplexMethod:TripVisuals.kt:@Composable fun ElevationChart</ID>
+    <ID>CyclomaticComplexMethod:TyreSheet.kt:@OptIn(ExperimentalMaterial3Api::class) @Composable fun TyreSheet</ID>
+    <ID>CyclomaticComplexMethod:VoltaWidget.kt:VoltaWidget$private fun medium</ID>
+    <ID>DestructuringDeclarationWithTooManyEntries:HomeViewModel.kt:HomeViewModel$val (link, cmd, now, place, w) = ex</ID>
+    <ID>LongMethod:CarModels.kt:CarModels$fun liveTrip: PaneUi</ID>
+    <ID>LongMethod:ChargeTracker.kt:ChargeTracker$suspend fun onReading</ID>
+    <ID>LongMethod:DashboardSections.kt:fun carAlerts: List&lt;CarAlert&gt;</ID>
+    <ID>LongMethod:MealPlanner.kt:MealPlanner$fun plan: TimedPlan</ID>
+    <ID>LongMethod:PlanningLoader.kt:private fun DrawScope.drawDrive</ID>
+    <ID>LongMethod:RouteAdvisor.kt:RouteAdvisor$private fun all: List&lt;Advice&gt;</ID>
+    <ID>LongMethod:TripPlanner.kt:TripPlanner$private fun greedy: TripPlan</ID>
+    <ID>LongMethod:TripRepository.kt:TripRepository$suspend fun tick: Long</ID>
+    <ID>LongMethod:VoltaWidget.kt:VoltaWidget$private fun medium</ID>
+    <ID>LoopWithTooManyJumpStatements:DriveLogger.kt:DriveLogger$for</ID>
+    <ID>LoopWithTooManyJumpStatements:MealPlanner.kt:MealPlanner$for</ID>
+    <ID>LoopWithTooManyJumpStatements:OptimalPlanner.kt:OptimalPlanner$for</ID>
+    <ID>LoopWithTooManyJumpStatements:RouteAdvisor.kt:RouteAdvisor$for</ID>
+    <ID>MatchingDeclarationName:AccountSection.kt:AccountViewModel : ViewModel</ID>
+    <ID>MatchingDeclarationName:BottomBar.kt:BottomTab</ID>
+    <ID>MatchingDeclarationName:Car360.kt:Car360Frames</ID>
+    <ID>MatchingDeclarationName:ConnectionLostScreen.kt:AccountGateViewModel : ViewModel</ID>
+    <ID>MatchingDeclarationName:PlanningLoader.kt:LoaderStage</ID>
+    <ID>MatchingDeclarationName:SmartPrecoolSection.kt:SmartPrecoolViewModel : ViewModel</ID>
+    <ID>ReturnCount:BatteryCare.kt:BatteryCare$fun tip: Tip?</ID>
+    <ID>ReturnCount:BatteryCare.kt:BatteryCare$fun usualDailyKm: Double?</ID>
+    <ID>ReturnCount:CarCheckWorker.kt:CarCheckWorker$override suspend fun doWork: Result</ID>
+    <ID>ReturnCount:CarIdentity.kt:CarIdentity.Companion$fun of: CarIdentity</ID>
+    <ID>ReturnCount:CarModels.kt:CarModels$fun home: PaneUi</ID>
+    <ID>ReturnCount:CarModels.kt:CarModels$fun minutesBetween: Double</ID>
+    <ID>ReturnCount:Cooling.kt:CoolingWorker$override suspend fun doWork: Result</ID>
+    <ID>ReturnCount:Crypto.kt:LoginFrame$fun decode: Result</ID>
+    <ID>ReturnCount:DashboardSections.kt:fun send</ID>
+    <ID>ReturnCount:DashboardSections.kt:internal fun chargeMinutesLeft: Int?</ID>
+    <ID>ReturnCount:DriveLogger.kt:DriveLogger$private fun startOf: Long</ID>
+    <ID>ReturnCount:DriveLogger.kt:DriveLogger$private suspend fun placeName: String?</ID>
+    <ID>ReturnCount:DriveLogger.kt:DriveLogger$suspend fun onReading</ID>
+    <ID>ReturnCount:GoogleMapsClient.kt:GoogleMapsClient$private fun searchedNear: List&lt;ChargerDto&gt;?</ID>
+    <ID>ReturnCount:IsmartRepository.kt:internal fun ignitionChangedAt: Long?</ID>
+    <ID>ReturnCount:IsmartRepository.kt:internal fun isDriving: Boolean</ID>
+    <ID>ReturnCount:LeftCarReceiver.kt:LeftCarReceiver$override fun onReceive</ID>
+    <ID>ReturnCount:LocationProvider.kt:LocationProvider$@SuppressLint("MissingPermission") suspend fun current: Fix?</ID>
+    <ID>ReturnCount:MealPlanner.kt:MealPlanner$fun plan: TimedPlan</ID>
+    <ID>ReturnCount:MgIsmartClient.kt:MgIsmartClient$private suspend fun poll: ByteArray?</ID>
+    <ID>ReturnCount:OptimalPlanner.kt:OptimalPlanner$private fun search: TripPlan?</ID>
+    <ID>ReturnCount:PlanViewModel.kt:PlanViewModel$suspend fun photo: android.graphics.Bitmap?</ID>
+    <ID>ReturnCount:RangeWatch.kt:RangeWatch$suspend fun evaluate</ID>
+    <ID>ReturnCount:SecureStore.kt:SecureStore$override fun load: LoginFrame.Session?</ID>
+    <ID>ReturnCount:SmartAlerts.kt:SmartAlerts$private suspend fun chargeByMorning</ID>
+    <ID>ReturnCount:SmartAlerts.kt:SmartAlerts$private suspend fun preTrip</ID>
+    <ID>ReturnCount:SmartPrecool.kt:DepartureWorker$override suspend fun doWork: Result</ID>
+    <ID>ReturnCount:SmartPrecool.kt:SmartPrecool$suspend fun onCarReading</ID>
+    <ID>ReturnCount:SpinCharger.kt:SpinCharger$@SuppressLint("MissingPermission") private fun write: Boolean</ID>
+    <ID>ReturnCount:SpinCharger.kt:SpinCharger$@SuppressLint("MissingPermission") suspend fun scan: List&lt;Found&gt;</ID>
+    <ID>ReturnCount:SpinCharger.kt:SpinCharger$private suspend fun send: String?</ID>
+    <ID>ReturnCount:Tap.kt:Tap$fun decodeV21: V21Response</ID>
+    <ID>ReturnCount:TripPlanner.kt:ChargeTime$fun curveKw: Double</ID>
+    <ID>ReturnCount:TripPlanner.kt:TripPlanner$private fun greedy: TripPlan</ID>
+    <ID>ReturnCount:TyreCare.kt:TyreCare$fun checks: List&lt;Check&gt;</ID>
+    <ID>ReturnCount:Walking.kt:Walking$fun now: Mode?</ID>
+    <ID>ReturnCount:WeatherClient.kt:WeatherClient$private suspend fun coveredHome: Boolean</ID>
+    <ID>ReturnCount:WeatherClient.kt:WeatherClient$private suspend fun fetch: Weather?</ID>
+    <ID>SwallowedException:GoogleMapsClient.kt:GoogleMapsClient$e: IdentityRefused</ID>
+    <ID>SwallowedException:GoogleMapsClient.kt:GoogleMapsClient$e: TransientException</ID>
+    <ID>SwallowedException:IsmartRepository.kt:IsmartRepository$e: CommandIndeterminateException</ID>
+    <ID>SwallowedException:IsmartRepository.kt:IsmartRepository$e: SignedOutException</ID>
+    <ID>SwallowedException:MgIsmartClient.kt:MgIsmartClient$e: Exception</ID>
+    <ID>SwallowedException:MgIsmartClient.kt:MgIsmartClient$e: TapFormatException</ID>
+    <ID>ThrowsCount:Crypto.kt:LoginFrame$fun decode: Result</ID>
+    <ID>ThrowsCount:MgIsmartClient.kt:MgIsmartClient$private suspend fun gatewayGet: JsonObject</ID>
+    <ID>ThrowsCount:MgIsmartClient.kt:MgIsmartClient$private suspend fun loginLocked: LoginFrame.Session</ID>
+    <ID>ThrowsCount:MgIsmartClient.kt:MgIsmartClient$private suspend fun poll: ByteArray?</ID>
+    <ID>ThrowsCount:MgIsmartClient.kt:MgIsmartClient$private suspend fun sendCommand</ID>
+    <ID>ThrowsCount:MgIsmartClient.kt:MgIsmartClient$private suspend fun verifyPin</ID>
+    <ID>ThrowsCount:Tap.kt:Tap$fun decodePinResponse: DispatcherV11</ID>
+    <ID>ThrowsCount:Tap.kt:Tap$fun decodeV21: V21Response</ID>
+    <ID>TooGenericExceptionCaught:IsmartRepository.kt:IsmartRepository$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:MgIsmartClient.kt:MgIsmartClient$e: Exception</ID>
+    <ID>TooManyFunctions:CarModels.kt:CarModels</ID>
+    <ID>TooManyFunctions:CarUi.kt:CarUi</ID>
+    <ID>TooManyFunctions:DashboardSections.kt:dev.irshadm.volta.ui.home.DashboardSections.kt</ID>
+    <ID>TooManyFunctions:EnergyScreen.kt:dev.irshadm.volta.ui.energy.EnergyScreen.kt</ID>
+    <ID>TooManyFunctions:GoogleMapsClient.kt:GoogleMapsClient</ID>
+    <ID>TooManyFunctions:IsmartRepository.kt:IsmartRepository</ID>
+    <ID>TooManyFunctions:JourneyPreview.kt:dev.irshadm.volta.ui.plan.JourneyPreview.kt</ID>
+    <ID>TooManyFunctions:MealPlanner.kt:MealPlanner</ID>
+    <ID>TooManyFunctions:MgIsmartClient.kt:MgIsmartClient</ID>
+    <ID>TooManyFunctions:PlanScreen.kt:dev.irshadm.volta.ui.plan.PlanScreen.kt</ID>
+    <ID>TooManyFunctions:PlanTimeline.kt:dev.irshadm.volta.ui.plan.PlanTimeline.kt</ID>
+    <ID>TooManyFunctions:PlanViewModel.kt:PlanViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:QuickActionActivity.kt:QuickActionActivity : FragmentActivity</ID>
+    <ID>TooManyFunctions:SettingsRepository.kt:SettingsRepository</ID>
+    <ID>TooManyFunctions:SettingsScreen.kt:dev.irshadm.volta.ui.settings.SettingsScreen.kt</ID>
+    <ID>TooManyFunctions:SpinCharger.kt:SpinCharger</ID>
+    <ID>TooManyFunctions:Tap.kt:Tap</ID>
+    <ID>TooManyFunctions:TripEntities.kt:TripDao</ID>
+    <ID>TooManyFunctions:TripScreen.kt:dev.irshadm.volta.ui.trip.TripScreen.kt</ID>
+    <ID>TooManyFunctions:VoltaWidget.kt:VoltaWidget</ID>
+    <ID>UnusedParameter:CarHero.kt:onToggleView: () -&gt; Unit</ID>
+    <ID>UnusedParameter:HomeScreen.kt:onPlanTrip: () -&gt; Unit</ID>
+    <ID>UnusedParameter:HomeScreen.kt:onSettings: () -&gt; Unit</ID>
+    <ID>UnusedParameter:MealPlanner.kt:MealPlanner$startSoc: Double</ID>
+    <ID>UnusedParameter:Replanner.kt:Replanner$profile: List&lt;ProfilePoint&gt;</ID>
+    <ID>UnusedParameter:SmartPrecool.kt:SmartPrecool$settings: SettingsRepository</ID>
+    <ID>UnusedParameter:TripScreen.kt:onPlan: () -&gt; Unit</ID>
+  </CurrentIssues>
+</SmellBaseline>

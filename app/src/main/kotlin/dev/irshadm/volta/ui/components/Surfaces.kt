@@ -59,8 +59,12 @@ fun VoltaCard(
 fun StatusTile(icon: ImageVector, tint: Color, label: String, modifier: Modifier = Modifier, alert: Boolean = false, onClick: (() -> Unit)? = null) {
     val interaction = remember { MutableInteractionSource() }
     VoltaCard(
-        if (onClick == null) modifier else modifier.pressScale(interaction).clip(RoundedCornerShape(16.dp))
-            .clickable(interaction, indication = null, role = Role.Button, onClick = onClick),
+        if (onClick == null) {
+            modifier
+        } else {
+            modifier.pressScale(interaction).clip(RoundedCornerShape(16.dp))
+                .clickable(interaction, indication = null, role = Role.Button, onClick = onClick)
+        },
         background = if (alert) VoltaColors.tint(VoltaColors.Amber, 0.08f) else VoltaColors.Surface,
         border = if (alert) VoltaColors.tint(VoltaColors.Amber, 0.4f) else VoltaColors.Border,
         radius = 16.dp,

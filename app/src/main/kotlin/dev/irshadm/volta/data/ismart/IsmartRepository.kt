@@ -1,7 +1,5 @@
 package dev.irshadm.volta.data.ismart
 
-import dev.irshadm.volta.data.SettingsRepository
-import dev.irshadm.volta.data.SocRepository
 import dev.irshadm.volta.core.ismart.CommandIndeterminateException
 import dev.irshadm.volta.core.ismart.Credentials
 import dev.irshadm.volta.core.ismart.IsmartException
@@ -13,16 +11,18 @@ import dev.irshadm.volta.core.ismart.RemoteCommand
 import dev.irshadm.volta.core.ismart.SignedOutException
 import dev.irshadm.volta.core.model.BodyStatus
 import dev.irshadm.volta.core.model.GpsFix
+import dev.irshadm.volta.core.model.LightStatus
 import dev.irshadm.volta.core.model.SocReading
 import dev.irshadm.volta.core.model.SocSource
 import dev.irshadm.volta.core.model.Timed
 import dev.irshadm.volta.core.model.TyrePressures
 import dev.irshadm.volta.core.model.VehicleStatus
 import dev.irshadm.volta.core.model.WindowStatus
-import dev.irshadm.volta.core.model.LightStatus
+import dev.irshadm.volta.data.SettingsRepository
+import dev.irshadm.volta.data.SocRepository
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -34,6 +34,7 @@ import javax.inject.Singleton
 sealed interface LinkState {
     data object SignedOut : LinkState
     data class Connected(val phone: String, val refreshing: Boolean = false, val error: String? = null) : LinkState
+
     /** The session was taken by another login (MG app) or expired; the saved login is still good, so Reconnect is one tap. */
     data class NeedsReconnect(val phone: String, val error: String? = null) : LinkState
 }
@@ -62,8 +63,11 @@ class IsmartRepository @Inject constructor(
     /** Last known status, persisted so Home shows the car immediately on a cold start. */
     private val cacheFile = java.io.File(context.filesDir, "last_status.json")
     private val _status = MutableStateFlow<VehicleStatus?>(
-        if (_link.value is LinkState.SignedOut) null
-        else runCatching { cacheJson.decodeFromString<VehicleStatus>(cacheFile.readText()) }.getOrNull(),
+        if (_link.value is LinkState.SignedOut) {
+            null
+        } else {
+            runCatching { cacheJson.decodeFromString<VehicleStatus>(cacheFile.readText()) }.getOrNull()
+        },
     )
     val status: StateFlow<VehicleStatus?> = _status
 
@@ -77,6 +81,7 @@ class IsmartRepository @Inject constructor(
 
     val hasPin: Boolean get() = secure.pinHash != null
     private val refreshMutex = Mutex()
+
     /** Work that must outlive the screen that started it (the first read after signing in). */
     private val scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO)
 
@@ -87,7 +92,9 @@ class IsmartRepository @Inject constructor(
     /** "Keep showing saved readings" on the connection-lost screen; reset when the link changes state. */
     private val _reconnectDismissed = MutableStateFlow(false)
     val reconnectDismissed: StateFlow<Boolean> = _reconnectDismissed
-    fun dismissReconnect() { _reconnectDismissed.value = true }
+    fun dismissReconnect() {
+        _reconnectDismissed.value = true
+    }
 
     /** True while [reconnect] is signing in; the link stays [LinkState.NeedsReconnect] until it succeeds. */
     private val _reconnecting = MutableStateFlow(false)
@@ -140,8 +147,11 @@ class IsmartRepository @Inject constructor(
         client.signOut()
         secure.clearLogin()
         if (!keepReadings) {
-            _status.value = null; cacheFile.delete(); _rejection.value = null
-            carPrefs.edit().clear().apply(); _car.value = CarIdentity.Unknown
+            _status.value = null
+            cacheFile.delete()
+            _rejection.value = null
+            carPrefs.edit().clear().apply()
+            _car.value = CarIdentity.Unknown
         }
         _link.value = LinkState.SignedOut
         _reconnectDismissed.value = false
@@ -160,7 +170,7 @@ class IsmartRepository @Inject constructor(
             client.signIn()
             _link.value = LinkState.Connected(phone, refreshing = true)
             _reconnectDismissed.value = false
-            scope.launch { refresh() }  // outlives the connection-lost screen that Connected closes
+            scope.launch { refresh() } // outlives the connection-lost screen that Connected closes
         } catch (e: LoginRejectedException) {
             _rejection.value = e.message
             signOut(keepReadings = true)
@@ -171,8 +181,12 @@ class IsmartRepository @Inject constructor(
         }
     }
 
-    fun setPin(pin: String) { secure.pinHash = MgCrypto.pinHash(pin) }
-    fun clearPin() { secure.pinHash = null }
+    fun setPin(pin: String) {
+        secure.pinHash = MgCrypto.pinHash(pin)
+    }
+    fun clearPin() {
+        secure.pinHash = null
+    }
 
     /** On-demand refresh. Readings are stored as a time series. */
     suspend fun refresh(includeCharge: Boolean = true, retrying: Boolean = false) = refreshMutex.withLock {
@@ -183,13 +197,17 @@ class IsmartRepository @Inject constructor(
             val before = _status.value
             // A read without the charge frame (e.g. right after a command) keeps the last charging figures.
             val status = map(r, before).let { st ->
-                if (r.charge != null || before == null) st else st.copy(
-                    pluggedIn = before.pluggedIn, charging = before.charging, chargePowerKw = before.chargePowerKw,
-                    chargeMinutesRemaining = before.chargeMinutesRemaining, energySinceLastChargeKwh = before.energySinceLastChargeKwh,
-                    distanceSinceLastChargeKm = before.distanceSinceLastChargeKm, chargingType = before.chargingType,
-                    chargeStartedAtMillis = before.chargeStartedAtMillis, kmToday = before.kmToday, kwhToday = before.kwhToday,
-                    soc = st.soc?.let { cur -> Timed(cur.value.copy(batteryEnergyKwh = cur.value.batteryEnergyKwh ?: before.soc?.value?.batteryEnergyKwh), cur.atMillis) },
-                )
+                if (r.charge != null || before == null) {
+                    st
+                } else {
+                    st.copy(
+                        pluggedIn = before.pluggedIn, charging = before.charging, chargePowerKw = before.chargePowerKw,
+                        chargeMinutesRemaining = before.chargeMinutesRemaining, energySinceLastChargeKwh = before.energySinceLastChargeKwh,
+                        distanceSinceLastChargeKm = before.distanceSinceLastChargeKm, chargingType = before.chargingType,
+                        chargeStartedAtMillis = before.chargeStartedAtMillis, kmToday = before.kmToday, kwhToday = before.kwhToday,
+                        soc = st.soc?.let { cur -> Timed(cur.value.copy(batteryEnergyKwh = cur.value.batteryEnergyKwh ?: before.soc?.value?.batteryEnergyKwh), cur.atMillis) },
+                    )
+                }
             }.let { st ->
                 // A parked time saved before a logged drive is stale.
                 val lastDrive = runCatching { drives.lastDriveEnd() }.getOrNull()
@@ -197,10 +215,15 @@ class IsmartRepository @Inject constructor(
             }
             _status.value = status
             // Signed in before the model was saved (or MG didn't send one then): ask once more.
-            if (_car.value == CarIdentity.Unknown) runCatching {
-                val vehicles = client.vehicles()
-                val car = CarIdentity.of(vehicles.firstOrNull { it.vin == client.vin } ?: vehicles.firstOrNull())
-                if (car != CarIdentity.Unknown) { carPrefs.edit().putString(CAR_NAME, car.name).apply(); _car.value = car }
+            if (_car.value == CarIdentity.Unknown) {
+                runCatching {
+                    val vehicles = client.vehicles()
+                    val car = CarIdentity.of(vehicles.firstOrNull { it.vin == client.vin } ?: vehicles.firstOrNull())
+                    if (car != CarIdentity.Unknown) {
+                        carPrefs.edit().putString(CAR_NAME, car.name).apply()
+                        _car.value = car
+                    }
+                }
             }
             runCatching { cacheFile.writeText(cacheJson.encodeToString(VehicleStatus.serializer(), status)) }
             val previous = socRepository.latest.first()
@@ -221,7 +244,10 @@ class IsmartRepository @Inject constructor(
     }
 
     suspend fun send(cmd: RemoteCommand) {
-        val pin = secure.pinHash ?: run { _command.value = CommandState.Failed(cmd, "Set your control PIN in Settings first", false); return }
+        val pin = secure.pinHash ?: run {
+            _command.value = CommandState.Failed(cmd, "Set your control PIN in Settings first", false)
+            return
+        }
         _command.value = CommandState.Running(cmd)
         try {
             client.command(cmd, pin)
@@ -238,7 +264,9 @@ class IsmartRepository @Inject constructor(
         }
     }
 
-    fun clearCommand() { _command.value = CommandState.Idle }
+    fun clearCommand() {
+        _command.value = CommandState.Idle
+    }
 
     private fun map(r: MgIsmartClient.Reading, previous: VehicleStatus?): VehicleStatus {
         val s = r.snapshot
@@ -246,8 +274,14 @@ class IsmartRepository @Inject constructor(
         val at = s.statusTime * 1000
         val socPct = c?.socPercent ?: s.socPercent?.toDouble()
         val soc = socPct?.let {
-            SocReading(it.coerceIn(0.0, 100.0), SocSource.ISMART, (c?.statusTime ?: s.statusTime) * 1000,
-                batteryEnergyKwh = c?.batteryEnergyKwh, carRangeKm = c?.rangeKm ?: s.rangeKm, odometerKm = s.odometerKm)
+            SocReading(
+                it.coerceIn(0.0, 100.0),
+                SocSource.ISMART,
+                (c?.statusTime ?: s.statusTime) * 1000,
+                batteryEnergyKwh = c?.batteryEnergyKwh,
+                carRangeKm = c?.rangeKm ?: s.rangeKm,
+                odometerKm = s.odometerKm,
+            )
         }
         val on = isDriving(s.powerMode, s.engineStatus, s.climateRunning, s.speedKmh, s.handBrakeOn)
         return VehicleStatus(
@@ -273,9 +307,11 @@ class IsmartRepository @Inject constructor(
             interiorTempC = s.interiorTempC?.let { Timed(it.toDouble(), at) },
             exteriorTempC = s.exteriorTempC?.let { Timed(it.toDouble(), at) },
             gps = if (s.latitude != null && s.longitude != null) Timed(GpsFix(s.latitude!!, s.longitude!!, s.altitudeM, s.speedKmh, s.headingDeg), (s.gpsTime ?: s.statusTime) * 1000) else null,
-            windows = if (listOf(s.driverWindowOpen, s.passengerWindowOpen, s.rearLeftWindowOpen, s.rearRightWindowOpen).any { it != null })
+            windows = if (listOf(s.driverWindowOpen, s.passengerWindowOpen, s.rearLeftWindowOpen, s.rearRightWindowOpen).any { it != null }) {
                 Timed(WindowStatus(s.driverWindowOpen == true, s.passengerWindowOpen == true, s.rearLeftWindowOpen == true, s.rearRightWindowOpen == true, s.sunroofOpen == true), at)
-            else null,
+            } else {
+                null
+            },
             lights = Timed(LightStatus(s.sideLights, s.dippedBeam, s.mainBeam), at),
             handbrakeOn = s.handBrakeOn?.let { Timed(it, at) },
             warningCodes = Timed(s.activeAlerts, at),

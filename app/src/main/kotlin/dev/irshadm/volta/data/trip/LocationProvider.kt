@@ -9,8 +9,8 @@ import android.location.LocationManager
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
 import androidx.core.os.CancellationSignal
-import dev.irshadm.volta.core.planner.LatLng
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.irshadm.volta.core.planner.LatLng
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
@@ -23,9 +23,8 @@ data class Fix(val position: LatLng, val altitudeM: Double?, val speedKmh: Doubl
 @Singleton
 class LocationProvider @Inject constructor(@ApplicationContext private val context: Context) {
 
-    fun hasPermission(): Boolean =
-        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    fun hasPermission(): Boolean = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 
     @SuppressLint("MissingPermission")
     suspend fun current(timeoutMs: Long = 10_000): Fix? {

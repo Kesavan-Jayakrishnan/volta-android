@@ -24,7 +24,9 @@ object Narrator {
     }.getOrDefault(State.Unavailable)
 
     /** Starts the one-time model download (foreground only); completes when done or failed. */
-    suspend fun download() { runCatching { model?.download()?.collect { } } }
+    suspend fun download() {
+        runCatching { model?.download()?.collect { } }
+    }
 
     private suspend fun ask(prompt: String, timeoutMs: Long = 6_000): String? {
         if (state() != State.Ready) return null
@@ -46,11 +48,15 @@ object Narrator {
     )?.lineSequence()?.firstOrNull()?.removeSurrounding("\"")
 
     /** A 2–3 sentence weekly note about what smart pre-cool learned. */
-    suspend fun weeklyNote(facts: List<String>): String? = if (facts.isEmpty()) null else ask(
-        "Summarise these facts about a driver's smart pre-cool assistant in 2-3 short, plain sentences, second person, no emojis, no invented numbers:\n" +
-            facts.joinToString("\n") { "- $it" },
-        timeoutMs = 10_000,
-    )
+    suspend fun weeklyNote(facts: List<String>): String? = if (facts.isEmpty()) {
+        null
+    } else {
+        ask(
+            "Summarise these facts about a driver's smart pre-cool assistant in 2-3 short, plain sentences, second person, no emojis, no invented numbers:\n" +
+                facts.joinToString("\n") { "- $it" },
+            timeoutMs = 10_000,
+        )
+    }
 
     /**
      * Why the app's suggested route is the better pick, in one sentence. The app chooses the route; the model only

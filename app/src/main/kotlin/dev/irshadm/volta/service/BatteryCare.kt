@@ -27,8 +27,16 @@ object BatteryCare {
         if (!prefs.contains("watching_since")) e.putLong("watching_since", now)
         if (soc >= 99) e.putLong("last_full", now)
         val plugged = v.pluggedIn?.value == true
-        if (soc < 20 && !plugged) { if (!prefs.contains("low_since")) e.putLong("low_since", now) } else e.remove("low_since")
-        if (soc >= 98 && v.charging?.value != true) { if (!prefs.contains("full_since")) e.putLong("full_since", now) } else e.remove("full_since")
+        if (soc < 20 && !plugged) {
+            if (!prefs.contains("low_since")) e.putLong("low_since", now)
+        } else {
+            e.remove("low_since")
+        }
+        if (soc >= 98 && v.charging?.value != true) {
+            if (!prefs.contains("full_since")) e.putLong("full_since", now)
+        } else {
+            e.remove("full_since")
+        }
         e.apply()
     }
 
@@ -36,8 +44,15 @@ object BatteryCare {
      * The one tip worth showing now, or null. [outsideC] from the weather; [usualDailyKm] from your drives
      * (null when there isn't enough history); [kmPerKwh] and [capacityKwh] turn that into a % for tonight.
      */
-    fun tip(context: Context, v: VehicleStatus?, outsideC: Double?, usualDailyKm: Double?, kmPerKwh: Double, capacityKwh: Double,
-            now: Long = System.currentTimeMillis()): Tip? {
+    fun tip(
+        context: Context,
+        v: VehicleStatus?,
+        outsideC: Double?,
+        usualDailyKm: Double?,
+        kmPerKwh: Double,
+        capacityKwh: Double,
+        now: Long = System.currentTimeMillis(),
+    ): Tip? {
         val soc = v?.soc?.value?.socPercent ?: return null
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val plugged = v.pluggedIn?.value == true
@@ -49,8 +64,11 @@ object BatteryCare {
         }
         if (!plugged && hour in 19..23 && soc < 35) {
             val need = usualDailyKm?.let { it / kmPerKwh / capacityKwh * 100 }
-            val text = if (need != null && soc - need < 20) "You're at ${soc.roundToInt()} %. Charging overnight to 90 % covers tomorrow's usual ${usualDailyKm.roundToInt()} km with plenty left."
-            else "You're at ${soc.roundToInt()} %. A night on the charger gets you back to a comfortable 80–90 %."
+            val text = if (need != null && soc - need < 20) {
+                "You're at ${soc.roundToInt()} %. Charging overnight to 90 % covers tomorrow's usual ${usualDailyKm.roundToInt()} km with plenty left."
+            } else {
+                "You're at ${soc.roundToInt()} %. A night on the charger gets you back to a comfortable 80–90 %."
+            }
             return Tip("tonight", "Plug in tonight?", text)
         }
         prefs.getLong("full_since", 0).takeIf { it > 0 && now - it > 36 * 3_600_000L && (outsideC ?: 0.0) >= 32 }?.let {

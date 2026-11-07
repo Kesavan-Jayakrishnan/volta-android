@@ -1,10 +1,14 @@
 package dev.irshadm.volta.service
 
+import android.Manifest
 import android.bluetooth.BluetoothClass
 import android.bluetooth.BluetoothDevice
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import dagger.hilt.android.EntryPointAccessors
 
@@ -18,7 +22,8 @@ class LeftCarReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != BluetoothDevice.ACTION_ACL_DISCONNECTED) return
         val device = IntentCompat.getParcelableExtra(intent, BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java) ?: return
-        // Needs BLUETOOTH_CONNECT on Android 12+; without it we can't tell a car from earbuds, so do nothing.
+        // Without BLUETOOTH_CONNECT on Android 12+ we can't tell a car from earbuds, so do nothing.
+        if (Build.VERSION.SDK_INT >= 31 && ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) return
         val kind = runCatching { device.bluetoothClass?.deviceClass }.getOrNull() ?: return
         if (kind != BluetoothClass.Device.AUDIO_VIDEO_CAR_AUDIO && kind != BluetoothClass.Device.AUDIO_VIDEO_HANDSFREE) return
         // Only worth a read if the car may just have been driven: it was on at the last reading, or we haven't looked for a while.

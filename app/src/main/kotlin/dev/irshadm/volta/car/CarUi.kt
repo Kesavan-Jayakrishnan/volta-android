@@ -56,12 +56,15 @@ object CarUi {
         Tone.Neutral -> CarColor.DEFAULT
     }
 
-    fun text(s: CharSequence, tone: Tone): CharSequence =
-        if (tone == Tone.Neutral) s else SpannableString(s).apply { setSpan(ForegroundCarColorSpan.create(color(tone)), 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) }
+    fun text(s: CharSequence, tone: Tone): CharSequence = if (tone == Tone.Neutral) s else SpannableString(s).apply { setSpan(ForegroundCarColorSpan.create(color(tone)), 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE) }
 
     /** "●●●●○" in green / default / yellow, then the line. */
     fun dots(n: Int, text: String?): CharSequence {
-        val tone = when { n >= 4 -> Tone.Good; n <= 2 -> Tone.Warn; else -> Tone.Neutral }
+        val tone = when {
+            n >= 4 -> Tone.Good
+            n <= 2 -> Tone.Warn
+            else -> Tone.Neutral
+        }
         val b = SpannableStringBuilder(text("●".repeat(n.coerceIn(0, CarModels.DOTS)) + "○".repeat((CarModels.DOTS - n).coerceIn(0, CarModels.DOTS)), tone))
         if (!text.isNullOrEmpty()) b.append("  ").append(text)
         return b
@@ -71,8 +74,7 @@ object CarUi {
         if (r.dots != null) addText(dots(r.dots, r.text)) else r.text?.let { addText(text(it, r.tone)) }
     }.build()
 
-    fun limit(carContext: CarContext, type: Int, fallback: Int): Int =
-        if (carContext.carAppApiLevel >= 2) runCatching { carContext.getCarService(ConstraintManager::class.java).getContentLimit(type) }.getOrDefault(fallback) else fallback
+    fun limit(carContext: CarContext, type: Int, fallback: Int): Int = if (carContext.carAppApiLevel >= 2) runCatching { carContext.getCarService(ConstraintManager::class.java).getContentLimit(type) }.getOrDefault(fallback) else fallback
 
     /** A pane: the chip joins the title, the ring is the pane image, the first button is the gold primary. */
     fun pane(carContext: CarContext, ui: PaneUi, root: Boolean, onAction: (CarAction) -> Unit): PaneTemplate {
@@ -91,16 +93,14 @@ object CarUi {
         return b.build()
     }
 
-    fun loadingPane(title: String, root: Boolean): PaneTemplate =
-        PaneTemplate.Builder(Pane.Builder().setLoading(true).build()).setTitle(title).setHeaderAction(if (root) Action.APP_ICON else Action.BACK).build()
+    fun loadingPane(title: String, root: Boolean): PaneTemplate = PaneTemplate.Builder(Pane.Builder().setLoading(true).build()).setTitle(title).setHeaderAction(if (root) Action.APP_ICON else Action.BACK).build()
 
-    fun action(carContext: CarContext, a: CarAction, primary: Boolean, onAction: (CarAction) -> Unit): Action =
-        Action.Builder().setTitle(a.label).setOnClickListener { onAction(a) }.apply {
-            if (primary) {
-                setBackgroundColor(gold)
-                if (carContext.carAppApiLevel >= 4) setFlags(Action.FLAG_PRIMARY)
-            }
-        }.build()
+    fun action(carContext: CarContext, a: CarAction, primary: Boolean, onAction: (CarAction) -> Unit): Action = Action.Builder().setTitle(a.label).setOnClickListener { onAction(a) }.apply {
+        if (primary) {
+            setBackgroundColor(gold)
+            if (carContext.carAppApiLevel >= 4) setFlags(Action.FLAG_PRIMARY)
+        }
+    }.build()
 
     /** A list row: numbered badge, name, one or two lines; tapping it (when [onClick] is set) opens the stop. */
     fun stopRow(carContext: CarContext, r: StopRowUi, onClick: (() -> Unit)?): Row = Row.Builder()
@@ -108,7 +108,12 @@ object CarUi {
         .addText(r.text)
         .apply { r.text2?.let { addText(it) } }
         .setImage(badgeIcon(carContext, r.badge, r.number), Row.IMAGE_TYPE_SMALL)
-        .apply { if (onClick != null) { setOnClickListener(onClick); setBrowsable(true) } }
+        .apply {
+            if (onClick != null) {
+                setOnClickListener(onClick)
+                setBrowsable(true)
+            }
+        }
         .build()
 
     /** A place row for the chargers map: distance as a DistanceSpan (the host formats it), a lettered marker. */
@@ -141,16 +146,34 @@ object CarUi {
         val c = Canvas(bmp)
         val stroke = 34f
         val rect = RectF(stroke, stroke, size - stroke, size - stroke)
-        val p = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = stroke; strokeCap = Paint.Cap.BUTT }
+        val p = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeWidth = stroke
+            strokeCap = Paint.Cap.BUTT
+        }
         p.color = TRACK
         c.drawArc(rect, -90f, 360f, false, p)
-        r.targetSoc?.let { p.color = TARGET; c.drawArc(rect, -90f, 360f * it.coerceIn(0, 100) / 100f, false, p) }
-        p.color = when (r.tone) { Tone.Good -> GREEN; Tone.Bad -> RED; Tone.Warn -> AMBER; Tone.Neutral -> GOLD }
+        r.targetSoc?.let {
+            p.color = TARGET
+            c.drawArc(rect, -90f, 360f * it.coerceIn(0, 100) / 100f, false, p)
+        }
+        p.color = when (r.tone) {
+            Tone.Good -> GREEN
+            Tone.Bad -> RED
+            Tone.Warn -> AMBER
+            Tone.Neutral -> GOLD
+        }
         p.strokeCap = Paint.Cap.ROUND
         c.drawArc(rect, -90f, 360f * r.soc.coerceIn(0, 100) / 100f, false, p)
-        val t = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = INK; textAlign = Paint.Align.CENTER; typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL); textSize = 104f }
+        val t = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = INK
+            textAlign = Paint.Align.CENTER
+            typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL)
+            textSize = 104f
+        }
         c.drawText("${r.soc} %", size / 2f, size / 2f + 24f, t)
-        t.color = MUTE; t.textSize = 34f
+        t.color = MUTE
+        t.textSize = 34f
         c.drawText(r.caption, size / 2f, size / 2f + 78f, t)
         return CarIcon.Builder(IconCompat.createWithBitmap(bmp)).build()
     }
@@ -161,11 +184,35 @@ object CarUi {
         val size = 96
         val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
-        val bg = when (badge) { Badge.Next -> GOLD; Badge.Done -> TRACK; Badge.New -> AMBER; else -> INK }
-        val ink = when (badge) { Badge.Done -> MUTE; else -> GOLD_INK }
+        val bg = when (badge) {
+            Badge.Next -> GOLD
+            Badge.Done -> TRACK
+            Badge.New -> AMBER
+            else -> INK
+        }
+        val ink = when (badge) {
+            Badge.Done -> MUTE
+            else -> GOLD_INK
+        }
         c.drawCircle(size / 2f, size / 2f, size / 2f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = bg })
-        if (badge == Badge.Done) c.drawCircle(size / 2f, size / 2f, size / 2f - 2f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = GREY; style = Paint.Style.STROKE; strokeWidth = 4f })
-        val t = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = ink; textAlign = Paint.Align.CENTER; typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD); textSize = 52f }
+        if (badge == Badge.Done) {
+            c.drawCircle(
+                size / 2f,
+                size / 2f,
+                size / 2f - 2f,
+                Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color = GREY
+                    style = Paint.Style.STROKE
+                    strokeWidth = 4f
+                },
+            )
+        }
+        val t = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = ink
+            textAlign = Paint.Align.CENTER
+            typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
+            textSize = 52f
+        }
         c.drawText(number?.toString() ?: "", size / 2f, size / 2f + 18f, t)
         return CarIcon.Builder(IconCompat.createWithBitmap(bmp)).build()
     }

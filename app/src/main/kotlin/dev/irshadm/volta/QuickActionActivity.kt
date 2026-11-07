@@ -10,18 +10,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.IntOffset
-import kotlinx.coroutines.flow.first
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,9 +20,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -41,30 +35,36 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.foundation.layout.height
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.border
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import dagger.hilt.android.AndroidEntryPoint
+import dev.irshadm.volta.core.designsystem.VoltaColors
+import dev.irshadm.volta.core.designsystem.VoltaIcons
+import dev.irshadm.volta.core.designsystem.VoltaTheme
+import dev.irshadm.volta.core.ismart.RemoteCommand
 import dev.irshadm.volta.data.ismart.CommandState
 import dev.irshadm.volta.data.ismart.IsmartRepository
 import dev.irshadm.volta.data.ismart.LinkState
 import dev.irshadm.volta.ui.components.VoltaButton
 import dev.irshadm.volta.ui.components.VoltaButtonStyle
-import dev.irshadm.volta.core.designsystem.VoltaIcons
 import dev.irshadm.volta.ui.components.confirmWithBiometrics
-import dev.irshadm.volta.core.designsystem.VoltaTheme
-import dev.irshadm.volta.core.designsystem.VoltaColors
-import dev.irshadm.volta.core.ismart.RemoteCommand
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.math.roundToInt
@@ -77,8 +77,11 @@ import kotlin.math.roundToInt
 @AndroidEntryPoint
 class QuickActionActivity : FragmentActivity() {
     @Inject lateinit var ismart: IsmartRepository
+
     @Inject lateinit var weatherClient: dev.irshadm.volta.data.weather.WeatherClient
+
     @Inject lateinit var location: dev.irshadm.volta.data.trip.LocationProvider
+
     @Inject lateinit var settings: dev.irshadm.volta.data.SettingsRepository
 
     private enum class Action { Precool, Lock, Unlock, Find }
@@ -87,7 +90,6 @@ class QuickActionActivity : FragmentActivity() {
         const val TARGET_C = dev.irshadm.volta.service.smart.Cooling.TARGET_C
         const val COMFY_BELOW = dev.irshadm.volta.service.smart.Cooling.COMFY_BELOW
     }
-
 
     /** Set when opened from a smart pre-cool suggestion: answers teach the per-place threshold. */
     private val suggestionPlace: String? get() = intent?.getStringExtra("suggestion_place")
@@ -117,7 +119,10 @@ class QuickActionActivity : FragmentActivity() {
         setContent {
             VoltaTheme {
                 Box(
-                    Modifier.fillMaxSize().clickable(remember { MutableInteractionSource() }, indication = null) { learn(false); finish() },
+                    Modifier.fillMaxSize().clickable(remember { MutableInteractionSource() }, indication = null) {
+                        learn(false)
+                        finish()
+                    },
                     contentAlignment = Alignment.BottomCenter,
                 ) {
                     Sheet(action)
@@ -145,12 +150,24 @@ class QuickActionActivity : FragmentActivity() {
         val capacity by androidx.compose.runtime.produceState(37.1) { value = settings.vehicleProfile.first().usableCapacityKwh }
 
         val (icon, title, detail) = when (action) {
-            Action.Precool -> Triple(VoltaIcons.Snow, if (acOn) "AC is running" else "Pre-cool your car",
-                listOfNotNull(inside?.let { if (temps.cabinEstimated) "Cabin about $it°" else "Cabin $it°" }, outside?.let { "outside $it°" }).joinToString(" · ").ifEmpty { "Starts the AC remotely" })
-            Action.Lock -> Triple(if (locked == false) VoltaIcons.Unlocked else VoltaIcons.Locked, if (locked == true) "Already locked" else "Lock your car",
-                if (locked == false) "The car is unlocked" else "Locks all doors")
-            Action.Unlock -> Triple(if (locked == false) VoltaIcons.Unlocked else VoltaIcons.Locked, if (locked == false) "Already unlocked" else "Unlock your car",
-                if (locked == false) "The car is unlocked" else "Unlocks the doors")
+            Action.Precool -> Triple(
+                VoltaIcons.Snow,
+                if (acOn) "AC is running" else "Pre-cool your car",
+                listOfNotNull(inside?.let { if (temps.cabinEstimated) "Cabin about $it°" else "Cabin $it°" }, outside?.let { "outside $it°" }).joinToString(" · ").ifEmpty { "Starts the AC remotely" },
+            )
+
+            Action.Lock -> Triple(
+                if (locked == false) VoltaIcons.Unlocked else VoltaIcons.Locked,
+                if (locked == true) "Already locked" else "Lock your car",
+                if (locked == false) "The car is unlocked" else "Locks all doors",
+            )
+
+            Action.Unlock -> Triple(
+                if (locked == false) VoltaIcons.Unlocked else VoltaIcons.Locked,
+                if (locked == false) "Already unlocked" else "Unlock your car",
+                if (locked == false) "The car is unlocked" else "Unlocks the doors",
+            )
+
             Action.Find -> Triple(VoltaIcons.Horn, "Find your car", "Flashes the lights and sounds the horn")
         }
         val cmd = when (action) {
@@ -172,41 +189,54 @@ class QuickActionActivity : FragmentActivity() {
                 // The cool starts (or ends) here: the progress notification follows it from now on.
                 if (c.command == RemoteCommand.ClimateOn) dev.irshadm.volta.service.smart.Cooling.started(this@QuickActionActivity, temps.cabinC ?: 32.0, capacity)
                 if (c.command == RemoteCommand.ClimateOff) dev.irshadm.volta.service.smart.Cooling.stopped(this@QuickActionActivity)
-                delay(1500); finish()
+                delay(1500)
+                finish()
             }
         }
         Column(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)).background(VoltaColors.Surface)
-                .clickable(remember { MutableInteractionSource() }, indication = null) {}   // taps inside don't dismiss
+                .clickable(remember { MutableInteractionSource() }, indication = null) {} // taps inside don't dismiss
                 .navigationBarsPadding().padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Box(Modifier.align(Alignment.CenterHorizontally).size(width = 36.dp, height = 4.dp).clip(RoundedCornerShape(2.dp)).background(VoltaColors.BorderStrong))
-            if (action == Action.Precool) PrecoolHeader(status, temps, acOn, sheltered = weather?.sheltered == true, capacity = capacity)
-            else {
+            if (action == Action.Precool) {
+                PrecoolHeader(status, temps, acOn, sheltered = weather?.sheltered == true, capacity = capacity)
+            } else {
                 CarHeader(action, status)
                 Column {
                     Text(title, style = MaterialTheme.typography.titleMedium, color = VoltaColors.Text)
                     Text(detail, style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted)
                 }
             }
-            AnimatedContent(command, contentKey = { it::class }, transitionSpec = { (fadeIn(tween(200)) + slideInVertically { it / 4 }) togetherWith fadeOut(tween(120)) },
-                label = "quick") { c ->
+            AnimatedContent(
+                command,
+                contentKey = { it::class },
+                transitionSpec = { (fadeIn(tween(200)) + slideInVertically { it / 4 }) togetherWith fadeOut(tween(120)) },
+                label = "quick",
+            ) { c ->
                 when {
                     link !is LinkState.Connected -> Note("Volta isn't connected to your car. Open the app to sign in or reconnect.", VoltaColors.Amber) { open() }
+
                     !ismart.hasPin -> Note("Add your MG control PIN in Volta → Settings first.", VoltaColors.Amber) { open() }
+
                     // No remote lock or unlock while the car is on: someone is in it.
                     driving && (action == Action.Lock || action == Action.Unlock) -> Note("Lock and unlock are off while the car is on.", VoltaColors.Amber) { finish() }
+
                     c is CommandState.Running -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         CircularProgressIndicator(color = VoltaColors.Gold, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
                         Text("Sending… the car can take 10–30 seconds", style = MaterialTheme.typography.bodyMedium, color = VoltaColors.TextSoft)
                     }
+
                     c is CommandState.Done -> Text("Done ✓", style = MaterialTheme.typography.titleMedium, color = VoltaColors.Green)
+
                     c is CommandState.Failed -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(c.message, style = MaterialTheme.typography.bodySmall, color = VoltaColors.AmberText)
                         VoltaButton("Close", { finish() }, Modifier.fillMaxWidth(), style = VoltaButtonStyle.Secondary)
                     }
+
                     (action == Action.Lock && locked == true) || (action == Action.Unlock && locked == false) -> VoltaButton("Close", { finish() }, Modifier.fillMaxWidth(), style = VoltaButtonStyle.Secondary)
+
                     // Slide, then fingerprint; tapping outside or swiping the sheet away is "not now".
                     action == Action.Precool -> {
                         val coolMin = temps.cabinC?.let { dev.irshadm.volta.service.smart.Cooling.minutes(it) } ?: 6
@@ -224,26 +254,40 @@ class QuickActionActivity : FragmentActivity() {
                                     CoolingProgress()
                                     SlideToSend("Slide to stop", stop = true, onSlide = send)
                                 }
+
                                 comfortable(temps) -> {
-                                    VoltaButton("Fine, thanks", { learn(false); finish() }, Modifier.fillMaxWidth())
+                                    VoltaButton("Fine, thanks", {
+                                        learn(false)
+                                        finish()
+                                    }, Modifier.fillMaxWidth())
                                     SlideToSend("Slide to cool anyway · $coolMin min", stop = false, quiet = true, onSlide = send)
                                 }
+
                                 else -> SlideToSend("Slide to cool · $coolMin min", stop = false, onSlide = send)
                             }
-                            if (!acOn) Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                                val place = suggestionPlace
-                                if (place != null) Text("Not today here", style = MaterialTheme.typography.labelLarge, color = VoltaColors.Muted,
-                                    modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable {
-                                        dev.irshadm.volta.service.smart.Feedback.muteToday(this@QuickActionActivity, place)
-                                        answered = true
-                                        androidx.core.app.NotificationManagerCompat.from(this@QuickActionActivity).cancel(dev.irshadm.volta.service.smart.DepartureWorker.NOTIFICATION_ID)
-                                        finish()
-                                    }.padding(vertical = 6.dp))
-                                androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
-                                Text("swipe down for not now", style = MaterialTheme.typography.labelSmall, color = VoltaColors.Dim)
+                            if (!acOn) {
+                                Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    val place = suggestionPlace
+                                    if (place != null) {
+                                        Text(
+                                            "Not today here",
+                                            style = MaterialTheme.typography.labelLarge,
+                                            color = VoltaColors.Muted,
+                                            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable {
+                                                dev.irshadm.volta.service.smart.Feedback.muteToday(this@QuickActionActivity, place)
+                                                answered = true
+                                                androidx.core.app.NotificationManagerCompat.from(this@QuickActionActivity).cancel(dev.irshadm.volta.service.smart.DepartureWorker.NOTIFICATION_ID)
+                                                finish()
+                                            }.padding(vertical = 6.dp),
+                                        )
+                                    }
+                                    androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
+                                    Text("swipe down for not now", style = MaterialTheme.typography.labelSmall, color = VoltaColors.Dim)
+                                }
                             }
                         }
                     }
+
                     // One action; tapping outside or swiping the sheet away is "not now".
                     else -> VoltaButton(button, {
                         confirmWithBiometrics(this@QuickActionActivity, "Confirm: ${button.lowercase()}", "Sends the command to your car") {
@@ -305,29 +349,43 @@ class QuickActionActivity : FragmentActivity() {
             hot -> "It's hot in there" to "It's been heating up while parked. About ${minutes(coolMin)} to $TARGET_C°, $cost of the battery."
             else -> "Ready in about ${minutes(coolMin)}" to "Start now and the cabin will be close to $TARGET_C° when you reach the car."
         }
-        val accent = when { acOn -> androidx.compose.ui.graphics.Color(0xFF7DD3E8); comfy -> VoltaColors.Green; else -> VoltaColors.Amber }
-        val badge = when { acOn -> androidx.compose.ui.graphics.Color(0xFF1F4A58); comfy -> androidx.compose.ui.graphics.Color(0xFF163A2A); else -> androidx.compose.ui.graphics.Color(0xFF5A2E14) }
+        val accent = when {
+            acOn -> androidx.compose.ui.graphics.Color(0xFF7DD3E8)
+            comfy -> VoltaColors.Green
+            else -> VoltaColors.Amber
+        }
+        val badge = when {
+            acOn -> androidx.compose.ui.graphics.Color(0xFF1F4A58)
+            comfy -> androidx.compose.ui.graphics.Color(0xFF163A2A)
+            else -> androidx.compose.ui.graphics.Color(0xFF5A2E14)
+        }
         val now = session?.cabinNow()?.roundToInt() ?: inside
 
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            if (chip != null || chipRight != null) Row(verticalAlignment = Alignment.CenterVertically) {
-                chip?.let { (icon, label) ->
-                    Row(Modifier.clip(RoundedCornerShape(10.dp)).background(VoltaColors.SurfaceHigh).padding(horizontal = 10.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Icon(icon, null, tint = if (comfy) VoltaColors.Muted else VoltaColors.Champagne, modifier = Modifier.size(14.dp))
-                        Text(label, style = MaterialTheme.typography.labelMedium, color = if (comfy) VoltaColors.TextSoft else VoltaColors.Champagne)
+            if (chip != null || chipRight != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    chip?.let { (icon, label) ->
+                        Row(
+                            Modifier.clip(RoundedCornerShape(10.dp)).background(VoltaColors.SurfaceHigh).padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            Icon(icon, null, tint = if (comfy) VoltaColors.Muted else VoltaColors.Champagne, modifier = Modifier.size(14.dp))
+                            Text(label, style = MaterialTheme.typography.labelMedium, color = if (comfy) VoltaColors.TextSoft else VoltaColors.Champagne)
+                        }
                     }
+                    androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
+                    chipRight?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = VoltaColors.Dim) }
                 }
-                androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
-                chipRight?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = VoltaColors.Dim) }
             }
             Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 Column(Modifier.weight(1f)) {
                     val big = MaterialTheme.typography.displaySmall.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Medium, letterSpacing = (-1).sp)
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(now?.let { "$it°" } ?: "—", style = big, color = accent)
-                        if (comfy) Icon(VoltaIcons.Check, null, tint = VoltaColors.Green, modifier = Modifier.size(22.dp))
-                        else {
+                        if (comfy) {
+                            Icon(VoltaIcons.Check, null, tint = VoltaColors.Green, modifier = Modifier.size(22.dp))
+                        } else {
                             Icon(VoltaIcons.Chevron, null, tint = VoltaColors.Dim, modifier = Modifier.size(18.dp))
                             Text("$TARGET_C°", style = big, color = VoltaColors.Green)
                         }
@@ -337,7 +395,9 @@ class QuickActionActivity : FragmentActivity() {
                             session != null -> "${kotlin.math.ceil(session.leftMin()).toInt()} min left" + (outside?.let { " · outside $it°" } ?: "")
                             else -> listOfNotNull("cabin" + if (temps.cabinEstimated) ", estimated" else "", outside?.let { "outside $it°" }).joinToString(" · ")
                         },
-                        style = MaterialTheme.typography.labelMedium, color = VoltaColors.Muted, modifier = Modifier.padding(top = 6.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = VoltaColors.Muted,
+                        modifier = Modifier.padding(top = 6.dp),
                     )
                 }
                 Box(
@@ -359,15 +419,24 @@ class QuickActionActivity : FragmentActivity() {
     private fun CoolingProgress() {
         val session = dev.irshadm.volta.service.smart.Cooling.session(this) ?: return
         var now by remember { androidx.compose.runtime.mutableLongStateOf(System.currentTimeMillis()) }
-        LaunchedEffect(Unit) { while (true) { delay(5_000); now = System.currentTimeMillis() } }
+        LaunchedEffect(Unit) {
+            while (true) {
+                delay(5_000)
+                now = System.currentTimeMillis()
+            }
+        }
         val f = (session.elapsedMin(now) / session.minutes).coerceIn(0.0, 1.0).toFloat()
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(VoltaColors.PanelTrack)) {
-                Box(Modifier.fillMaxWidth(f.coerceAtLeast(0.02f)).height(6.dp).clip(RoundedCornerShape(3.dp))
-                    .background(androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(VoltaColors.Amber, androidx.compose.ui.graphics.Color(0xFF7DD3E8)))))
+                Box(
+                    Modifier.fillMaxWidth(f.coerceAtLeast(0.02f)).height(6.dp).clip(RoundedCornerShape(3.dp))
+                        .background(androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(VoltaColors.Amber, androidx.compose.ui.graphics.Color(0xFF7DD3E8)))),
+                )
             }
-            Row { Text("started ${clock(session.startedAt)}", style = MaterialTheme.typography.labelSmall, color = VoltaColors.Dim, modifier = Modifier.weight(1f))
-                Text("ready about ${clock(session.startedAt + session.minutes * 60_000L)}", style = MaterialTheme.typography.labelSmall, color = VoltaColors.Dim) }
+            Row {
+                Text("started ${clock(session.startedAt)}", style = MaterialTheme.typography.labelSmall, color = VoltaColors.Dim, modifier = Modifier.weight(1f))
+                Text("ready about ${clock(session.startedAt + session.minutes * 60_000L)}", style = MaterialTheme.typography.labelSmall, color = VoltaColors.Dim)
+            }
         }
     }
 
@@ -381,7 +450,13 @@ class QuickActionActivity : FragmentActivity() {
      */
     @Composable
     private fun SlideToSend(label: String, stop: Boolean, quiet: Boolean = false, onSlide: () -> Unit) {
-        val tint = if (stop) VoltaColors.BlueSoft else if (quiet) VoltaColors.SurfaceHigh else VoltaColors.Champagne
+        val tint = if (stop) {
+            VoltaColors.BlueSoft
+        } else if (quiet) {
+            VoltaColors.SurfaceHigh
+        } else {
+            VoltaColors.Champagne
+        }
         val scope = androidx.compose.runtime.rememberCoroutineScope()
         val offset = remember { androidx.compose.animation.core.Animatable(0f) }
         var trackPx by remember { androidx.compose.runtime.mutableFloatStateOf(1f) }
@@ -401,7 +476,8 @@ class QuickActionActivity : FragmentActivity() {
                             scope.launch {
                                 if (offset.value > maxPx * 0.8f) {
                                     haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                                    offset.animateTo(maxPx, tween(120)); onSlide()
+                                    offset.animateTo(maxPx, tween(120))
+                                    onSlide()
                                 }
                                 offset.animateTo(0f, androidx.compose.animation.core.spring(dampingRatio = 0.75f, stiffness = 400f))
                             }
@@ -415,8 +491,13 @@ class QuickActionActivity : FragmentActivity() {
                 .semantics { contentDescription = label },
             contentAlignment = if (stop) Alignment.CenterEnd else Alignment.CenterStart,
         ) {
-            Text(if (stop) "‹‹‹  $label" else "$label  ›››", style = MaterialTheme.typography.labelLarge, color = if (quiet) VoltaColors.Muted else VoltaColors.TextSoft, maxLines = 1,
-                modifier = Modifier.align(Alignment.Center).graphicsLayer { alpha = 1f - progress })
+            Text(
+                if (stop) "‹‹‹  $label" else "$label  ›››",
+                style = MaterialTheme.typography.labelLarge,
+                color = if (quiet) VoltaColors.Muted else VoltaColors.TextSoft,
+                maxLines = 1,
+                modifier = Modifier.align(Alignment.Center).graphicsLayer { alpha = 1f - progress },
+            )
             Box(
                 Modifier.padding(horizontal = 6.dp).offset { IntOffset((offset.value * dir).roundToInt(), 0) }.size(knob).clip(CircleShape).background(tint),
                 contentAlignment = Alignment.Center,
@@ -445,14 +526,22 @@ class QuickActionActivity : FragmentActivity() {
         Box(
             Modifier.fillMaxWidth().height(132.dp).clip(RoundedCornerShape(20.dp)).background(VoltaColors.Bg)
                 .drawBehind {
-                    drawRect(androidx.compose.ui.graphics.Brush.radialGradient(
-                        listOf(glow.copy(alpha = 0.32f), androidx.compose.ui.graphics.Color.Transparent),
-                        center = androidx.compose.ui.geometry.Offset(size.width * 0.5f, size.height * 0.42f), radius = size.width * 0.45f))
+                    drawRect(
+                        androidx.compose.ui.graphics.Brush.radialGradient(
+                            listOf(glow.copy(alpha = 0.32f), androidx.compose.ui.graphics.Color.Transparent),
+                            center = androidx.compose.ui.geometry.Offset(size.width * 0.5f, size.height * 0.42f),
+                            radius = size.width * 0.45f,
+                        ),
+                    )
                 },
             contentAlignment = Alignment.Center,
         ) {
-            androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(res), null,
-                contentScale = androidx.compose.ui.layout.ContentScale.Fit, modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 6.dp))
+            androidx.compose.foundation.Image(
+                androidx.compose.ui.res.painterResource(res),
+                null,
+                contentScale = androidx.compose.ui.layout.ContentScale.Fit,
+                modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 6.dp),
+            )
         }
     }
 

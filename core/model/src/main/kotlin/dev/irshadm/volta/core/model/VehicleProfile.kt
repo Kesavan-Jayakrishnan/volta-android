@@ -22,8 +22,7 @@ data class VehicleProfile(
     fun energyAt(socPercent: Double): Double = usableCapacityKwh * socPercent.coerceIn(0.0, 100.0) / 100.0
 
     /** Flat-road range from [socPercent] down to [reservePercent] at the given efficiency. */
-    fun rangeKm(socPercent: Double, kmPerKwh: Double, reservePercent: Double = 0.0): Double =
-        (energyAt(socPercent) - energyAt(reservePercent)).coerceAtLeast(0.0) * kmPerKwh
+    fun rangeKm(socPercent: Double, kmPerKwh: Double, reservePercent: Double = 0.0): Double = (energyAt(socPercent) - energyAt(reservePercent)).coerceAtLeast(0.0) * kmPerKwh
 
     fun cityRangeKm(socPercent: Double) = rangeKm(socPercent, cityKmPerKwh)
     fun highwayRangeKm(socPercent: Double) = rangeKm(socPercent, highwayKmPerKwh)

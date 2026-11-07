@@ -31,14 +31,20 @@ object Walking {
         ContextCompat.checkSelfPermission(context, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED
 
     private fun intent(context: Context) = PendingIntent.getBroadcast(
-        context, 11, Intent(context, WalkingReceiver::class.java), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+        context,
+        11,
+        Intent(context, WalkingReceiver::class.java),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
     )
 
     /** Starts (or stops) listening for walking / riding transitions. Survives until reboot; re-armed with the geofences. */
     @SuppressLint("MissingPermission")
     fun watch(context: Context, on: Boolean) {
         val client = ActivityRecognition.getClient(context)
-        if (!on || !hasPermission(context)) { runCatching { client.removeActivityTransitionUpdates(intent(context)) }; return }
+        if (!on || !hasPermission(context)) {
+            runCatching { client.removeActivityTransitionUpdates(intent(context)) }
+            return
+        }
         val types = listOf(DetectedActivity.WALKING, DetectedActivity.ON_FOOT, DetectedActivity.IN_VEHICLE, DetectedActivity.ON_BICYCLE, DetectedActivity.STILL)
         val transitions = types.map { ActivityTransition.Builder().setActivityType(it).setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER).build() }
         runCatching { client.requestActivityTransitionUpdates(ActivityTransitionRequest(transitions), intent(context)) }
