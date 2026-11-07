@@ -1,0 +1,80 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+concurrency:
+  group: release-${{ github.ref }}
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Tag matches versionName
+        run: |
+          version=$(sed -n 's/^ *versionName = "\(.*\)"$/\1/p' app/build.gradle.kts)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match versionName $version"
+            exit 1
+          fi
+      - name: Unit tests
+        run: ./gradlew test
+      - name: Restore signing key
+        env:
+          VOLTA_KEYSTORE_BASE64: ${{ secrets.VOLTA_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$VOLTA_KEYSTORE_BASE64" ]; then
+            echo "::error::VOLTA_KEYSTORE_BASE64 isn't set"
+            exit 1
+          fi
+          printf '%s' "$VOLTA_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+          echo "VOLTA_STORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+      # MAPS_API_KEY is left out on purpose: a key built into a public APK would bill its owner for everyone's use.
+      - name: Signed release build
+        env:
+          VOLTA_STORE_PASSWORD: ${{ secrets.VOLTA_STORE_PASSWORD }}
+          VOLTA_KEY_ALIAS: ${{ secrets.VOLTA_KEY_ALIAS }}
+          VOLTA_KEY_PASSWORD: ${{ secrets.VOLTA_KEY_PASSWORD }}
+        run: ./gradlew :app:assembleRelease
+      - name: Verify and describe the APK
+        run: |
+          # An unsigned build is named app-release-unsigned.apk, so this copy also stops one being published.
+          cp app/build/outputs/apk/release/app-release.apk volta.apk
+          build_tools=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n 1)
+          certs=$("$ANDROID_HOME/build-tools/$build_tools/apksigner" verify --print-certs volta.apk)
+          cert_sha1=$(printf '%s\n' "$certs" | sed -n 's/^.*certificate SHA-1 digest: //p' | head -n 1 \
+            | tr 'a-f' 'A-F' | sed 's/../&:/g; s/:$//')
+          if [ -z "$cert_sha1" ]; then
+            echo "::error::Couldn't read the signing certificate"
+            exit 1
+          fi
+          apk_sha256=$(sha256sum volta.apk | cut -d ' ' -f 1)
+          echo "$apk_sha256  volta.apk" > volta.apk.sha256
+          cat > release-notes.md <<EOF
+          Android 10 or newer. You need an MG i-SMART owner account and your own [Google Maps key](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/docs/GOOGLE-API-KEY.md).
+
+          Signing in signs you out of the MG app, because MG allows one session at a time.
+
+          This APK doesn't include the interactive map, which needs a key at build time. Trip planning works with the key you enter in the app. To get the map, [build it yourself](https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/docs/BUILD.md).
+
+          **APK SHA-256** (compare with \`shasum -a 256 volta.apk\`)
+          \`$apk_sha256\`
+
+          **Signing certificate SHA-1** (for restricting your Google key)
+          \`$cert_sha1\`
+          EOF
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" volta.apk volta.apk.sha256 --title "Volta $GITHUB_REF_NAME" --notes-file release-notes.md

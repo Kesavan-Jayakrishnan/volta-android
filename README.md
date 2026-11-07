@@ -30,6 +30,9 @@ pending, and anything else shows the Windsor. Their battery figures can be set i
 - An Android phone, Android 10 or newer.
 - A Google Maps Platform API key of your own, for trip planning. [How to create one and cap its cost](docs/GOOGLE-API-KEY.md).
 
+The release APK doesn't include the interactive map, because the Maps SDK reads its key at build time. Trip planning
+works without it. To get the map, [build it yourself](docs/BUILD.md) with `MAPS_API_KEY` set.
+
 ## First run
 
 1. **Sign in** with your i-SMART mobile number and password.
