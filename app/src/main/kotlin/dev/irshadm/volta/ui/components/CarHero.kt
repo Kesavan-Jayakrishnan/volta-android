@@ -109,11 +109,11 @@ private const val FRAME_W = 1500f
 private const val FRAME_H = 804f
 
 /** Which photo the hero shows when nothing needs attention. */
-enum class CarShot(val res: Int, val description: String) {
-    Locked(R.drawable.car_locked, "Your car, locked"),
-    Unlocked(R.drawable.car_unlocked, "Your car, unlocked"),
-    Charging(R.drawable.car_charging, "Your car, charging"),
-    Lights(R.drawable.car_lights, "Your car, lights on"),
+enum class CarShot(val res: Int, val frame: Int, val description: String) {
+    Locked(R.drawable.car_locked, R.drawable.car360_locked_1, "Your car, locked"),
+    Unlocked(R.drawable.car_unlocked, R.drawable.car360_unlocked_1, "Your car, unlocked"),
+    Charging(R.drawable.car_charging, R.drawable.car360_charging_1, "Your car, charging"),
+    Lights(R.drawable.car_lights, R.drawable.car360_lights_1, "Your car, lights on"),
 }
 
 data class CarHeroState(
@@ -157,8 +157,8 @@ data class CarHeroState(
 fun CarHero(
     state: CarHeroState, showDiagram: Boolean, onToggleView: () -> Unit, modifier: Modifier = Modifier, backdrop: Boolean = true,
     lowWheels: Set<Wheel> = emptySet(), onTyreTap: () -> Unit = {},
-    /** The photos and 360° frames are of a Windsor; any other MG gets [GenericCar] instead. */
-    windsor: Boolean = true,
+    /** Only the Windsor has the 360° view; other models show [CarPictures.hero]. */
+    model: dev.irshadm.volta.data.ismart.CarModel = dev.irshadm.volta.data.ismart.CarModel.Windsor,
 ) {
     val alerts = state.alerts
     val diagram = showDiagram || alerts.isNotEmpty()
@@ -180,9 +180,22 @@ fun CarHero(
                 Box(Modifier.fillMaxSize().padding(top = if (alerts.isNotEmpty()) 44.dp else 8.dp, bottom = 4.dp), contentAlignment = Alignment.Center) {
                     TopDownCar(state, Modifier.fillMaxSize())
                 }
-            } else if (!windsor) {
-                androidx.compose.runtime.SideEffect { dev.irshadm.volta.ui.splash.HeroAnchor.image = null }
-                GenericCar(Modifier.fillMaxSize().padding(start = 10.dp, end = 10.dp, top = 40.dp, bottom = 4.dp))
+            } else if (model != dev.irshadm.volta.data.ismart.CarModel.Windsor) {
+                val picture = CarPictures.hero(model, state.shot)
+                androidx.compose.runtime.SideEffect { dev.irshadm.volta.ui.splash.HeroAnchor.image = picture }
+                Crossfade(state.shot, animationSpec = tween(380), label = "shot") { shot ->
+                    Image(
+                        painterResource(CarPictures.hero(model, shot)),
+                        contentDescription = shot.description,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxSize().padding(start = 10.dp, end = 10.dp, top = 40.dp, bottom = 4.dp)
+                            .graphicsLayer {
+                                alpha = if (dev.irshadm.volta.ui.splash.SplashGate.landed) 1f else 0f
+                                compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen
+                            }
+                            .champagneLight(),
+                    )
+                }
             } else {
                 if (frames.available) {
                     androidx.compose.runtime.SideEffect { dev.irshadm.volta.ui.splash.HeroAnchor.image = frames.frame(state.shot, Car360Frames.DEFAULT_INDEX) }
@@ -354,22 +367,4 @@ private fun Modifier.champagneLight() = this.drawWithContent {
         ),
         blendMode = androidx.compose.ui.graphics.BlendMode.Modulate,
     )
-}
-
-/**
- * For MG models other than the Windsor, whose photos Volta doesn't have: a large outline car on a soft champagne
- * glow, in the app's icon style.
- */
-@Composable
-fun GenericCar(modifier: Modifier = Modifier) {
-    Box(modifier, contentAlignment = Alignment.Center) {
-        Box(
-            Modifier.fillMaxWidth(0.8f).fillMaxHeight(0.7f)
-                .background(androidx.compose.ui.graphics.Brush.radialGradient(listOf(Wt.tint(Wt.Champagne, 0.16f), Color.Transparent))),
-        )
-        androidx.compose.material3.Icon(
-            dev.irshadm.volta.core.designsystem.WtIcons.Car, contentDescription = "Your car",
-            tint = Wt.Champagne, modifier = Modifier.fillMaxHeight(0.62f).aspectRatio(1f),
-        )
-    }
 }

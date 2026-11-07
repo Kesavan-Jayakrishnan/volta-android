@@ -93,7 +93,8 @@ object Cooling {
         val p = Paint(Paint.ANTI_ALIAS_FLAG)
         p.shader = android.graphics.RadialGradient(size / 2f, size * 0.38f, size * 0.7f, tint, blend(tint, 0xFF15171B.toInt(), 0.65f), android.graphics.Shader.TileMode.CLAMP)
         c.drawRoundRect(RectF(0f, 0f, size.toFloat(), size.toFloat()), size * 0.22f, size * 0.22f, p)
-        val car = BitmapFactory.decodeResource(context.resources, R.drawable.car360_locked_1) ?: return bmp
+        val picture = dev.irshadm.volta.ui.components.CarPictures.small(dev.irshadm.volta.data.ismart.CarIdentity.saved(context).model, dev.irshadm.volta.ui.components.CarShot.Locked)
+        val car = BitmapFactory.decodeResource(context.resources, picture) ?: return bmp
         val scale = (size * 0.86f) / car.width
         val w = car.width * scale
         val h = car.height * scale

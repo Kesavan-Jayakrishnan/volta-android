@@ -37,10 +37,11 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import dev.irshadm.volta.R
+import dev.irshadm.volta.data.ismart.CarModel
+import dev.irshadm.volta.ui.components.CarPictures
+import dev.irshadm.volta.ui.components.CarShot
 import dev.irshadm.volta.core.designsystem.LocalReducedMotion
 import dev.irshadm.volta.core.designsystem.Wt
-import dev.irshadm.volta.ui.components.GenericCar
 
 private val Sheen = Color(0xFF30343B)
 
@@ -59,13 +60,13 @@ internal fun SkeletonBar(brush: Brush, width: Dp, height: Dp, modifier: Modifier
     Box(modifier.width(width).height(height).clip(shape).background(brush))
 }
 
-/** The car, held back until there's a reading to show it with. Same height as CarHero. The photo is of a Windsor. */
+/** The car, held back until there's a reading to show it with. Same height as CarHero. */
 @Composable
-internal fun SkeletonCar(windsor: Boolean, modifier: Modifier = Modifier) {
+internal fun SkeletonCar(model: CarModel, modifier: Modifier = Modifier) {
+    val picture = CarPictures.hero(model, CarShot.Locked)
     Box(modifier.fillMaxWidth().height(250.dp)) {
-        if (!windsor) GenericCar(Modifier.fillMaxSize().padding(start = 10.dp, end = 10.dp, top = 40.dp, bottom = 4.dp).graphicsLayer { alpha = 0.55f })
-        else Image(
-            painterResource(R.drawable.car_locked), contentDescription = null, contentScale = ContentScale.Fit,
+        Image(
+            painterResource(picture), contentDescription = null, contentScale = ContentScale.Fit,
             // Darkened rather than faded: a faded photo lets the dusk sky show through the car.
             colorFilter = ColorFilter.colorMatrix(ColorMatrix().apply { setToScale(0.55f, 0.55f, 0.55f, 1f) }),
             modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
