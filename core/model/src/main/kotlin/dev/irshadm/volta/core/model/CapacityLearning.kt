@@ -22,9 +22,10 @@ object CapacityLearning {
 
     /** One reading's estimate of usable capacity, or null when the reading can't support one. */
     fun sample(socPercent: Double, energyKwh: Double?): Double? {
-        if (energyKwh == null) return null
-        if (energyKwh < 1.0 || socPercent < MIN_SOC_PERCENT || socPercent > 100.0) return null
-        val kwh = energyKwh / (socPercent / 100.0)
+        val kwh = energyKwh
+            ?.takeIf { it >= 1.0 && socPercent in MIN_SOC_PERCENT..100.0 }
+            ?.div(socPercent / 100.0)
+            ?: return null
         return kwh.takeIf { it in 10.0..120.0 }
     }
 
