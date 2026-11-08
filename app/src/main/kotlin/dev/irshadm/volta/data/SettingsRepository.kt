@@ -6,8 +6,10 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
+import dev.irshadm.volta.core.model.CapacityLearning
 import dev.irshadm.volta.core.model.ChargerPreferences
 import dev.irshadm.volta.core.model.EnergySettings
 import dev.irshadm.volta.core.model.NetworkPreference
@@ -192,6 +194,30 @@ class SettingsRepository @Inject constructor(private val store: DataStore<Prefer
         store.edit { it[HOME_COVERED] = on }
     }
 
+    /** When the usable capacity was last measured from the car (null until the car has been read enough). */
+    val capacityLearnedAt: Flow<Long?> = store.data.map { it[CAPACITY_LEARNED_AT] }
+
+    /**
+     * Feeds one car reading (SoC and pack energy from the same charge frame) into [CapacityLearning]. Once enough
+     * samples agree, the profile's usable capacity follows the car; returns the new capacity when it changed.
+     */
+    suspend fun learnCapacity(socPercent: Double, energyKwh: Double?, nowMillis: Long = System.currentTimeMillis()): Double? {
+        val sample = CapacityLearning.sample(socPercent, energyKwh) ?: return null
+        var changed: Double? = null
+        store.edit { p ->
+            val samples = CapacityLearning.append(p[CAPACITY_SAMPLES]?.split(',')?.mapNotNull { it.toDoubleOrNull() }.orEmpty(), sample)
+            p[CAPACITY_SAMPLES] = samples.joinToString(",")
+            val learned = CapacityLearning.learned(samples) ?: return@edit
+            p[CAPACITY_LEARNED_AT] = nowMillis
+            val current = p[CAPACITY] ?: VehicleProfile().usableCapacityKwh
+            if (CapacityLearning.shouldReplace(current, learned) && VehicleProfile(usableCapacityKwh = learned).validate().isEmpty()) {
+                p[CAPACITY] = learned
+                changed = learned
+            }
+        }
+        return changed
+    }
+
     suspend fun save(profile: VehicleProfile) {
         require(profile.validate().isEmpty())
         store.edit { p ->
@@ -226,6 +252,8 @@ class SettingsRepository @Inject constructor(private val store: DataStore<Prefer
 
     private companion object {
         val CAPACITY = doublePreferencesKey("vehicle.capacity_kwh")
+        val CAPACITY_SAMPLES = stringPreferencesKey("vehicle.capacity_samples")
+        val CAPACITY_LEARNED_AT = longPreferencesKey("vehicle.capacity_learned_at")
         val CITY_EFF = doublePreferencesKey("vehicle.city_km_per_kwh")
         val HIGHWAY_EFF = doublePreferencesKey("vehicle.highway_km_per_kwh")
         val MASS = doublePreferencesKey("vehicle.mass_kg")
