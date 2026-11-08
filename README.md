@@ -17,6 +17,8 @@ There is no Volta server and no analytics: your login and key stay on your phone
 - **Trip planner:** routes with their climb, fast-charging stops with a backup for each, and meal stops at places
   that are open when you get there. Behind-plan alerts re-plan from where you are.
 - **Energy:** every charging session priced on your home tariff or public rates.
+- **Home charger:** start and stop an Exicom Spin home charger over Bluetooth, from the dashboard. Only the Exicom Spin
+  is supported; other home chargers aren't.
 - **Smart pre-cool:** suggests cooling the car before you walk out. It always asks first.
 - **Android Auto** and a home-screen widget.
 
