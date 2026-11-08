@@ -24,7 +24,7 @@ There is no Volta server and no analytics: your login and key stay on your phone
 
 Only tested on the MG Windsor EV so far. The battery size is measured from the car after a few reads, so a Windsor Pro's larger pack is picked up on its own. Other MG EVs on i-SMART should sign in and show their data, but none has been
 run yet. The Comet EV, ZS EV, M9, Cyberster and Hector Tomahawk EV have their own pictures, with only the 360° view still
-pending, and anything else shows the Windsor. Their battery figures can be set in Settings → Car until model profiles arrive.
+pending, and anything else shows the Windsor. Their battery size is measured the same way; efficiency can be set in Settings → Car until model profiles arrive.
 
 ## What you need
 
