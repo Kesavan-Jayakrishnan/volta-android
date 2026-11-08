@@ -37,6 +37,7 @@ class SettingsViewModel @Inject constructor(
     private fun <T> stateFlowOf(flow: kotlinx.coroutines.flow.Flow<T>, initial: T): StateFlow<T> = flow.stateIn(viewModelScope, SharingStarted.Eagerly, initial)
 
     val vehicle = stateFlowOf(repo.vehicleProfile, VehicleProfile())
+    val capacityLearnedAt = stateFlowOf(repo.capacityLearnedAt, null)
     val trip = stateFlowOf(repo.tripSettings, TripSettings())
     val chargers = stateFlowOf(repo.chargerPreferences, ChargerPreferences())
     val energy = stateFlowOf(repo.energySettings, EnergySettings())

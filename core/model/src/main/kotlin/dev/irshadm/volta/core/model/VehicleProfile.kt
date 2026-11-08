@@ -7,8 +7,9 @@ data class ChargeCurvePoint(val socPercent: Int, val powerKw: Double)
  * Energy model inputs for the car.
  *
  * Defaults are for the MG Windsor 38 kWh. Usable capacity was measured on a real car
- * (21.9 kWh at 59 %); efficiencies are starting points that calibration
- * replaces with learned values.
+ * (21.9 kWh at 59 %) and is only the starting point: [CapacityLearning] replaces it with the
+ * car's own figure after a few reads (a Windsor Pro's pack is ~52 kWh). Efficiencies are
+ * starting points that calibration replaces with learned values.
  */
 data class VehicleProfile(
     val usableCapacityKwh: Double = 37.1,

@@ -246,6 +246,8 @@ class IsmartRepository @Inject constructor(
             val previous = socRepository.latest.first()
             runCatching { charges.onReading(status, previous?.takeIf { it.source == dev.irshadm.volta.core.model.SocSource.ISMART }) }
             status.soc?.value?.let { socRepository.add(it) }
+            // The pack size comes from the car, not the Windsor 38 default: SoC and energy from the same charge frame.
+            r.charge?.let { c -> c.socPercent?.let { soc -> runCatching { settings.learnCapacity(soc, c.batteryEnergyKwh) } } }
             runCatching { drives.onReading(status, before) }
             runCatching { dev.irshadm.volta.service.smart.SmartPrecool.onCarReading(context, status, settings) }
             runCatching { dev.irshadm.volta.service.CarCheckWorker.evaluate(context, status) }
