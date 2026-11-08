@@ -1,0 +1,89 @@
+name: Personal APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: personal-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Validate signing secrets
+        env:
+          VOLTA_KEYSTORE_BASE64: ${{ secrets.VOLTA_KEYSTORE_BASE64 }}
+          VOLTA_STORE_PASSWORD: ${{ secrets.VOLTA_STORE_PASSWORD }}
+          VOLTA_KEY_ALIAS: ${{ secrets.VOLTA_KEY_ALIAS }}
+          VOLTA_KEY_PASSWORD: ${{ secrets.VOLTA_KEY_PASSWORD }}
+        run: |
+          for name in VOLTA_KEYSTORE_BASE64 VOLTA_STORE_PASSWORD VOLTA_KEY_ALIAS VOLTA_KEY_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing required GitHub Actions secret: $name"
+              exit 1
+            fi
+          done
+
+      - name: Restore personal signing key
+        env:
+          VOLTA_KEYSTORE_BASE64: ${{ secrets.VOLTA_KEYSTORE_BASE64 }}
+        run: |
+          printf '%s' "$VOLTA_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/volta-personal-release.jks"
+          test -s "$RUNNER_TEMP/volta-personal-release.jks"
+          echo "VOLTA_STORE_FILE=$RUNNER_TEMP/volta-personal-release.jks" >> "$GITHUB_ENV"
+
+      - name: Run quality checks
+        run: |
+          ./gradlew spotlessCheck detekt test
+          ./gradlew :app:lintRelease
+
+      - name: Build signed release APK
+        env:
+          VOLTA_STORE_PASSWORD: ${{ secrets.VOLTA_STORE_PASSWORD }}
+          VOLTA_KEY_ALIAS: ${{ secrets.VOLTA_KEY_ALIAS }}
+          VOLTA_KEY_PASSWORD: ${{ secrets.VOLTA_KEY_PASSWORD }}
+          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+        run: ./gradlew :app:assembleRelease
+
+      - name: Verify APK and calculate checksum
+        run: |
+          APK="app/build/outputs/apk/release/app-release.apk"
+          if [ ! -f "$APK" ]; then
+            echo "::error::Signed APK not found. Check Gradle signing configuration."
+            exit 1
+          fi
+
+          BUILD_TOOLS=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n 1)
+          "$ANDROID_HOME/build-tools/$BUILD_TOOLS/apksigner" verify --verbose --print-certs "$APK"
+
+          mkdir -p personal-apk
+          cp "$APK" personal-apk/volta-personal.apk
+          cd personal-apk
+          sha256sum volta-personal.apk > volta-personal.apk.sha256
+
+      - name: Upload APK and checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: volta-personal-${{ github.sha }}
+          path: |
+            personal-apk/volta-personal.apk
+            personal-apk/volta-personal.apk.sha256
+          if-no-files-found: error
+          retention-days: 14
