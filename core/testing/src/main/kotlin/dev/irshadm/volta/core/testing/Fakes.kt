@@ -2,7 +2,9 @@ package dev.irshadm.volta.core.testing
 
 import dev.irshadm.volta.core.domain.Account
 import dev.irshadm.volta.core.domain.AccountRepository
+import dev.irshadm.volta.core.domain.ControlPinRepository
 import dev.irshadm.volta.core.domain.MapsKeyRepository
+import dev.irshadm.volta.core.domain.PinCheck
 import dev.irshadm.volta.core.domain.SetupRepository
 import dev.irshadm.volta.core.maps.KeyCheckReport
 import dev.irshadm.volta.core.maps.MapsKeyChecker
@@ -50,5 +52,30 @@ class FakeMapsKeyChecker(var report: KeyCheckReport) : MapsKeyChecker {
     override suspend fun check(key: String): KeyCheckReport {
         checked += key
         return report
+    }
+}
+
+/** Answers every check with [nextResult] and records the PINs it was given in [checked]. */
+class FakeControlPinRepository(saved: Boolean = false, stepDone: Boolean = saved) : ControlPinRepository {
+    override val hasPin = MutableStateFlow(saved)
+    override val stepDone = MutableStateFlow(stepDone)
+    var nextResult: PinCheck = PinCheck.Saved
+    val checked = mutableListOf<String>()
+
+    override suspend fun checkAndSave(pin: String): PinCheck {
+        checked += pin
+        if (nextResult == PinCheck.Saved) {
+            hasPin.value = true
+            stepDone.value = true
+        }
+        return nextResult
+    }
+
+    override fun skip() {
+        stepDone.value = true
+    }
+
+    override fun clear() {
+        hasPin.value = false
     }
 }

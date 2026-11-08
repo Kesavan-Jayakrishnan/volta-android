@@ -71,6 +71,11 @@ class SecureStore(context: Context) : SessionStore {
         get() = get(PIN_HASH)
         set(value) = put(PIN_HASH, value)
 
+    /** The first-run PIN step was skipped for this login. */
+    var pinSkipped: Boolean
+        get() = get(PIN_SKIPPED) != null
+        set(value) = put(PIN_SKIPPED, if (value) "1" else null)
+
     override fun load(): LoginFrame.Session? {
         val uid = get(UID) ?: return null
         val token = get(TOKEN) ?: return null
@@ -83,10 +88,10 @@ class SecureStore(context: Context) : SessionStore {
     }
 
     /**
-     * Forgets the MG login, session and PIN hash. Only these: the same encrypted file also holds the Google Maps key,
+     * Forgets the MG login, session, PIN hash and whether the PIN step was skipped. Only these: the same encrypted file also holds the Google Maps key,
      * which stays through a sign-out.
      */
-    fun clearLogin() = prefs.edit().apply { listOf(PHONE, PASSWORD, UID, TOKEN, PIN_HASH).forEach { remove(it) } }.apply()
+    fun clearLogin() = prefs.edit().apply { listOf(PHONE, PASSWORD, UID, TOKEN, PIN_HASH, PIN_SKIPPED).forEach { remove(it) } }.apply()
 
     private companion object {
         const val ALIAS = "volta_secure"
@@ -96,5 +101,6 @@ class SecureStore(context: Context) : SessionStore {
         const val UID = "mg.uid"
         const val TOKEN = "mg.token"
         const val PIN_HASH = "mg.pin_hash"
+        const val PIN_SKIPPED = "mg.pin_skipped"
     }
 }

@@ -238,7 +238,7 @@ fun AttentionBanner(v: VehicleStatus, now: Long, onFix: (RemoteCommand) -> Unit,
  * Without the car link (manual mode) only the numbers and the bar show.
  */
 @Composable
-fun HomePanel(state: HomeUiState, vm: HomeViewModel, onSettings: () -> Unit, modifier: Modifier = Modifier, onTyres: () -> Unit = {}) {
+fun HomePanel(state: HomeUiState, vm: HomeViewModel, onNeedPin: (RemoteCommand, String) -> Unit, modifier: Modifier = Modifier, onTyres: () -> Unit = {}) {
     val context = LocalContext.current
     val v = state.vehicle
     val tyreVersion by TyreCare.version.collectAsState()
@@ -263,7 +263,7 @@ fun HomePanel(state: HomeUiState, vm: HomeViewModel, onSettings: () -> Unit, mod
     fun send(cmd: RemoteCommand, what: String) {
         if (driving && cmd in drivingOnly) return
         if (!state.hasPin) {
-            onSettings()
+            onNeedPin(cmd, what)
             return
         }
         if (running != null) return
@@ -420,7 +420,7 @@ fun HomePanel(state: HomeUiState, vm: HomeViewModel, onSettings: () -> Unit, mod
             if (driving) {
                 Text("Lock and windows are off while the car is on.", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted, modifier = Modifier.padding(top = 6.dp, start = 4.dp))
             } else if (!state.hasPin) {
-                Text("Add your MG control PIN in Settings to use these.", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted, modifier = Modifier.padding(top = 6.dp, start = 4.dp))
+                Text("These ask for your MG control PIN the first time.", style = MaterialTheme.typography.bodySmall, color = VoltaColors.Muted, modifier = Modifier.padding(top = 6.dp, start = 4.dp))
             }
             // Opening the details scrolls the page so they're fully in view.
             val bringer = remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }

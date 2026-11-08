@@ -31,6 +31,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.irshadm.volta.core.designsystem.VoltaColors
 import dev.irshadm.volta.data.ismart.IsmartRepository
 import dev.irshadm.volta.data.ismart.LinkState
+import dev.irshadm.volta.feature.onboarding.pin.ControlPinForm
+import dev.irshadm.volta.feature.onboarding.pin.ControlPinViewModel
 import dev.irshadm.volta.ui.components.VoltaButton
 import dev.irshadm.volta.ui.components.VoltaButtonStyle
 import kotlinx.coroutines.launch
@@ -48,8 +50,9 @@ fun MgAccountSection(vm: AccountViewModel = hiltViewModel()) {
     var password by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
-    var pin by remember { mutableStateOf("") }
-    var pinSet by remember { mutableStateOf(vm.ismart.hasPin) }
+    val pinSet by vm.ismart.pinSaved.collectAsStateWithLifecycle()
+    val pinVm: ControlPinViewModel = hiltViewModel()
+    val pinState by pinVm.state.collectAsStateWithLifecycle()
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         AnimatedContent(link is LinkState.SignedOut, label = "account") { signedOut ->
@@ -77,32 +80,13 @@ fun MgAccountSection(vm: AccountViewModel = hiltViewModel()) {
                     if (pinSet) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("PIN saved", style = MaterialTheme.typography.bodyMedium, color = VoltaColors.Green, modifier = Modifier.weight(1f))
-                            VoltaButton("Change", {
-                                vm.ismart.clearPin()
-                                pinSet = false
-                            }, style = VoltaButtonStyle.Secondary)
+                            VoltaButton("Change", { vm.ismart.clearPin() }, style = VoltaButtonStyle.Secondary)
                         }
                     } else {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            OutlinedTextField(
-                                value = pin,
-                                onValueChange = { pin = it.filter(Char::isDigit).take(4) },
-                                label = { Text("4-digit PIN") },
-                                singleLine = true,
-                                visualTransformation = PasswordVisualTransformation(),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-                                modifier = Modifier.weight(1f),
-                            )
-                            VoltaButton("Save", {
-                                vm.ismart.setPin(pin)
-                                pin = ""
-                                pinSet = true
-                            }, enabled = pin.length == 4)
-                        }
+                        ControlPinForm(pinState, pinVm::onPinChange, { pinVm.check() }, "Check with MG", autoFocus = false)
                     }
                     VoltaButton("Sign out", {
                         vm.ismart.signOut()
-                        pinSet = false
                     }, Modifier.fillMaxWidth(), style = VoltaButtonStyle.Secondary)
                 }
             }

@@ -38,6 +38,9 @@ class LoginThrottledException(val retryAtMillis: Long) : SignedOutException("Sig
 /** A command was sent but its outcome is unknown. Must not be replayed automatically. */
 class CommandIndeterminateException(message: String) : IsmartException(message)
 
+/** MG said the control PIN is wrong. Wrong tries count against MG's limit, so it is never retried. */
+class WrongPinException(message: String) : IsmartException(message)
+
 class NotOwnerException : IsmartException("This MG account is a shared (secondary) account; battery data needs the owner account")
 
 data class Credentials(val phone: String, val password: String)
@@ -271,6 +274,13 @@ class MgIsmartClient(
 
     // ---------------- commands ----------------
 
+    /** Checks [pinHash] with MG, the same check every command starts with, without sending anything to the car. */
+    suspend fun checkPin(pinHash: String) {
+        if (vin == null) vehicles()
+        val v = vin ?: throw IsmartException("No vehicle on this MG account")
+        mutex.withLock { verifyPin(v, pinHash) }
+    }
+
     /** Sends [cmd] after PIN verification. Lock/unlock/windows that never report completion are verified from a fresh status. */
     suspend fun command(cmd: RemoteCommand, pinHash: String) {
         if (vin == null) vehicles()
@@ -321,7 +331,7 @@ class MgIsmartClient(
                     throw IsmartException("PIN check: session invalid")
                 }
 
-                else -> throw IsmartException("Wrong control PIN (result ${d.result})")
+                else -> throw WrongPinException("Wrong control PIN (result ${d.result})")
             }
         }
     }

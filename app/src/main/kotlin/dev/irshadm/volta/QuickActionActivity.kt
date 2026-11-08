@@ -135,6 +135,9 @@ class QuickActionActivity : FragmentActivity() {
     private fun Sheet(action: Action) {
         val status by ismart.status.collectAsStateWithLifecycle()
         val link by ismart.link.collectAsStateWithLifecycle()
+        val pinSaved by ismart.pinSaved.collectAsStateWithLifecycle()
+        val pinVm: dev.irshadm.volta.feature.onboarding.pin.ControlPinViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+        val pinState by pinVm.state.collectAsStateWithLifecycle()
         val liveCommand by ismart.command.collectAsStateWithLifecycle()
         val command = liveCommand
         val acOn = status?.climateRunning?.value == true
@@ -218,7 +221,11 @@ class QuickActionActivity : FragmentActivity() {
                 when {
                     link !is LinkState.Connected -> Note("Volta isn't connected to your car. Open the app to sign in or reconnect.", VoltaColors.Amber) { open() }
 
-                    !ismart.hasPin -> Note("Add your MG control PIN in Volta → Settings first.", VoltaColors.Amber) { open() }
+                    // No PIN yet: ask for it here, then the action below takes over.
+                    !pinSaved -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text("Add your MG control PIN first. You only enter it once.", style = MaterialTheme.typography.bodyMedium, color = VoltaColors.TextSoft)
+                        dev.irshadm.volta.feature.onboarding.pin.ControlPinForm(pinState, pinVm::onPinChange, { pinVm.check() }, "Check with MG", autoFocus = false)
+                    }
 
                     // No remote lock or unlock while the car is on: someone is in it.
                     driving && (action == Action.Lock || action == Action.Unlock) -> Note("Lock and unlock are off while the car is on.", VoltaColors.Amber) { finish() }
