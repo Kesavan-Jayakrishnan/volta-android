@@ -79,7 +79,12 @@ class IsmartRepository @Inject constructor(
     private val _command = MutableStateFlow<CommandState>(CommandState.Idle)
     val command: StateFlow<CommandState> = _command
 
-    val hasPin: Boolean get() = secure.pinHash != null
+    private val _pinSaved = MutableStateFlow(secure.pinHash != null)
+    val pinSaved: StateFlow<Boolean> = _pinSaved
+    val hasPin: Boolean get() = _pinSaved.value
+
+    private val _pinStepDone = MutableStateFlow(secure.pinHash != null || secure.pinSkipped)
+    val pinStepDone: StateFlow<Boolean> = _pinStepDone
     private val refreshMutex = Mutex()
 
     /** Work that must outlive the screen that started it (the first read after signing in). */
@@ -146,6 +151,8 @@ class IsmartRepository @Inject constructor(
     fun signOut(keepReadings: Boolean = false) {
         client.signOut()
         secure.clearLogin()
+        _pinSaved.value = false
+        _pinStepDone.value = false
         if (!keepReadings) {
             _status.value = null
             cacheFile.delete()
@@ -183,10 +190,20 @@ class IsmartRepository @Inject constructor(
 
     fun setPin(pin: String) {
         secure.pinHash = MgCrypto.pinHash(pin)
+        _pinSaved.value = true
+        _pinStepDone.value = true
     }
     fun clearPin() {
         secure.pinHash = null
+        _pinSaved.value = false
     }
+    fun skipPinStep() {
+        secure.pinSkipped = true
+        _pinStepDone.value = true
+    }
+
+    /** Asks MG whether [pin] is right without sending anything to the car. Throws the client's exception if not. */
+    suspend fun checkPin(pin: String) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { client.checkPin(MgCrypto.pinHash(pin)) }
 
     /** On-demand refresh. Readings are stored as a time series. */
     suspend fun refresh(includeCharge: Boolean = true, retrying: Boolean = false) = refreshMutex.withLock {
