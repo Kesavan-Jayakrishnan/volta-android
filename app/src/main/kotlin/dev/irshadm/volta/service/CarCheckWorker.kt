@@ -75,7 +75,7 @@ class CarCheckWorker(context: Context, params: WorkerParameters) : CoroutineWork
                         weather?.tempC,
                         BatteryCare.usualDailyKm(deps.tripDao().finished(300)),
                         kmPerKwh,
-                        dev.irshadm.volta.core.model.VehicleProfile().usableCapacityKwh,
+                        deps.settings().vehicleProfile.first().usableCapacityKwh,
                     ),
                 )
             }

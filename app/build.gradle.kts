@@ -29,8 +29,8 @@ android {
         applicationId = "dev.irshadm.volta.oss"
         minSdk = 29
         targetSdk = 36
-        versionCode = 3
-        versionName = "0.1.2"
+        versionCode = 4
+        versionName = "0.1.3"
         manifestPlaceholders["MAPS_API_KEY"] = mapSdkKey
         buildConfigField("boolean", "HAS_MAP_KEY", mapSdkKey.isNotEmpty().toString())
     }

@@ -477,15 +477,30 @@ private fun AccountPage(vm: SettingsViewModel) {
     val v by vm.vehicle.collectAsStateWithLifecycle()
     Group { Box(Modifier.padding(14.dp)) { MgAccountSection() } }
     Label("Car")
+    // Once the car has been read enough, the pack size is measured from it (a Windsor Pro is not a Windsor 38)
+    // and the stepper goes; before that, whole kWh steps, since the real sizes are 15 kWh apart.
+    val measured by vm.capacityLearnedAt.collectAsStateWithLifecycle()
+    val measuredAt = measured
     Group {
-        StepperRow(
-            "Usable battery",
-            "%.1f kWh".format(v.usableCapacityKwh),
-            "Measured from your car",
-            { vm.saveVehicle(v.copy(usableCapacityKwh = (v.usableCapacityKwh - 0.1).r1())) },
-            { vm.saveVehicle(v.copy(usableCapacityKwh = (v.usableCapacityKwh + 0.1).r1())) },
-        )
+        if (measuredAt != null) {
+            InfoRow("Usable battery", "%.1f kWh".format(v.usableCapacityKwh))
+        } else {
+            StepperRow(
+                "Usable battery",
+                "%.0f kWh".format(v.usableCapacityKwh),
+                "Until the car has been read a few times",
+                { vm.saveVehicle(v.copy(usableCapacityKwh = (v.usableCapacityKwh - 1.0).r1())) },
+                { vm.saveVehicle(v.copy(usableCapacityKwh = (v.usableCapacityKwh + 1.0).r1())) },
+            )
+        }
     }
+    Note(
+        if (measuredAt != null) {
+            "Measured from your car on " + java.text.SimpleDateFormat("d MMM", java.util.Locale.getDefault()).format(java.util.Date(measuredAt)) + ". It follows the car's own figure."
+        } else {
+            "Measured from your car once it has been read a few times."
+        },
+    )
 }
 
 @Composable

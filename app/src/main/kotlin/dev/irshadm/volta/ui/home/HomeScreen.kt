@@ -216,7 +216,7 @@ private fun Header(state: HomeUiState, onSettings: () -> Unit, modifier: Modifie
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(state.car.name, style = MaterialTheme.typography.headlineLarge, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-                state.vehicle?.let { StatusChip(it, state.charger.chargerCharging) }
+                state.vehicle?.let { StatusChip(it, state.profile.usableCapacityKwh, state.charger.chargerCharging) }
                 if (state.waitingForCar) SkeletonBar(skeletonBrush(), 150.dp, 30.dp, shape = CircleShape)
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -290,7 +290,7 @@ private enum class CarActivity(val label: String, val color: Color) {
 
 /** Parked / driving / charging at a glance, next to the car's name. */
 @Composable
-private fun StatusChip(v: dev.irshadm.volta.core.model.VehicleStatus, chargerCharging: Boolean = false) {
+private fun StatusChip(v: dev.irshadm.volta.core.model.VehicleStatus, capacityKwh: Double, chargerCharging: Boolean = false) {
     val context = LocalContext.current
     val activity = when {
         v.charging?.value == true || chargerCharging -> CarActivity.Charging
@@ -299,7 +299,7 @@ private fun StatusChip(v: dev.irshadm.volta.core.model.VehicleStatus, chargerCha
         else -> CarActivity.Parked
     }
     val detail = when (activity) {
-        CarActivity.Charging -> chargeMinutesLeft(v, dev.irshadm.volta.core.model.VehicleProfile().usableCapacityKwh)?.takeIf { it > 0 }?.let { m -> "full by ~" + sinceClock(System.currentTimeMillis() + m * 60_000L) }
+        CarActivity.Charging -> chargeMinutesLeft(v, capacityKwh)?.takeIf { it > 0 }?.let { m -> "full by ~" + sinceClock(System.currentTimeMillis() + m * 60_000L) }
             ?: v.chargePowerKw?.value?.takeIf { it > 0.5 }?.let { "%.1f kW".format(it) }
 
         CarActivity.Driving -> v.speedKmh?.value?.takeIf { it > 3 }?.let { "${it.roundToInt()} km/h" }
