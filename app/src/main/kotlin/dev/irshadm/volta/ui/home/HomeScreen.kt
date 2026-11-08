@@ -84,6 +84,7 @@ import dev.irshadm.volta.core.model.SocSource
 import dev.irshadm.volta.core.model.TyrePressures
 import dev.irshadm.volta.data.ismart.CommandState
 import dev.irshadm.volta.data.ismart.LinkState
+import dev.irshadm.volta.feature.onboarding.pin.ControlPinSheet
 import dev.irshadm.volta.ui.components.CarHero
 import dev.irshadm.volta.ui.components.StatusTile
 import dev.irshadm.volta.ui.components.VoltaButton
@@ -133,6 +134,16 @@ fun HomeScreen(onPlanTrip: () -> Unit, onSettings: () -> Unit, viewModel: HomeVi
                 TyreCare.checks(tyreContext, state.vehicle?.tyrePsi?.value, carFlag = TyreCare.carFlag(state.vehicle?.warningCodes?.value)).map { it.wheel }.toSet()
             }
             if (tyresOpen) state.vehicle?.let { TyreSheet(it) { tyresOpen = false } }
+            // A command with no PIN saved asks for it here, then carries on with that command.
+            var pinFor by remember { mutableStateOf<Pair<RemoteCommand, String>?>(null) }
+            val pinContext = LocalContext.current
+            pinFor?.let { (cmd, what) ->
+                val verb = cmd.verb()
+                ControlPinSheet("Add your control PIN to $verb", "Save and $verb", onSaved = {
+                    pinFor = null
+                    confirmWithBiometrics(pinContext, "Confirm: $what", "Sends the command to your car") { viewModel.send(cmd) }
+                }, onDismiss = { pinFor = null })
+            }
             Box(Modifier.fillMaxWidth().onGloballyPositioned { topPx = it.boundsInWindow().top }) {
                 if (state.hero != null || state.waitingForCar) dev.irshadm.volta.ui.components.DuskBackdrop(Modifier.matchParentSize(), heroTop, heroH)
                 Column(Modifier.statusBarsPadding()) {
@@ -163,7 +174,7 @@ fun HomeScreen(onPlanTrip: () -> Unit, onSettings: () -> Unit, viewModel: HomeVi
                                 val context = LocalContext.current
                                 AttentionBanner(v, state.nowMillis, onFix = { cmd ->
                                     if (!state.hasPin) {
-                                        onSettings()
+                                        pinFor = cmd to cmd.label.lowercase()
                                     } else {
                                         confirmWithBiometrics(context, "Confirm: ${cmd.label.lowercase()}", "Sends the command to your car") { viewModel.send(cmd) }
                                     }
@@ -192,7 +203,7 @@ fun HomeScreen(onPlanTrip: () -> Unit, onSettings: () -> Unit, viewModel: HomeVi
                 if (state.waitingForCar) {
                     PanelSkeleton(skeletonBrush(), Modifier.appear(3))
                 } else {
-                    HomePanel(state, viewModel, onSettings, Modifier.appear(3), onTyres = { tyresOpen = true })
+                    HomePanel(state, viewModel, onNeedPin = { cmd, what -> pinFor = cmd to what }, Modifier.appear(3), onTyres = { tyresOpen = true })
                 }
             }
         }
@@ -331,4 +342,16 @@ private fun sinceClock(at: Long): String {
         else -> "d MMM"
     }
     return java.text.SimpleDateFormat(fmt, java.util.Locale.getDefault()).format(java.util.Date(at)).replace("AM", "am").replace("PM", "pm")
+}
+
+/** What the command does, to finish "Add your control PIN to …". */
+private fun RemoteCommand.verb(): String = when (this) {
+    RemoteCommand.Lock -> "lock"
+    RemoteCommand.Unlock -> "unlock"
+    RemoteCommand.ClimateOn -> "turn on the AC"
+    RemoteCommand.ClimateOff -> "turn off the AC"
+    RemoteCommand.FindMyCar -> "find your car"
+    RemoteCommand.OpenBoot -> "open the boot"
+    RemoteCommand.WindowsOpen -> "open the windows"
+    RemoteCommand.WindowsClose -> "close the windows"
 }

@@ -36,6 +36,7 @@ import dev.irshadm.volta.core.domain.ObserveStartDestinationUseCase
 import dev.irshadm.volta.core.domain.StartDestination
 import dev.irshadm.volta.feature.onboarding.mapskey.MapsKeyMode
 import dev.irshadm.volta.feature.onboarding.mapskey.MapsKeyRoute
+import dev.irshadm.volta.feature.onboarding.pin.ControlPinRoute
 import dev.irshadm.volta.feature.onboarding.signin.SignInRoute
 import dev.irshadm.volta.ui.components.BottomTab
 import dev.irshadm.volta.ui.components.VoltaBottomBar
@@ -73,6 +74,8 @@ class MainActivity : FragmentActivity() {
                     if (start == StartDestination.Home) AppNav()
                     when {
                         start == StartDestination.SignIn -> SignInRoute()
+
+                        start == StartDestination.ControlPin -> ControlPinRoute()
 
                         start == StartDestination.MapsKey -> MapsKeyRoute(MapsKeyMode.FirstRun)
 
