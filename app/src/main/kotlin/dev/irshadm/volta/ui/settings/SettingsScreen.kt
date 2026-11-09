@@ -844,6 +844,7 @@ private fun key(@Suppress("UNUSED_PARAMETER") v: Int, content: @Composable () ->
 
 @Composable
 private fun ElectricityPage(vm: SettingsViewModel) {
+    val locale = LocalLocale.current.platformLocale
     val e by vm.energy.collectAsStateWithLifecycle()
     val t by vm.tariff.collectAsStateWithLifecycle()
     var editing by remember { mutableStateOf(false) }
