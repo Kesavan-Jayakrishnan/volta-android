@@ -52,6 +52,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -481,6 +482,7 @@ private fun AccountPage(vm: SettingsViewModel) {
     // and the stepper goes; before that, whole kWh steps, since the real sizes are 15 kWh apart.
     val measured by vm.capacityLearnedAt.collectAsStateWithLifecycle()
     val measuredAt = measured
+    val locale = LocalLocale.current.platformLocale
     Group {
         if (measuredAt != null) {
             InfoRow("Usable battery", "%.1f kWh".format(v.usableCapacityKwh))
@@ -496,7 +498,7 @@ private fun AccountPage(vm: SettingsViewModel) {
     }
     Note(
         if (measuredAt != null) {
-            "Measured from your car on " + java.text.SimpleDateFormat("d MMM", java.util.Locale.getDefault()).format(java.util.Date(measuredAt)) + ". It follows the car's own figure."
+            "Measured from your car on " + java.text.SimpleDateFormat("d MMM", locale).format(java.util.Date(measuredAt)) + ". It follows the car's own figure."
         } else {
             "Measured from your car once it has been read a few times."
         },
@@ -908,7 +910,7 @@ private fun ElectricityPage(vm: SettingsViewModel) {
             "Mark checked today",
             style = MaterialTheme.typography.bodySmall,
             color = VoltaColors.Gold,
-            modifier = Modifier.clickable { vm.saveTariff(t.copy(verifiedOn = SimpleDateFormat("d MMM yyyy", Locale.getDefault()).format(Date()))) },
+            modifier = Modifier.clickable { vm.saveTariff(t.copy(verifiedOn = SimpleDateFormat("d MMM yyyy", locale).format(Date()))) },
         )
     }
 }
